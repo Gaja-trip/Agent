@@ -8,6 +8,10 @@ const portalData = {
     title: "토지이음 지도",
     url: "https://www.eum.go.kr/web/mp/mpMapDet.jsp",
     frameTitle: "토지이음 지도 웹페이지",
+    embed: false,
+    description:
+      "위성·항공사진과 지적도 레이어는 토지이음 지도 원문 화면에서 가장 안정적으로 표시됩니다.",
+    actionLabel: "토지이음 지도 새 창 열기",
   },
   law: {
     title: "법령정보",
@@ -114,16 +118,8 @@ function initPortalTabs() {
     return;
   }
 
-  function setActivePortal(portalKey) {
-    const portal = portalData[portalKey];
-
-    portalTabs.forEach((button) => {
-      const isActive = button.dataset.portal === portalKey;
-      button.classList.toggle("is-active", isActive);
-      button.setAttribute("aria-selected", String(isActive));
-    });
-
-    portalPanel.innerHTML = `
+  function renderEmbeddedPortal(portal) {
+    return `
       <div class="embedded-site">
         <iframe
           class="embedded-site__frame"
@@ -134,6 +130,39 @@ function initPortalTabs() {
         ></iframe>
       </div>
     `;
+  }
+
+  function renderExternalPortal(portal) {
+    return `
+      <div class="external-portal">
+        <div class="external-portal__visual" aria-hidden="true">
+          <span class="external-portal__road"></span>
+          <span class="external-portal__parcel external-portal__parcel--primary"></span>
+          <span class="external-portal__parcel external-portal__parcel--secondary"></span>
+        </div>
+        <div class="external-portal__content">
+          <p class="eyebrow">Satellite Layer</p>
+          <h2>${portal.title}</h2>
+          <p>${portal.description}</p>
+          <a class="button button--primary" href="${portal.url}" target="_blank" rel="noopener noreferrer">
+            <i data-lucide="external-link"></i>
+            ${portal.actionLabel}
+          </a>
+        </div>
+      </div>
+    `;
+  }
+
+  function setActivePortal(portalKey) {
+    const portal = portalData[portalKey];
+
+    portalTabs.forEach((button) => {
+      const isActive = button.dataset.portal === portalKey;
+      button.classList.toggle("is-active", isActive);
+      button.setAttribute("aria-selected", String(isActive));
+    });
+
+    portalPanel.innerHTML = portal.embed === false ? renderExternalPortal(portal) : renderEmbeddedPortal(portal);
 
     refreshIcons();
   }
