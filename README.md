@@ -10,11 +10,11 @@
 
 - `index.html`: 메인 탭 화면
 - `process.html`: 토지 정리 진행 절차
-- `checklist.html`: 상담 전 준비자료 체크리스트
+- `checklist.html`: 지적측량 안내자료와 상담 체크리스트
 - `manual.html`: 통합 화면 사용 매뉴얼
 - `knowledge.html`: 상담지식 요약
 - `styles.css`: 반응형 화면 스타일
-- `script.js`: 메인 탭, 절차 탭, 준비자료 체크리스트 상호작용
+- `script.js`: 메인 탭, 절차 탭, 안내자료 출력, 체크리스트 상호작용
 
 ## V-World 항공사진
 

@@ -105,7 +105,7 @@ const processSteps = {
 
 const readyMessages = [
   {
-    title: "준비자료 확인 전",
+    title: "안내자료 확인 전",
     copy: "지번과 목적이 먼저 정리되면 토지이음, 토지이음 지도, 법령 검토를 빠르게 연결할 수 있습니다.",
   },
   {
@@ -1050,7 +1050,50 @@ function initReadinessChecklist() {
   updateReadiness();
 }
 
+function initGuidePrintButtons() {
+  const printButtons = document.querySelectorAll("[data-print-image]");
+
+  if (!printButtons.length) {
+    return;
+  }
+
+  printButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const imageUrl = button.dataset.printImage;
+      const title = button.dataset.printTitle || "안내자료";
+      const absoluteImageUrl = new URL(imageUrl, window.location.href).href;
+      const printWindow = window.open("", "_blank");
+
+      if (!printWindow) {
+        window.print();
+        return;
+      }
+
+      printWindow.document.write(`
+        <!doctype html>
+        <html lang="ko">
+          <head>
+            <meta charset="UTF-8" />
+            <title>${escapeHtml(title)}</title>
+            <style>
+              * { box-sizing: border-box; }
+              body { margin: 0; padding: 18px; font-family: sans-serif; }
+              img { display: block; width: 100%; max-width: 1120px; margin: 0 auto; }
+              @page { size: landscape; margin: 10mm; }
+            </style>
+          </head>
+          <body>
+            <img src="${escapeHtml(absoluteImageUrl)}" alt="${escapeHtml(title)}" onload="window.print(); window.close();" />
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+    });
+  });
+}
+
 initPortalTabs();
 initProcessSteps();
 initReadinessChecklist();
+initGuidePrintButtons();
 refreshIcons();

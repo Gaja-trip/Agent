@@ -407,6 +407,39 @@ input {
   margin-top: 8px;
 }
 
+.guide-materials {
+  display: grid;
+  gap: 22px;
+  margin-bottom: 28px;
+}
+
+.guide-card {
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 12px 36px rgba(31, 42, 39, 0.06);
+}
+
+.guide-card__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.guide-card__toolbar h2 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.guide-card img {
+  width: 100%;
+  background: #f7faf8;
+}
+
 .knowledge-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1246,6 +1279,7 @@ input {
   }
 
   .hero__actions,
+  .guide-card__toolbar,
   .final-panel {
     align-items: stretch;
     flex-direction: column;
@@ -1300,6 +1334,33 @@ input {
 
   .step-detail__top {
     align-items: flex-start;
+  }
+}
+
+@media print {
+  .site-header,
+  .page-title,
+  .guide-card__toolbar .button,
+  .readiness,
+  .checklist-layout {
+    display: none !important;
+  }
+
+  .page-main,
+  .section {
+    padding: 0;
+    background: #fff;
+  }
+
+  .guide-materials {
+    gap: 0;
+    margin: 0;
+  }
+
+  .guide-card {
+    break-after: page;
+    border: 0;
+    box-shadow: none;
   }
 }
 
