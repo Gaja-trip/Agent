@@ -21,7 +21,8 @@ const portalData = {
 };
 
 const parcelStorageKey = "landInfoPortal.parcelAddress";
-const vworldKeyStorageKey = "landInfoPortal.vworldApiKey";
+const parcelStateStorageKey = "landInfoPortal.parcelState";
+const vworldApiKey = "39B6F1DE-2D35-3582-9008-A537EF6A6BC4";
 const defaultAerialCenter = [37.5665, 126.978];
 let vworldMap = null;
 let vworldMarker = null;
@@ -132,6 +133,22 @@ function writeStoredValue(key, value) {
   }
 }
 
+function readStoredJson(key) {
+  try {
+    return JSON.parse(window.localStorage.getItem(key) || "{}");
+  } catch (error) {
+    return {};
+  }
+}
+
+function writeStoredJson(key, value) {
+  try {
+    window.localStorage.setItem(key, JSON.stringify(value));
+  } catch (error) {
+    // Storage can be unavailable in strict browser modes. The live UI still works.
+  }
+}
+
 function escapeHtml(value) {
   return value.replace(/[&<>"']/g, (char) => {
     const entities = {
@@ -160,12 +177,39 @@ function initPortalTabs() {
     return parcelInput ? parcelInput.value.trim() : readStoredValue(parcelStorageKey);
   }
 
-  function getVworldApiKey() {
-    return window.VWORLD_API_KEY || readStoredValue(vworldKeyStorageKey);
+  function saveParcelAddress() {
+    const address = getParcelAddress();
+    const savedState = readStoredJson(parcelStateStorageKey);
+
+    writeStoredValue(parcelStorageKey, address);
+
+    if (savedState.query !== address) {
+      writeStoredJson(parcelStateStorageKey, { query: address });
+    }
   }
 
-  function saveParcelAddress() {
-    writeStoredValue(parcelStorageKey, getParcelAddress());
+  function getParcelState() {
+    const address = getParcelAddress();
+    const savedState = readStoredJson(parcelStateStorageKey);
+
+    if (savedState.query === address) {
+      return savedState;
+    }
+
+    return { query: address };
+  }
+
+  function getMapUrl() {
+    const state = getParcelState();
+
+    if (state.pnu) {
+      const url = new URL(portalData.map.url);
+      url.searchParams.set("pnu", state.pnu);
+      url.searchParams.set("sId", "selectaddr");
+      return url.toString();
+    }
+
+    return portalData.map.url;
   }
 
   function renderSharedParcel() {
@@ -174,7 +218,7 @@ function initPortalTabs() {
 
     return `
       <div class="portal-context">
-        <span>토지이음 기준 지번/주소</span>
+        <span>토지이음 검색 주소</span>
         <strong data-shared-parcel>${displayText}</strong>
       </div>
     `;
@@ -187,14 +231,16 @@ function initPortalTabs() {
     });
   }
 
-  function renderEmbeddedPortal(portal) {
+  function renderEmbeddedPortal(portal, options = {}) {
+    const iframeUrl = portal === portalData.map ? getMapUrl() : portal.url;
+
     return `
       <div class="embedded-site">
-        ${renderSharedParcel()}
+        ${options.showParcelContext ? renderSharedParcel() : ""}
         <iframe
           class="embedded-site__frame"
           title="${portal.frameTitle}"
-          src="${portal.url}"
+          src="${iframeUrl}"
           loading="lazy"
           referrerpolicy="no-referrer-when-downgrade"
         ></iframe>
@@ -204,49 +250,77 @@ function initPortalTabs() {
 
   function renderAerialPortal() {
     const parcelAddress = escapeHtml(getParcelAddress());
-    const apiKey = escapeHtml(getVworldApiKey());
 
     return `
       <div class="aerial-portal">
         <aside class="aerial-portal__panel">
-          <p class="eyebrow">V-World Aerial Photo</p>
-          <h2>항공사진</h2>
-          <p>상단에서 입력한 토지이음 기준 지번/주소를 V-World 항공사진 위에 표시합니다.</p>
-          <div class="portal-context portal-context--aerial">
-            <span>표시 지번/주소</span>
-            <strong data-shared-parcel>${parcelAddress || "아직 입력 전"}</strong>
-          </div>
-          <form class="vworld-key-form" data-vworld-key-form>
-            <label for="vworld-api-key">V-World 인증키</label>
-            <div>
-              <input
-                id="vworld-api-key"
-                name="vworldApiKey"
-                type="text"
-                value="${apiKey}"
-                placeholder="발급받은 V-World API 키"
-                autocomplete="off"
-              />
-              <button class="button button--primary" type="submit">
-                <i data-lucide="key-round"></i>
-                지도 표시
-              </button>
-            </div>
+          <form class="aerial-search" data-aerial-parcel-form>
+            <label for="aerial-parcel-address">주소 검색</label>
+            <input
+              id="aerial-parcel-address"
+              type="search"
+              name="aerialParcel"
+              data-aerial-parcel-input
+              value="${parcelAddress}"
+              placeholder="지번 또는 도로명"
+              autocomplete="street-address"
+            />
+            <button class="button button--primary" type="submit">
+              <i data-lucide="search"></i>
+              이동
+            </button>
           </form>
-          <p class="aerial-status" data-aerial-status>
-            ${apiKey ? "항공사진을 준비 중입니다." : "V-World 인증키를 입력하면 항공사진이 표시됩니다."}
-          </p>
         </aside>
         <div class="vworld-map-shell">
           <div class="vworld-map" id="vworld-map" aria-label="V-World 항공사진 지도"></div>
           <div class="vworld-map__empty" data-vworld-empty>
             <i data-lucide="satellite"></i>
-            <strong>${parcelAddress || "토지이음 기준 지번/주소를 입력하세요"}</strong>
-            <span>V-World 인증키와 지번/주소가 준비되면 항공사진 위치를 표시합니다.</span>
+            <strong>${parcelAddress || "주소를 입력하세요"}</strong>
+            <span>토지이음에서 마지막으로 저장한 주소 기준으로 항공사진 위치를 표시합니다.</span>
           </div>
+          <p class="aerial-status" data-aerial-status>항공사진을 준비 중입니다.</p>
         </div>
       </div>
     `;
+  }
+
+  function requestVworldJsonp(url) {
+    return new Promise((resolve, reject) => {
+      const callbackName = `vworldCallback_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+      const script = document.createElement("script");
+      const jsonpUrl = new URL(url.toString());
+
+      jsonpUrl.searchParams.set("callback", callbackName);
+
+      window[callbackName] = (data) => {
+        script.remove();
+        delete window[callbackName];
+        resolve(data);
+      };
+
+      script.onerror = () => {
+        script.remove();
+        delete window[callbackName];
+        reject(new Error("V-World address search failed"));
+      };
+
+      script.src = jsonpUrl.toString();
+      document.head.appendChild(script);
+    });
+  }
+
+  async function requestVworldJson(url) {
+    try {
+      const response = await fetch(url.toString());
+
+      if (response.ok) {
+        return await response.json();
+      }
+    } catch (error) {
+      // Fall back to JSONP below for static pages and browsers that block CORS.
+    }
+
+    return requestVworldJsonp(url);
   }
 
   async function searchVworldAddress(query, apiKey) {
@@ -267,22 +341,25 @@ function initPortalTabs() {
       url.searchParams.set("key", apiKey);
       url.searchParams.set("query", query);
 
-      const response = await fetch(url.toString());
+      let data;
 
-      if (!response.ok) {
+      try {
+        data = await requestVworldJson(url);
+      } catch (error) {
         continue;
       }
 
-      const data = await response.json();
       const item = data.response?.result?.items?.[0];
       const longitude = Number(item?.point?.x);
       const latitude = Number(item?.point?.y);
+      const pnu = String(item?.id || "").match(/^\d{19}$/) ? String(item.id) : "";
 
       if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
         return {
           latitude,
           longitude,
-          title: item.title || query,
+          pnu,
+          title: item.title || item.address?.parcel || item.address?.road || query,
         };
       }
     }
@@ -290,17 +367,59 @@ function initPortalTabs() {
     return null;
   }
 
-  function bindVworldKeyForm() {
-    const keyForm = document.querySelector("[data-vworld-key-form]");
-    const keyInput = document.querySelector("#vworld-api-key");
+  async function resolveParcelAddress() {
+    const address = getParcelAddress();
 
-    if (!keyForm || !keyInput) {
+    if (!address) {
+      writeStoredJson(parcelStateStorageKey, { query: "" });
+      return null;
+    }
+
+    const state = getParcelState();
+
+    if (state.query === address && Number.isFinite(state.latitude) && Number.isFinite(state.longitude)) {
+      return state;
+    }
+
+    const point = await searchVworldAddress(address, vworldApiKey);
+
+    if (!point) {
+      writeStoredJson(parcelStateStorageKey, { query: address });
+      return null;
+    }
+
+    const nextState = {
+      query: address,
+      ...point,
+    };
+
+    writeStoredJson(parcelStateStorageKey, nextState);
+    return nextState;
+  }
+
+  function bindAerialSearchForm() {
+    const aerialForm = document.querySelector("[data-aerial-parcel-form]");
+    const aerialInput = document.querySelector("[data-aerial-parcel-input]");
+
+    if (!aerialForm || !aerialInput) {
       return;
     }
 
-    keyForm.addEventListener("submit", (event) => {
+    aerialInput.addEventListener("input", () => {
+      if (parcelInput) {
+        parcelInput.value = aerialInput.value;
+      }
+
+      saveParcelAddress();
+    });
+
+    aerialForm.addEventListener("submit", async (event) => {
       event.preventDefault();
-      writeStoredValue(vworldKeyStorageKey, keyInput.value.trim());
+      if (parcelInput) {
+        parcelInput.value = aerialInput.value.trim();
+      }
+      saveParcelAddress();
+      await resolveParcelAddress();
       setActivePortal("aerial");
     });
   }
@@ -310,7 +429,6 @@ function initPortalTabs() {
     const emptyState = document.querySelector("[data-vworld-empty]");
     const status = document.querySelector("[data-aerial-status]");
     const parcelAddress = getParcelAddress();
-    const apiKey = getVworldApiKey();
 
     if (vworldMap) {
       vworldMap.remove();
@@ -322,17 +440,17 @@ function initPortalTabs() {
       return;
     }
 
-    if (!apiKey) {
-      mapNode.classList.add("is-hidden");
-      emptyState.hidden = false;
-      status.textContent = "V-World 인증키를 입력하면 항공사진이 표시됩니다.";
-      return;
-    }
-
     if (!window.L) {
       mapNode.classList.add("is-hidden");
       emptyState.hidden = false;
       status.textContent = "지도 라이브러리를 불러오지 못했습니다. 네트워크 연결을 확인해 주세요.";
+      return;
+    }
+
+    if (!parcelAddress) {
+      mapNode.classList.add("is-hidden");
+      emptyState.hidden = false;
+      status.textContent = "주소를 입력하면 해당 위치로 항공사진을 이동합니다.";
       return;
     }
 
@@ -343,20 +461,15 @@ function initPortalTabs() {
       zoomControl: true,
     }).setView(defaultAerialCenter, 16);
 
-    window.L.tileLayer(`https://api.vworld.kr/req/wmts/1.0.0/${encodeURIComponent(apiKey)}/Satellite/{z}/{y}/{x}.jpeg`, {
+    window.L.tileLayer(`https://api.vworld.kr/req/wmts/1.0.0/${encodeURIComponent(vworldApiKey)}/Satellite/{z}/{y}/{x}.jpeg`, {
       maxZoom: 19,
       attribution: "V-World",
     }).addTo(vworldMap);
 
-    if (!parcelAddress) {
-      status.textContent = "토지이음 기준 지번/주소를 입력하면 해당 위치로 항공사진을 이동합니다.";
-      return;
-    }
-
     status.textContent = `"${parcelAddress}" 위치를 V-World에서 검색 중입니다.`;
 
     try {
-      const point = await searchVworldAddress(parcelAddress, apiKey);
+      const point = await resolveParcelAddress();
 
       if (!point) {
         status.textContent = `"${parcelAddress}" 검색 결과를 찾지 못했습니다. 지번을 더 정확히 입력해 주세요.`;
@@ -369,7 +482,7 @@ function initPortalTabs() {
       vworldMarker.openPopup();
       status.textContent = `${point.title} 기준으로 V-World 항공사진을 표시 중입니다.`;
     } catch (error) {
-      status.textContent = "V-World 주소 검색 중 오류가 발생했습니다. 인증키와 네트워크 상태를 확인해 주세요.";
+      status.textContent = "V-World 주소 검색 중 오류가 발생했습니다. 네트워크 상태를 확인해 주세요.";
     }
   }
 
@@ -377,20 +490,33 @@ function initPortalTabs() {
     const portal = portalData[portalKey];
     activePortalKey = portalKey;
 
+    if (parcelForm) {
+      parcelForm.hidden = portalKey === "aerial" || portalKey === "law";
+    }
+
     portalTabs.forEach((button) => {
       const isActive = button.dataset.portal === portalKey;
       button.classList.toggle("is-active", isActive);
       button.setAttribute("aria-selected", String(isActive));
     });
 
-    portalPanel.innerHTML = portal.type === "aerial" ? renderAerialPortal() : renderEmbeddedPortal(portal);
+    portalPanel.innerHTML =
+      portal.type === "aerial" ? renderAerialPortal() : renderEmbeddedPortal(portal, { showParcelContext: portalKey === "map" });
 
     refreshIcons();
     syncSharedParcelText();
 
     if (portal.type === "aerial") {
-      bindVworldKeyForm();
+      bindAerialSearchForm();
       window.requestAnimationFrame(() => initAerialMap());
+    }
+
+    if (portalKey === "map" && getParcelAddress() && !getParcelState().pnu) {
+      resolveParcelAddress().then((state) => {
+        if (state?.pnu && activePortalKey === "map") {
+          setActivePortal("map");
+        }
+      });
     }
   }
 
@@ -403,9 +529,10 @@ function initPortalTabs() {
   }
 
   if (parcelForm) {
-    parcelForm.addEventListener("submit", (event) => {
+    parcelForm.addEventListener("submit", async (event) => {
       event.preventDefault();
       saveParcelAddress();
+      await resolveParcelAddress();
       setActivePortal(activePortalKey);
     });
   }
