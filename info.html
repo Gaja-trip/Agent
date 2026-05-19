@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="토지이음, 다음지도, 국가법령정보센터를 활용한 토지정보 연결 안내" />
+    <title>정보 연결 | 토지정보 통합 안내</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script defer src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <script defer src="script.js"></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="index.html" aria-label="토지정보 통합 안내 첫 화면">
+        <span class="brand__mark" aria-hidden="true">
+          <i data-lucide="map"></i>
+        </span>
+        <span>
+          <strong>토지정보 통합 안내</strong>
+          <small>공개 안내 페이지</small>
+        </span>
+      </a>
+      <nav class="main-nav" aria-label="주요 메뉴">
+        <a class="is-active" href="info.html">정보 연결</a>
+        <a href="process.html">진행 절차</a>
+        <a href="checklist.html">준비자료</a>
+      </nav>
+    </header>
+
+    <main class="page-main">
+      <section class="page-title" aria-labelledby="page-title">
+        <p class="eyebrow">Connected Public Sources</p>
+        <h1 id="page-title">정보 연결</h1>
+        <p>
+          각 사이트에서 확인한 정보를 한 장의 상담 메모로 묶으면 토지의 가능성, 제한사항,
+          다음 행정 절차를 더 빠르게 설명할 수 있습니다.
+        </p>
+      </section>
+
+      <section class="section section--compact">
+        <div class="source-grid">
+          <article class="source-card">
+            <div class="source-card__icon">
+              <i data-lucide="land-plot"></i>
+            </div>
+            <h2>토지이음</h2>
+            <p>토지이용계획, 용도지역·지구, 행위제한, 도시계획시설 여부를 확인합니다.</p>
+            <ul>
+              <li>지번 기반 토지이용계획 열람</li>
+              <li>허가 가능성에 영향을 주는 규제 확인</li>
+              <li>상담 기록의 기본 정보 출처로 활용</li>
+            </ul>
+            <a class="text-link" href="https://www.eum.go.kr/web/am/amMain.jsp" target="_blank" rel="noopener">
+              토지이음 바로가기
+              <i data-lucide="external-link"></i>
+            </a>
+          </article>
+
+          <article class="source-card">
+            <div class="source-card__icon source-card__icon--amber">
+              <i data-lucide="satellite"></i>
+            </div>
+            <h2>다음지도 위성지도</h2>
+            <p>스카이뷰와 로드뷰로 현장 여건, 접근성, 주변 토지 이용 상태를 함께 살핍니다.</p>
+            <ul>
+              <li>진입도로와 인접 필지 현황 검토</li>
+              <li>지목과 실제 이용 상태 차이 확인</li>
+              <li>현장측량 전 상담 포인트 정리</li>
+            </ul>
+            <a class="text-link" href="https://map.kakao.com/" target="_blank" rel="noopener">
+              다음지도 바로가기
+              <i data-lucide="external-link"></i>
+            </a>
+          </article>
+
+          <article class="source-card">
+            <div class="source-card__icon source-card__icon--rust">
+              <i data-lucide="book-open-check"></i>
+            </div>
+            <h2>국가법령정보센터</h2>
+            <p>허가와 토지이동에 필요한 법령, 시행령, 시행규칙, 자치법규 근거를 확인합니다.</p>
+            <ul>
+              <li>개발행위허가와 지적 관련 규정 확인</li>
+              <li>민원 보완 요청의 근거 조항 추적</li>
+              <li>상담 결과의 설명 신뢰도 보강</li>
+            </ul>
+            <a class="text-link" href="https://www.law.go.kr/main.html" target="_blank" rel="noopener">
+              법령정보 바로가기
+              <i data-lucide="external-link"></i>
+            </a>
+          </article>
+        </div>
+      </section>
+
+      <section class="section section--map" aria-label="상담 기록 예시">
+        <div class="map-panel">
+          <div class="map-visual" aria-hidden="true">
+            <div class="parcel parcel--main"></div>
+            <div class="parcel parcel--road"></div>
+            <div class="parcel parcel--green"></div>
+            <div class="parcel parcel--label">대상 필지</div>
+          </div>
+          <div class="map-copy">
+            <p class="eyebrow">Consulting Note</p>
+            <h2>상담 메모는 “근거 → 현황 → 절차” 순서로 정리합니다</h2>
+            <p>
+              토지이음에서 규제와 계획 정보를 확인하고, 다음지도에서 실제 이용 상태와 접근 조건을
+              보완한 뒤, 국가법령정보센터에서 허가 판단의 근거를 연결합니다.
+            </p>
+            <div class="note-list">
+              <span><i data-lucide="check"></i> 대상 지번과 공부상 지목</span>
+              <span><i data-lucide="check"></i> 용도지역·지구와 행위제한</span>
+              <span><i data-lucide="check"></i> 현장 접근성과 측량 필요 범위</span>
+              <span><i data-lucide="check"></i> 허가부서 상담 의견과 보완사항</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

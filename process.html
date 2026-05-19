@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="토지 허가 상담부터 등기촉탁까지 토지 정리 진행 절차 안내" />
+    <title>진행 절차 | 토지정보 통합 안내</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script defer src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <script defer src="script.js"></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="index.html" aria-label="토지정보 통합 안내 첫 화면">
+        <span class="brand__mark" aria-hidden="true">
+          <i data-lucide="map"></i>
+        </span>
+        <span>
+          <strong>토지정보 통합 안내</strong>
+          <small>공개 안내 페이지</small>
+        </span>
+      </a>
+      <nav class="main-nav" aria-label="주요 메뉴">
+        <a href="info.html">정보 연결</a>
+        <a class="is-active" href="process.html">진행 절차</a>
+        <a href="checklist.html">준비자료</a>
+      </nav>
+    </header>
+
+    <main class="page-main">
+      <section class="page-title" aria-labelledby="page-title">
+        <p class="eyebrow">Land Arrangement Process</p>
+        <h1 id="page-title">진행 절차</h1>
+        <p>
+          허가 가능성 검토부터 지적공부 정리와 등기촉탁까지, 현재 어느 단계에 있는지 바로
+          파악할 수 있도록 구성했습니다.
+        </p>
+      </section>
+
+      <section class="section section--process section--compact">
+        <div class="process-layout">
+          <div class="timeline" role="tablist" aria-label="토지 정리 단계">
+            <button class="timeline__step is-active" type="button" role="tab" aria-selected="true" data-step="consult">
+              <span>01</span>
+              <strong>허가부서 상담</strong>
+            </button>
+            <button class="timeline__step" type="button" role="tab" aria-selected="false" data-step="survey">
+              <span>02</span>
+              <strong>지적측량</strong>
+            </button>
+            <button class="timeline__step" type="button" role="tab" aria-selected="false" data-step="permit">
+              <span>03</span>
+              <strong>토지허가 진행</strong>
+            </button>
+            <button class="timeline__step" type="button" role="tab" aria-selected="false" data-step="movement">
+              <span>04</span>
+              <strong>토지이동신청</strong>
+            </button>
+            <button class="timeline__step" type="button" role="tab" aria-selected="false" data-step="registry">
+              <span>05</span>
+              <strong>등기촉탁</strong>
+            </button>
+          </div>
+
+          <article class="step-detail" aria-live="polite">
+            <div class="step-detail__top">
+              <span class="step-detail__badge" id="step-number">01</span>
+              <div>
+                <p class="eyebrow" id="step-owner">관할 허가부서</p>
+                <h2 id="step-title">허가부서와 사전 상담</h2>
+              </div>
+            </div>
+            <p id="step-summary">
+              토지의 이용 목적, 분할 또는 형질변경 필요성, 개발행위허가 대상 여부를 관할 부서와
+              먼저 확인합니다.
+            </p>
+            <div class="detail-grid">
+              <div>
+                <h3>확인할 내용</h3>
+                <ul id="step-checks"></ul>
+              </div>
+              <div>
+                <h3>준비 결과물</h3>
+                <ul id="step-outputs"></ul>
+              </div>
+            </div>
+            <p class="step-detail__notice" id="step-notice">
+              상담 의견은 지자체와 담당 부서에 따라 달라질 수 있으므로 상담일, 담당 부서, 보완
+              요청사항을 기록해 둡니다.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section section--final">
+        <div class="final-panel">
+          <div>
+            <p class="eyebrow">Public Notice</p>
+            <h2>실제 허가 판단은 관할 부서 확인이 기준입니다</h2>
+            <p>
+              최종 허가 가능 여부, 제출 서류, 수수료, 처리 기간은 토지 소재지의 관할 행정기관과
+              최신 법령·조례 기준에 따라 확인해야 합니다.
+            </p>
+          </div>
+          <a class="button button--primary" href="info.html">
+            <i data-lucide="layers"></i>
+            정보 연결 보기
+          </a>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

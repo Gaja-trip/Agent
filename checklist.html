@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="토지정보 통합 상담 전 준비자료 체크리스트" />
+    <title>준비자료 | 토지정보 통합 안내</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script defer src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <script defer src="script.js"></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="index.html" aria-label="토지정보 통합 안내 첫 화면">
+        <span class="brand__mark" aria-hidden="true">
+          <i data-lucide="map"></i>
+        </span>
+        <span>
+          <strong>토지정보 통합 안내</strong>
+          <small>공개 안내 페이지</small>
+        </span>
+      </a>
+      <nav class="main-nav" aria-label="주요 메뉴">
+        <a href="info.html">정보 연결</a>
+        <a href="process.html">진행 절차</a>
+        <a class="is-active" href="checklist.html">준비자료</a>
+      </nav>
+    </header>
+
+    <main class="page-main">
+      <section class="page-title" aria-labelledby="page-title">
+        <p class="eyebrow">Preparation Checklist</p>
+        <h1 id="page-title">준비자료</h1>
+        <p>아래 자료가 준비될수록 상담 시간이 줄고, 허가 가능성 검토의 정확도가 높아집니다.</p>
+      </section>
+
+      <section class="section section--compact">
+        <div class="checklist-layout">
+          <form class="checklist" aria-label="상담 준비자료 체크리스트">
+            <label>
+              <input type="checkbox" name="parcel" />
+              <span>대상 토지의 주소 또는 지번</span>
+            </label>
+            <label>
+              <input type="checkbox" name="purpose" />
+              <span>토지를 정리하려는 목적과 희망 형태</span>
+            </label>
+            <label>
+              <input type="checkbox" name="plan" />
+              <span>토지이음 토지이용계획 확인 내용</span>
+            </label>
+            <label>
+              <input type="checkbox" name="map" />
+              <span>다음지도 위성·로드뷰로 본 현장 여건</span>
+            </label>
+            <label>
+              <input type="checkbox" name="owner" />
+              <span>소유자 동의와 대리 상담 여부</span>
+            </label>
+            <label>
+              <input type="checkbox" name="history" />
+              <span>기존 상담, 민원 접수, 보완 요청 이력</span>
+            </label>
+          </form>
+
+          <aside class="readiness" aria-live="polite">
+            <span class="readiness__score" id="ready-score">0/6</span>
+            <h2 id="ready-title">준비자료 확인 전</h2>
+            <p id="ready-copy">
+              지번과 목적이 먼저 정리되면 토지이음, 지도, 법령 검토를 빠르게 연결할 수 있습니다.
+            </p>
+          </aside>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
