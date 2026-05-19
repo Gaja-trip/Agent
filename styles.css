@@ -407,6 +407,40 @@ input {
   margin-top: 8px;
 }
 
+.guide-page-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 18px;
+  padding: 6px;
+  background: #edf4ef;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.guide-page-tabs button {
+  min-height: 48px;
+  padding: 10px 12px;
+  color: #31463f;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 900;
+}
+
+.guide-page-tabs button:hover,
+.guide-page-tabs button.is-active {
+  color: #fff;
+  background: var(--green);
+  border-color: var(--green);
+}
+
+.guide-page[hidden] {
+  display: none;
+}
+
 .guide-materials {
   display: grid;
   gap: 22px;
@@ -1292,6 +1326,7 @@ input {
   .summary-strip,
   .checklist,
   .detail-grid,
+  .guide-page-tabs,
   .portal-tabs {
     grid-template-columns: 1fr;
   }
@@ -1340,6 +1375,7 @@ input {
 @media print {
   .site-header,
   .page-title,
+  .guide-page-tabs,
   .guide-card__toolbar .button,
   .readiness,
   .checklist-layout {

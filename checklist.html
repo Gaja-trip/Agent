@@ -33,69 +33,91 @@
       <section class="page-title" aria-labelledby="page-title">
         <p class="eyebrow">Guide Materials</p>
         <h1 id="page-title">안내자료</h1>
-        <p>지적측량 사전 확인사항과 완료 후 후속 조치, 상담 체크리스트를 한 곳에서 확인합니다.</p>
+        <p>지적측량 사전 확인사항과 완료 후 후속 조치, 사전체크리스트를 항목별로 확인합니다.</p>
       </section>
 
       <section class="section section--compact">
-        <div class="guide-materials" aria-label="사전안내 자료">
-          <article class="guide-card" id="survey-checks">
-            <div class="guide-card__toolbar">
-              <h2>지적측량 확인사항</h2>
-              <button class="button button--primary" type="button" data-print-image="assets/survey-checks.png" data-print-title="지적측량 확인사항">
-                <i data-lucide="printer"></i>
-                출력
-              </button>
-            </div>
-            <img src="assets/survey-checks.png" alt="2026 지적측량 종합 안내 및 필수 확인 사항" />
-          </article>
-
-          <article class="guide-card" id="survey-followup">
-            <div class="guide-card__toolbar">
-              <h2>지적측량 완료 후 후속 조치 안내</h2>
-              <button class="button button--primary" type="button" data-print-image="assets/survey-followup.png" data-print-title="지적측량 완료 후 후속 조치 안내">
-                <i data-lucide="printer"></i>
-                출력
-              </button>
-            </div>
-            <img src="assets/survey-followup.png" alt="지적측량 완료 후 후속 조치 안내" />
-          </article>
+        <div class="guide-page-tabs" role="tablist" aria-label="안내자료 항목">
+          <button class="is-active" type="button" role="tab" aria-selected="true" aria-controls="guide-survey-checks" data-guide-page="survey-checks">
+            지적측량 확인사항
+          </button>
+          <button type="button" role="tab" aria-selected="false" aria-controls="guide-survey-followup" data-guide-page="survey-followup">
+            지적측량 완료 후 후속 조치 안내
+          </button>
+          <button type="button" role="tab" aria-selected="false" aria-controls="guide-prechecklist" data-guide-page="prechecklist">
+            사전체크리스트
+          </button>
         </div>
 
-        <div class="checklist-layout">
-          <form class="checklist" aria-label="상담 안내자료 체크리스트">
-            <label>
-              <input type="checkbox" name="parcel" />
-              <span>대상 토지의 주소 또는 지번</span>
-            </label>
-            <label>
-              <input type="checkbox" name="purpose" />
-              <span>토지를 정리하려는 목적과 희망 형태</span>
-            </label>
-            <label>
-              <input type="checkbox" name="plan" />
-              <span>토지이음 토지이용계획 확인 내용</span>
-            </label>
-            <label>
-              <input type="checkbox" name="map" />
-              <span>토지이음 지도로 본 현장 여건</span>
-            </label>
-            <label>
-              <input type="checkbox" name="owner" />
-              <span>소유자 동의와 대리 상담 여부</span>
-            </label>
-            <label>
-              <input type="checkbox" name="history" />
-              <span>기존 상담, 민원 접수, 보완 요청 이력</span>
-            </label>
-          </form>
+        <div class="guide-pages">
+          <section class="guide-page is-active" id="guide-survey-checks" role="tabpanel" data-guide-panel="survey-checks">
+            <div class="guide-materials" aria-label="지적측량 확인사항">
+              <article class="guide-card" id="survey-checks">
+                <div class="guide-card__toolbar">
+                  <h2>지적측량 확인사항</h2>
+                  <button class="button button--primary" type="button" data-print-image="assets/survey-checks.png" data-print-title="지적측량 확인사항">
+                    <i data-lucide="printer"></i>
+                    출력
+                  </button>
+                </div>
+                <img src="assets/survey-checks.png" alt="2026 지적측량 종합 안내 및 필수 확인 사항" />
+              </article>
+            </div>
+          </section>
 
-          <aside class="readiness" aria-live="polite">
-            <span class="readiness__score" id="ready-score">0/6</span>
-            <h2 id="ready-title">안내자료 확인 전</h2>
-            <p id="ready-copy">
-              지번과 목적이 먼저 정리되면 토지이음, 지도, 법령 검토를 빠르게 연결할 수 있습니다.
-            </p>
-          </aside>
+          <section class="guide-page" id="guide-survey-followup" role="tabpanel" data-guide-panel="survey-followup" hidden>
+            <div class="guide-materials" aria-label="지적측량 완료 후 후속 조치 안내">
+              <article class="guide-card" id="survey-followup">
+                <div class="guide-card__toolbar">
+                  <h2>지적측량 완료 후 후속 조치 안내</h2>
+                  <button class="button button--primary" type="button" data-print-image="assets/survey-followup.png" data-print-title="지적측량 완료 후 후속 조치 안내">
+                    <i data-lucide="printer"></i>
+                    출력
+                  </button>
+                </div>
+                <img src="assets/survey-followup.png" alt="지적측량 완료 후 후속 조치 안내" />
+              </article>
+            </div>
+          </section>
+
+          <section class="guide-page" id="guide-prechecklist" role="tabpanel" data-guide-panel="prechecklist" hidden>
+            <div class="checklist-layout">
+              <form class="checklist" aria-label="상담 안내자료 사전체크리스트">
+                <label>
+                  <input type="checkbox" name="parcel" />
+                  <span>대상 토지의 주소 또는 지번</span>
+                </label>
+                <label>
+                  <input type="checkbox" name="purpose" />
+                  <span>토지를 정리하려는 목적과 희망 형태</span>
+                </label>
+                <label>
+                  <input type="checkbox" name="plan" />
+                  <span>토지이음 토지이용계획 확인 내용</span>
+                </label>
+                <label>
+                  <input type="checkbox" name="map" />
+                  <span>토지이음 지도로 본 현장 여건</span>
+                </label>
+                <label>
+                  <input type="checkbox" name="owner" />
+                  <span>소유자 동의와 대리 상담 여부</span>
+                </label>
+                <label>
+                  <input type="checkbox" name="history" />
+                  <span>기존 상담, 민원 접수, 보완 요청 이력</span>
+                </label>
+              </form>
+
+              <aside class="readiness" aria-live="polite">
+                <span class="readiness__score" id="ready-score">0/6</span>
+                <h2 id="ready-title">안내자료 확인 전</h2>
+                <p id="ready-copy">
+                  지번과 목적이 먼저 정리되면 토지이음, 지도, 법령 검토를 빠르게 연결할 수 있습니다.
+                </p>
+              </aside>
+            </div>
+          </section>
         </div>
       </section>
     </main>

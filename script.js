@@ -1198,6 +1198,48 @@ function initReadinessChecklist() {
   updateReadiness();
 }
 
+function initGuidePages() {
+  const pageButtons = document.querySelectorAll("[data-guide-page]");
+  const pagePanels = document.querySelectorAll("[data-guide-panel]");
+
+  if (!pageButtons.length || !pagePanels.length) {
+    return;
+  }
+
+  function setActiveGuidePage(pageKey, options = {}) {
+    const targetPanel = document.querySelector(`[data-guide-panel="${pageKey}"]`);
+
+    if (!targetPanel) {
+      return;
+    }
+
+    pageButtons.forEach((button) => {
+      const isActive = button.dataset.guidePage === pageKey;
+      button.classList.toggle("is-active", isActive);
+      button.setAttribute("aria-selected", String(isActive));
+    });
+
+    pagePanels.forEach((panel) => {
+      const isActive = panel.dataset.guidePanel === pageKey;
+      panel.classList.toggle("is-active", isActive);
+      panel.hidden = !isActive;
+    });
+
+    if (options.updateHash) {
+      window.history.replaceState(null, "", `#${pageKey}`);
+    }
+  }
+
+  pageButtons.forEach((button) => {
+    button.addEventListener("click", () => setActiveGuidePage(button.dataset.guidePage, { updateHash: true }));
+  });
+
+  const initialPage = window.location.hash.replace("#", "");
+  const hasInitialPage = [...pagePanels].some((panel) => panel.dataset.guidePanel === initialPage);
+
+  setActiveGuidePage(hasInitialPage ? initialPage : pageButtons[0].dataset.guidePage);
+}
+
 function initGuidePrintButtons() {
   const printButtons = document.querySelectorAll("[data-print-image]");
 
@@ -1243,5 +1285,6 @@ function initGuidePrintButtons() {
 initPortalTabs();
 initProcessSteps();
 initReadinessChecklist();
+initGuidePages();
 initGuidePrintButtons();
 refreshIcons();
