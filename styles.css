@@ -800,8 +800,7 @@ input {
 
 .portal-panel {
   display: grid;
-  grid-template-columns: minmax(260px, 0.82fr) minmax(320px, 1.18fr);
-  gap: 22px;
+  gap: 18px;
   margin-top: 12px;
   padding: clamp(22px, 3.5vw, 36px);
   color: var(--ink);
@@ -809,6 +808,12 @@ input {
   border: 1px solid rgba(255, 255, 255, 0.48);
   border-radius: 8px;
   box-shadow: var(--shadow);
+}
+
+.portal-panel__summary {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.82fr) minmax(320px, 1.18fr);
+  gap: 22px;
 }
 
 .portal-panel__main {
@@ -846,11 +851,6 @@ input {
   font-size: 1.04rem;
 }
 
-.portal-panel__button {
-  width: fit-content;
-  margin-top: auto;
-}
-
 .portal-panel__details {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -877,6 +877,52 @@ input {
 
 .portal-panel__details li + li {
   margin-top: 8px;
+}
+
+.embedded-site {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.embedded-site__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  min-height: 48px;
+  padding: 10px 16px;
+  color: #31463f;
+  background: #eef5f1;
+  border-bottom: 1px solid var(--line);
+}
+
+.embedded-site__bar strong {
+  font-size: 1rem;
+}
+
+.embedded-site__bar span {
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.embedded-site__frame {
+  display: block;
+  width: 100%;
+  height: min(68vh, 720px);
+  min-height: 560px;
+  border: 0;
+  background: #fff;
+}
+
+.embedded-site__notice {
+  margin: 0;
+  padding: 12px 16px;
+  color: #5b4633;
+  background: #fff7e8;
+  border-top: 1px solid #efd9a7;
+  font-size: 0.92rem;
 }
 
 .page-main {
@@ -936,12 +982,9 @@ input {
   .map-panel,
   .process-layout,
   .checklist-layout,
-  .portal-panel {
+  .portal-panel,
+  .portal-panel__summary {
     grid-template-columns: 1fr;
-  }
-
-  .portal-panel__button {
-    margin-top: 24px;
   }
 
   .summary-strip {
@@ -1004,8 +1047,19 @@ input {
   .checklist,
   .detail-grid,
   .portal-tabs,
-  .portal-panel__details {
+  .portal-panel__details,
+  .portal-panel__summary {
     grid-template-columns: 1fr;
+  }
+
+  .embedded-site__bar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .embedded-site__frame {
+    height: 70vh;
+    min-height: 460px;
   }
 
   .home-landing {
