@@ -238,6 +238,7 @@ input {
 .main-nav svg,
 .parcel-search svg,
 .aerial-search svg,
+.vworld-tools svg,
 .source-card__icon svg,
 .note-list svg,
 .vworld-map__empty svg {
@@ -980,6 +981,71 @@ input {
   width: 100%;
   min-height: 42px;
   padding: 10px;
+}
+
+.vworld-tools {
+  display: grid;
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.vworld-tool-group {
+  display: grid;
+  gap: 8px;
+}
+
+.vworld-tool-group strong {
+  color: #31463f;
+  font-size: 0.86rem;
+}
+
+.vworld-tool-group button,
+.vworld-segment button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 38px;
+  padding: 8px 10px;
+  color: #31463f;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.88rem;
+  font-weight: 900;
+}
+
+.vworld-tool-group button:hover,
+.vworld-segment button:hover,
+.vworld-segment button.is-active {
+  color: #fff;
+  background: var(--green);
+  border-color: var(--green);
+}
+
+.vworld-segment {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.vworld-segment button {
+  min-height: 34px;
+  padding: 7px 6px;
+  font-size: 0.8rem;
+}
+
+.vworld-measure {
+  display: block;
+  min-height: 42px;
+  padding: 10px;
+  color: #5b4633;
+  background: #fff5df;
+  border: 1px solid #efd9a7;
+  border-radius: 8px;
+  font-size: 0.83rem;
+  font-weight: 800;
 }
 
 .aerial-status {

@@ -2,6 +2,7 @@ const portalData = {
   eum: {
     title: "토지이음",
     url: "https://www.eum.go.kr/web/am/amMain.jsp",
+    landUseUrl: "https://www.eum.go.kr/web/ar/lu/luLandDet.jsp",
     frameTitle: "토지이음 웹페이지",
   },
   map: {
@@ -26,6 +27,14 @@ const vworldApiKey = "39B6F1DE-2D35-3582-9008-A537EF6A6BC4";
 const defaultAerialCenter = [37.5665, 126.978];
 let vworldMap = null;
 let vworldMarker = null;
+let vworldBaseLayer = null;
+let vworldHybridLayer = null;
+let vworldCurrentLayer = "satellite";
+let vworldCurrentPoint = null;
+let vworldMarkerVisible = true;
+let vworldMeasureMode = "";
+let vworldMeasurePoints = [];
+let vworldMeasureLayer = null;
 
 const processSteps = {
   consult: {
@@ -212,6 +221,23 @@ function initPortalTabs() {
     return portalData.map.url;
   }
 
+  function getEumUrl() {
+    const state = getParcelState();
+
+    if (state.pnu) {
+      const url = new URL(portalData.eum.landUseUrl);
+      url.searchParams.set("pnu", state.pnu);
+      url.searchParams.set("isNoScr", "script");
+      url.searchParams.set("mode", "search");
+      url.searchParams.set("selGbn", "umd");
+      url.searchParams.set("s_type", "1");
+      url.searchParams.set("add", "land");
+      return url.toString();
+    }
+
+    return portalData.eum.url;
+  }
+
   function renderSharedParcel() {
     const parcelAddress = escapeHtml(getParcelAddress());
     const displayText = parcelAddress || "아직 입력 전";
@@ -232,7 +258,7 @@ function initPortalTabs() {
   }
 
   function renderEmbeddedPortal(portal, options = {}) {
-    const iframeUrl = portal === portalData.map ? getMapUrl() : portal.url;
+    const iframeUrl = portal === portalData.map ? getMapUrl() : portal === portalData.eum ? getEumUrl() : portal.url;
 
     return `
       <div class="embedded-site">
@@ -270,6 +296,40 @@ function initPortalTabs() {
               이동
             </button>
           </form>
+          <div class="vworld-tools" aria-label="V-World 지도 기능">
+            <div class="vworld-tool-group">
+              <strong>지도</strong>
+              <div class="vworld-segment" role="group" aria-label="배경지도 선택">
+                <button type="button" class="is-active" data-vworld-layer="satellite">항공</button>
+                <button type="button" data-vworld-layer="base">일반</button>
+                <button type="button" data-vworld-layer="hybrid">라벨</button>
+              </div>
+            </div>
+            <div class="vworld-tool-group">
+              <strong>도구</strong>
+              <button type="button" data-vworld-action="center">
+                <i data-lucide="crosshair"></i>
+                주소 이동
+              </button>
+              <button type="button" data-vworld-action="toggle-marker">
+                <i data-lucide="map-pin"></i>
+                마커
+              </button>
+              <button type="button" data-vworld-action="distance">
+                <i data-lucide="ruler"></i>
+                거리재기
+              </button>
+              <button type="button" data-vworld-action="area">
+                <i data-lucide="pentagon"></i>
+                면적재기
+              </button>
+              <button type="button" data-vworld-action="clear">
+                <i data-lucide="eraser"></i>
+                초기화
+              </button>
+            </div>
+            <output class="vworld-measure" data-vworld-measure>지도 도구를 선택하세요.</output>
+          </div>
         </aside>
         <div class="vworld-map-shell">
           <div class="vworld-map" id="vworld-map" aria-label="V-World 항공사진 지도"></div>
@@ -424,6 +484,241 @@ function initPortalTabs() {
     });
   }
 
+  function createVworldLayer(layerName) {
+    const extension = layerName === "Satellite" ? "jpeg" : "png";
+
+    return window.L.tileLayer(
+      `https://api.vworld.kr/req/wmts/1.0.0/${encodeURIComponent(vworldApiKey)}/${layerName}/{z}/{y}/{x}.${extension}`,
+      {
+        maxZoom: 19,
+        attribution: "V-World",
+      }
+    );
+  }
+
+  function setVworldLayer(layerKey) {
+    if (!vworldMap || !window.L) {
+      return;
+    }
+
+    if (vworldBaseLayer) {
+      vworldMap.removeLayer(vworldBaseLayer);
+    }
+
+    if (vworldHybridLayer) {
+      vworldMap.removeLayer(vworldHybridLayer);
+      vworldHybridLayer = null;
+    }
+
+    vworldCurrentLayer = layerKey;
+    vworldBaseLayer = createVworldLayer(layerKey === "base" ? "Base" : "Satellite").addTo(vworldMap);
+
+    if (layerKey === "hybrid") {
+      vworldHybridLayer = createVworldLayer("Hybrid").addTo(vworldMap);
+    }
+
+    document.querySelectorAll("[data-vworld-layer]").forEach((button) => {
+      button.classList.toggle("is-active", button.dataset.vworldLayer === layerKey);
+    });
+  }
+
+  function updateAerialStatus(message) {
+    const status = document.querySelector("[data-aerial-status]");
+
+    if (status) {
+      status.textContent = message;
+    }
+  }
+
+  function updateMeasureOutput(message) {
+    const output = document.querySelector("[data-vworld-measure]");
+
+    if (output) {
+      output.textContent = message;
+    }
+  }
+
+  function centerVworldOnParcel() {
+    if (!vworldMap || !vworldCurrentPoint) {
+      updateAerialStatus("먼저 주소를 검색해 위치를 확인해 주세요.");
+      return;
+    }
+
+    vworldMap.setView([vworldCurrentPoint.latitude, vworldCurrentPoint.longitude], 18);
+    updateAerialStatus(`${vworldCurrentPoint.title} 위치로 이동했습니다.`);
+  }
+
+  function syncVworldMarker() {
+    if (!vworldMap || !window.L || !vworldCurrentPoint) {
+      return;
+    }
+
+    if (vworldMarker) {
+      vworldMap.removeLayer(vworldMarker);
+      vworldMarker = null;
+    }
+
+    if (!vworldMarkerVisible) {
+      return;
+    }
+
+    vworldMarker = window.L.marker([vworldCurrentPoint.latitude, vworldCurrentPoint.longitude]).addTo(vworldMap).bindPopup(vworldCurrentPoint.title);
+  }
+
+  function formatDistance(meters) {
+    if (meters >= 1000) {
+      return `${(meters / 1000).toFixed(2)} km`;
+    }
+
+    return `${Math.round(meters)} m`;
+  }
+
+  function formatArea(squareMeters) {
+    if (squareMeters >= 1000000) {
+      return `${(squareMeters / 1000000).toFixed(2)} km²`;
+    }
+
+    return `${Math.round(squareMeters).toLocaleString()} m²`;
+  }
+
+  function calculatePolygonArea(points) {
+    if (points.length < 3) {
+      return 0;
+    }
+
+    const earthRadius = 6378137;
+    const meanLatitude = points.reduce((sum, point) => sum + point.lat, 0) / points.length;
+    const latitudeScale = Math.cos((meanLatitude * Math.PI) / 180);
+    const projected = points.map((point) => ({
+      x: earthRadius * (point.lng * Math.PI / 180) * latitudeScale,
+      y: earthRadius * (point.lat * Math.PI / 180),
+    }));
+
+    const area = projected.reduce((sum, point, index) => {
+      const next = projected[(index + 1) % projected.length];
+      return sum + point.x * next.y - next.x * point.y;
+    }, 0);
+
+    return Math.abs(area / 2);
+  }
+
+  function clearVworldMeasure() {
+    vworldMeasurePoints = [];
+    vworldMeasureMode = "";
+
+    if (vworldMeasureLayer && vworldMap) {
+      vworldMap.removeLayer(vworldMeasureLayer);
+    }
+
+    vworldMeasureLayer = null;
+    updateMeasureOutput("지도 도구를 선택하세요.");
+  }
+
+  function renderVworldMeasure() {
+    if (!vworldMap || !window.L) {
+      return;
+    }
+
+    if (vworldMeasureLayer) {
+      vworldMap.removeLayer(vworldMeasureLayer);
+    }
+
+    const layers = vworldMeasurePoints.map((point) =>
+      window.L.circleMarker(point, {
+        radius: 5,
+        color: "#f2c76b",
+        fillColor: "#114636",
+        fillOpacity: 1,
+        weight: 2,
+      })
+    );
+
+    if (vworldMeasurePoints.length >= 2) {
+      const shapeOptions = {
+        color: "#f2c76b",
+        fillColor: "#1f6b55",
+        fillOpacity: 0.24,
+        weight: 3,
+      };
+
+      if (vworldMeasureMode === "area" && vworldMeasurePoints.length >= 3) {
+        layers.push(window.L.polygon(vworldMeasurePoints, shapeOptions));
+      } else {
+        layers.push(window.L.polyline(vworldMeasurePoints, shapeOptions));
+      }
+    }
+
+    vworldMeasureLayer = window.L.layerGroup(layers).addTo(vworldMap);
+
+    if (vworldMeasureMode === "distance") {
+      const distance = vworldMeasurePoints.reduce((sum, point, index) => {
+        if (index === 0) {
+          return 0;
+        }
+
+        return sum + vworldMap.distance(vworldMeasurePoints[index - 1], point);
+      }, 0);
+
+      updateMeasureOutput(vworldMeasurePoints.length > 1 ? `거리 ${formatDistance(distance)}` : "지도에서 지점을 클릭하세요.");
+      return;
+    }
+
+    if (vworldMeasureMode === "area") {
+      const area = calculatePolygonArea(vworldMeasurePoints);
+      updateMeasureOutput(vworldMeasurePoints.length > 2 ? `면적 ${formatArea(area)}` : "지도에서 3개 이상 지점을 클릭하세요.");
+    }
+  }
+
+  function handleVworldMapClick(event) {
+    if (!vworldMeasureMode) {
+      return;
+    }
+
+    vworldMeasurePoints.push(event.latlng);
+    renderVworldMeasure();
+  }
+
+  function setVworldMeasureMode(mode) {
+    clearVworldMeasure();
+    vworldMeasureMode = mode;
+    updateMeasureOutput(mode === "distance" ? "거리재기: 지도에서 지점을 클릭하세요." : "면적재기: 지도에서 3개 이상 지점을 클릭하세요.");
+  }
+
+  function bindVworldTools() {
+    document.querySelectorAll("[data-vworld-layer]").forEach((button) => {
+      button.addEventListener("click", () => setVworldLayer(button.dataset.vworldLayer));
+    });
+
+    document.querySelectorAll("[data-vworld-action]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const action = button.dataset.vworldAction;
+
+        if (action === "center") {
+          centerVworldOnParcel();
+        }
+
+        if (action === "toggle-marker") {
+          vworldMarkerVisible = !vworldMarkerVisible;
+          syncVworldMarker();
+          updateAerialStatus(vworldMarkerVisible ? "마커를 표시했습니다." : "마커를 숨겼습니다.");
+        }
+
+        if (action === "distance") {
+          setVworldMeasureMode("distance");
+        }
+
+        if (action === "area") {
+          setVworldMeasureMode("area");
+        }
+
+        if (action === "clear") {
+          clearVworldMeasure();
+          updateAerialStatus("측정 표시를 초기화했습니다.");
+        }
+      });
+    });
+  }
+
   async function initAerialMap() {
     const mapNode = document.querySelector("#vworld-map");
     const emptyState = document.querySelector("[data-vworld-empty]");
@@ -434,6 +729,11 @@ function initPortalTabs() {
       vworldMap.remove();
       vworldMap = null;
       vworldMarker = null;
+      vworldBaseLayer = null;
+      vworldHybridLayer = null;
+      vworldMeasureLayer = null;
+      vworldMeasurePoints = [];
+      vworldMeasureMode = "";
     }
 
     if (!mapNode || !emptyState || !status) {
@@ -460,11 +760,10 @@ function initPortalTabs() {
     vworldMap = window.L.map(mapNode, {
       zoomControl: true,
     }).setView(defaultAerialCenter, 16);
+    vworldMap.on("click", handleVworldMapClick);
 
-    window.L.tileLayer(`https://api.vworld.kr/req/wmts/1.0.0/${encodeURIComponent(vworldApiKey)}/Satellite/{z}/{y}/{x}.jpeg`, {
-      maxZoom: 19,
-      attribution: "V-World",
-    }).addTo(vworldMap);
+    setVworldLayer(vworldCurrentLayer);
+    bindVworldTools();
 
     status.textContent = `"${parcelAddress}" 위치를 V-World에서 검색 중입니다.`;
 
@@ -477,9 +776,12 @@ function initPortalTabs() {
       }
 
       const position = [point.latitude, point.longitude];
+      vworldCurrentPoint = point;
       vworldMap.setView(position, 18);
-      vworldMarker = window.L.marker(position).addTo(vworldMap).bindPopup(point.title);
-      vworldMarker.openPopup();
+      syncVworldMarker();
+      if (vworldMarker) {
+        vworldMarker.openPopup();
+      }
       status.textContent = `${point.title} 기준으로 V-World 항공사진을 표시 중입니다.`;
     } catch (error) {
       status.textContent = "V-World 주소 검색 중 오류가 발생했습니다. 네트워크 상태를 확인해 주세요.";
@@ -501,7 +803,7 @@ function initPortalTabs() {
     });
 
     portalPanel.innerHTML =
-      portal.type === "aerial" ? renderAerialPortal() : renderEmbeddedPortal(portal, { showParcelContext: portalKey === "map" });
+      portal.type === "aerial" ? renderAerialPortal() : renderEmbeddedPortal(portal, { showParcelContext: portalKey === "eum" || portalKey === "map" });
 
     refreshIcons();
     syncSharedParcelText();
@@ -511,10 +813,10 @@ function initPortalTabs() {
       window.requestAnimationFrame(() => initAerialMap());
     }
 
-    if (portalKey === "map" && getParcelAddress() && !getParcelState().pnu) {
+    if ((portalKey === "eum" || portalKey === "map") && getParcelAddress() && !getParcelState().pnu) {
       resolveParcelAddress().then((state) => {
-        if (state?.pnu && activePortalKey === "map") {
-          setActivePortal("map");
+        if (state?.pnu && activePortalKey === portalKey) {
+          setActivePortal(portalKey);
         }
       });
     }
