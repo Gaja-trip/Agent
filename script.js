@@ -26,6 +26,7 @@ const parcelStateStorageKey = "landInfoPortal.parcelState";
 const vworldApiKey = "39B6F1DE-2D35-3582-9008-A537EF6A6BC4";
 const defaultAerialCenter = [37.5665, 126.978];
 const localCadastralShpPath = "cadastral/AL_52800_LAND_INFO_BASE_MAP_202604/52800.shp";
+const localCadastralIndexPath = "cadastral/AL_52800_LAND_INFO_BASE_MAP_202604/52800.index.bin";
 const localCadastralRadiusMeters = 50;
 const maxLocalCadastralFeatures = 800;
 let vworldMap = null;
@@ -651,18 +652,95 @@ function initPortalTabs() {
     return { view, records };
   }
 
+  function parseLocalCadastralIndex(arrayBuffer) {
+    const view = new DataView(arrayBuffer);
+    const decoder = new TextDecoder("ascii");
+    const magic = decoder.decode(new Uint8Array(arrayBuffer, 0, 4));
+
+    if (magic !== "CDX1") {
+      throw new Error("Unsupported cadastral index");
+    }
+
+    const count = view.getUint32(4, true);
+    const records = [];
+    let offset = 16;
+
+    for (let index = 0; index < count; index += 1) {
+      if (offset + 40 > view.byteLength) {
+        break;
+      }
+
+      records.push({
+        contentOffset: view.getUint32(offset, true),
+        contentLengthBytes: view.getUint32(offset + 4, true),
+        bbox: {
+          minX: view.getFloat64(offset + 8, true),
+          minY: view.getFloat64(offset + 16, true),
+          maxX: view.getFloat64(offset + 24, true),
+          maxY: view.getFloat64(offset + 32, true),
+        },
+      });
+      offset += 40;
+    }
+
+    return { records };
+  }
+
   async function getLocalCadastralDataset() {
     if (!localCadastralDatasetPromise) {
-      localCadastralDatasetPromise = fetch(localCadastralShpPath).then(async (response) => {
+      localCadastralDatasetPromise = (async () => {
+        try {
+          const indexResponse = await fetch(localCadastralIndexPath);
+
+          if (indexResponse.ok) {
+            return parseLocalCadastralIndex(await indexResponse.arrayBuffer());
+          }
+        } catch (error) {
+          // Fall back to reading the SHP below.
+        }
+
+        const response = await fetch(localCadastralShpPath);
+
         if (!response.ok) {
           throw new Error("Local cadastral shapefile fetch failed");
         }
 
         return parseLocalCadastralShp(await response.arrayBuffer());
-      });
+      })();
     }
 
     return localCadastralDatasetPromise;
+  }
+
+  async function fetchLocalCadastralRecord(record) {
+    const rangeEnd = record.contentOffset + record.contentLengthBytes - 1;
+    const response = await fetch(localCadastralShpPath, {
+      headers: {
+        Range: `bytes=${record.contentOffset}-${rangeEnd}`,
+      },
+    });
+
+    if (!response.ok && response.status !== 206) {
+      throw new Error("Local cadastral record fetch failed");
+    }
+
+    const buffer = await response.arrayBuffer();
+
+    if (response.status === 206 || buffer.byteLength === record.contentLengthBytes) {
+      return {
+        view: new DataView(buffer),
+        record: {
+          ...record,
+          contentOffset: 0,
+          contentLengthBytes: buffer.byteLength,
+        },
+      };
+    }
+
+    return {
+      view: new DataView(buffer),
+      record,
+    };
   }
 
   function parseLocalCadastralFeature(view, record, center, radiusMeters) {
@@ -745,13 +823,11 @@ function initPortalTabs() {
       maxY: center.y + radiusMeters,
     };
     const features = [];
+    const candidates = dataset.records.filter((record) => bboxIntersects(record.bbox, extent));
 
-    for (const record of dataset.records) {
-      if (!bboxIntersects(record.bbox, extent)) {
-        continue;
-      }
-
-      const feature = parseLocalCadastralFeature(dataset.view, record, center, radiusMeters);
+    for (const record of candidates) {
+      const recordSource = dataset.view ? { view: dataset.view, record } : await fetchLocalCadastralRecord(record);
+      const feature = parseLocalCadastralFeature(recordSource.view, recordSource.record, center, radiusMeters);
 
       if (feature) {
         features.push(feature);
@@ -1064,11 +1140,11 @@ function initPortalTabs() {
 
           if (isLocalCadastral) {
             return {
-              color: "#ffd84d",
+              color: "#00e5ff",
               fillColor: "#ffd84d",
-              fillOpacity: 0.08,
+              fillOpacity: 0.13,
               opacity: 1,
-              weight: 2.5,
+              weight: 3.5,
             };
           }
 
@@ -1159,18 +1235,36 @@ function initPortalTabs() {
 
     try {
       updateAerialStatus(`${point.title} 기준 50m 이내 연속지적도를 불러오는 중입니다.`);
-      const features = await searchLocalCadastralFeatures(point, localCadastralRadiusMeters);
+      let features = await searchLocalCadastralFeatures(point, localCadastralRadiusMeters);
+      let sourceLabel = "cadastral SHP";
 
       if (!features.length) {
-        updateAerialStatus(`${point.title} 기준 50m 이내 연속지적도 도형을 찾지 못했습니다.`);
+        features = await searchVworldParcels(point.latitude, point.longitude, localCadastralRadiusMeters);
+        sourceLabel = "V-World";
+      }
+
+      if (!features.length) {
+        updateAerialStatus(`${point.title} 기준 50m 이내 연속지적도 도형을 찾지 못했습니다. 주소가 cadastral SHP 범위 밖인지 확인해 주세요.`);
         return;
       }
 
       renderVworldParcelLayer(features, point, { highlightAll: true });
 
-      updateAerialStatus(`${point.title} 기준 50m 이내 연속지적도 ${features.length}개를 표시했습니다.`);
+      updateAerialStatus(`${point.title} 기준 50m 이내 연속지적도 ${features.length}개를 ${sourceLabel} 기준으로 표시했습니다.`);
     } catch (error) {
-      updateAerialStatus("cadastral 폴더의 연속지적도 SHP를 불러오지 못했습니다. 로컬 서버에서 실행 중인지 확인해 주세요.");
+      try {
+        const fallbackFeatures = await searchVworldParcels(point.latitude, point.longitude, localCadastralRadiusMeters);
+
+        if (fallbackFeatures.length) {
+          renderVworldParcelLayer(fallbackFeatures, point, { highlightAll: true });
+          updateAerialStatus(`cadastral SHP를 직접 읽지 못해 V-World 기준 50m 이내 연속지적도 ${fallbackFeatures.length}개를 표시했습니다.`);
+          return;
+        }
+      } catch (fallbackError) {
+        // Show the local SHP guidance below.
+      }
+
+      updateAerialStatus("연속지적도를 불러오지 못했습니다. node server.cjs로 실행한 뒤 http://127.0.0.1:4173/에서 다시 열어 주세요.");
     }
   }
 

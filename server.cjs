@@ -38,9 +38,41 @@ http
         return;
       }
 
+      const range = request.headers.range;
+      const contentType = mimeTypes[path.extname(filePath).toLowerCase()] || "application/octet-stream";
+
+      if (range) {
+        const match = range.match(/^bytes=(\d+)-(\d*)$/);
+
+        if (!match) {
+          response.writeHead(416, { "Content-Range": `bytes */${stats.size}` });
+          response.end();
+          return;
+        }
+
+        const start = Number(match[1]);
+        const end = match[2] ? Number(match[2]) : stats.size - 1;
+
+        if (!Number.isInteger(start) || !Number.isInteger(end) || start < 0 || end >= stats.size || start > end) {
+          response.writeHead(416, { "Content-Range": `bytes */${stats.size}` });
+          response.end();
+          return;
+        }
+
+        response.writeHead(206, {
+          "Accept-Ranges": "bytes",
+          "Content-Length": end - start + 1,
+          "Content-Range": `bytes ${start}-${end}/${stats.size}`,
+          "Content-Type": contentType,
+        });
+        fs.createReadStream(filePath, { start, end }).pipe(response);
+        return;
+      }
+
       response.writeHead(200, {
+        "Accept-Ranges": "bytes",
         "Content-Length": stats.size,
-        "Content-Type": mimeTypes[path.extname(filePath).toLowerCase()] || "application/octet-stream",
+        "Content-Type": contentType,
       });
       fs.createReadStream(filePath).pipe(response);
     });
