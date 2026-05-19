@@ -25,6 +25,9 @@ const parcelStorageKey = "landInfoPortal.parcelAddress";
 const parcelStateStorageKey = "landInfoPortal.parcelState";
 const vworldApiKey = "39B6F1DE-2D35-3582-9008-A537EF6A6BC4";
 const defaultAerialCenter = [37.5665, 126.978];
+const localCadastralShpPath = "cadastral/AL_52800_LAND_INFO_BASE_MAP_202604/52800.shp";
+const localCadastralRadiusMeters = 50;
+const maxLocalCadastralFeatures = 800;
 let vworldMap = null;
 let vworldMarker = null;
 let vworldBaseLayer = null;
@@ -37,6 +40,7 @@ let vworldMarkerVisible = true;
 let vworldMeasureMode = "";
 let vworldMeasurePoints = [];
 let vworldMeasureLayer = null;
+let localCadastralDatasetPromise = null;
 
 const processSteps = {
   consult: {
@@ -319,7 +323,7 @@ function initPortalTabs() {
               </button>
               <button type="button" data-vworld-action="parcels">
                 <i data-lucide="shapes"></i>
-                50m도형
+                연속지적도
               </button>
               <button type="button" data-vworld-action="distance">
                 <i data-lucide="ruler"></i>
@@ -438,6 +442,327 @@ function initPortalTabs() {
     const longitudeDelta = radiusMeters / (111320 * Math.cos((latitude * Math.PI) / 180));
 
     return [longitude - longitudeDelta, latitude - latitudeDelta, longitude + longitudeDelta, latitude + latitudeDelta];
+  }
+
+  const epsg5186 = {
+    semiMajor: 6378137,
+    inverseFlattening: 298.257222101,
+    originLatitude: (38 * Math.PI) / 180,
+    centralMeridian: (127 * Math.PI) / 180,
+    scale: 1,
+    falseEasting: 200000,
+    falseNorthing: 600000,
+  };
+
+  epsg5186.flattening = 1 / epsg5186.inverseFlattening;
+  epsg5186.eccentricitySquared = 2 * epsg5186.flattening - epsg5186.flattening ** 2;
+  epsg5186.secondEccentricitySquared = epsg5186.eccentricitySquared / (1 - epsg5186.eccentricitySquared);
+
+  function getMeridionalArc(latitudeRadians) {
+    const { semiMajor, eccentricitySquared } = epsg5186;
+    const e4 = eccentricitySquared ** 2;
+    const e6 = eccentricitySquared ** 3;
+
+    return (
+      semiMajor *
+      ((1 - eccentricitySquared / 4 - (3 * e4) / 64 - (5 * e6) / 256) * latitudeRadians -
+        ((3 * eccentricitySquared) / 8 + (3 * e4) / 32 + (45 * e6) / 1024) * Math.sin(2 * latitudeRadians) +
+        ((15 * e4) / 256 + (45 * e6) / 1024) * Math.sin(4 * latitudeRadians) -
+        ((35 * e6) / 3072) * Math.sin(6 * latitudeRadians))
+    );
+  }
+
+  function wgs84ToEpsg5186(latitude, longitude) {
+    const { semiMajor, eccentricitySquared, secondEccentricitySquared, originLatitude, centralMeridian, scale, falseEasting, falseNorthing } = epsg5186;
+    const latitudeRadians = (latitude * Math.PI) / 180;
+    const longitudeRadians = (longitude * Math.PI) / 180;
+    const sinLatitude = Math.sin(latitudeRadians);
+    const cosLatitude = Math.cos(latitudeRadians);
+    const tangentLatitude = Math.tan(latitudeRadians);
+    const n = semiMajor / Math.sqrt(1 - eccentricitySquared * sinLatitude ** 2);
+    const t = tangentLatitude ** 2;
+    const c = secondEccentricitySquared * cosLatitude ** 2;
+    const a = (longitudeRadians - centralMeridian) * cosLatitude;
+    const m = getMeridionalArc(latitudeRadians);
+    const m0 = getMeridionalArc(originLatitude);
+
+    return {
+      x:
+        falseEasting +
+        scale *
+          n *
+          (a + ((1 - t + c) * a ** 3) / 6 + ((5 - 18 * t + t ** 2 + 72 * c - 58 * secondEccentricitySquared) * a ** 5) / 120),
+      y:
+        falseNorthing +
+        scale *
+          (m -
+            m0 +
+            n *
+              tangentLatitude *
+              (a ** 2 / 2 + ((5 - t + 9 * c + 4 * c ** 2) * a ** 4) / 24 + ((61 - 58 * t + t ** 2 + 600 * c - 330 * secondEccentricitySquared) * a ** 6) / 720)),
+    };
+  }
+
+  function epsg5186ToWgs84(x, y) {
+    const { semiMajor, eccentricitySquared, secondEccentricitySquared, originLatitude, centralMeridian, scale, falseEasting, falseNorthing } = epsg5186;
+    const e1 = (1 - Math.sqrt(1 - eccentricitySquared)) / (1 + Math.sqrt(1 - eccentricitySquared));
+    const e4 = eccentricitySquared ** 2;
+    const e6 = eccentricitySquared ** 3;
+    const m0 = getMeridionalArc(originLatitude);
+    const m = m0 + (y - falseNorthing) / scale;
+    const mu = m / (semiMajor * (1 - eccentricitySquared / 4 - (3 * e4) / 64 - (5 * e6) / 256));
+    const footprintLatitude =
+      mu +
+      ((3 * e1) / 2 - (27 * e1 ** 3) / 32) * Math.sin(2 * mu) +
+      ((21 * e1 ** 2) / 16 - (55 * e1 ** 4) / 32) * Math.sin(4 * mu) +
+      ((151 * e1 ** 3) / 96) * Math.sin(6 * mu) +
+      ((1097 * e1 ** 4) / 512) * Math.sin(8 * mu);
+    const sinFootprint = Math.sin(footprintLatitude);
+    const cosFootprint = Math.cos(footprintLatitude);
+    const tanFootprint = Math.tan(footprintLatitude);
+    const c1 = secondEccentricitySquared * cosFootprint ** 2;
+    const t1 = tanFootprint ** 2;
+    const n1 = semiMajor / Math.sqrt(1 - eccentricitySquared * sinFootprint ** 2);
+    const r1 = (semiMajor * (1 - eccentricitySquared)) / (1 - eccentricitySquared * sinFootprint ** 2) ** 1.5;
+    const d = (x - falseEasting) / (n1 * scale);
+    const latitude =
+      footprintLatitude -
+      ((n1 * tanFootprint) / r1) *
+        (d ** 2 / 2 -
+          ((5 + 3 * t1 + 10 * c1 - 4 * c1 ** 2 - 9 * secondEccentricitySquared) * d ** 4) / 24 +
+          ((61 + 90 * t1 + 298 * c1 + 45 * t1 ** 2 - 252 * secondEccentricitySquared - 3 * c1 ** 2) * d ** 6) / 720);
+    const longitude =
+      centralMeridian +
+      (d -
+        ((1 + 2 * t1 + c1) * d ** 3) / 6 +
+        ((5 - 2 * c1 + 28 * t1 - 3 * c1 ** 2 + 8 * secondEccentricitySquared + 24 * t1 ** 2) * d ** 5) / 120) /
+        cosFootprint;
+
+    return {
+      latitude: (latitude * 180) / Math.PI,
+      longitude: (longitude * 180) / Math.PI,
+    };
+  }
+
+  function bboxIntersects(first, second) {
+    return first.minX <= second.maxX && first.maxX >= second.minX && first.minY <= second.maxY && first.maxY >= second.minY;
+  }
+
+  function getDistanceSquaredToSegment(point, start, end) {
+    const dx = end.x - start.x;
+    const dy = end.y - start.y;
+
+    if (dx === 0 && dy === 0) {
+      return (point.x - start.x) ** 2 + (point.y - start.y) ** 2;
+    }
+
+    const ratio = Math.max(0, Math.min(1, ((point.x - start.x) * dx + (point.y - start.y) * dy) / (dx ** 2 + dy ** 2)));
+    const projectedX = start.x + ratio * dx;
+    const projectedY = start.y + ratio * dy;
+
+    return (point.x - projectedX) ** 2 + (point.y - projectedY) ** 2;
+  }
+
+  function isProjectedPointInRing(point, ring = []) {
+    let inside = false;
+
+    if (ring.length < 3) {
+      return false;
+    }
+
+    for (let i = 0, j = ring.length - 1; i < ring.length; j = i, i += 1) {
+      const start = ring[i];
+      const end = ring[j];
+
+      if ((start.y > point.y) !== (end.y > point.y)) {
+        const crossingX = ((end.x - start.x) * (point.y - start.y)) / (end.y - start.y) + start.x;
+
+        if (point.x < crossingX) {
+          inside = !inside;
+        }
+      }
+    }
+
+    return inside;
+  }
+
+  function doesRingIntersectRadius(ring, center, radiusMeters) {
+    const radiusSquared = radiusMeters ** 2;
+
+    if (isProjectedPointInRing(center, ring)) {
+      return true;
+    }
+
+    for (let index = 0; index < ring.length; index += 1) {
+      const current = ring[index];
+      const next = ring[(index + 1) % ring.length];
+
+      if ((center.x - current.x) ** 2 + (center.y - current.y) ** 2 <= radiusSquared) {
+        return true;
+      }
+
+      if (getDistanceSquaredToSegment(center, current, next) <= radiusSquared) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  function parseLocalCadastralShp(arrayBuffer) {
+    const view = new DataView(arrayBuffer);
+    const fileCode = view.getInt32(0, false);
+    const shapeType = view.getInt32(32, true);
+
+    if (fileCode !== 9994 || (shapeType !== 5 && shapeType !== 15)) {
+      throw new Error("Unsupported cadastral shapefile");
+    }
+
+    const records = [];
+    let offset = 100;
+
+    while (offset + 12 <= view.byteLength) {
+      const contentLengthBytes = view.getInt32(offset + 4, false) * 2;
+      const contentOffset = offset + 8;
+      const contentEnd = contentOffset + contentLengthBytes;
+
+      if (contentEnd > view.byteLength || contentLengthBytes < 44) {
+        break;
+      }
+
+      const recordShapeType = view.getInt32(contentOffset, true);
+
+      if (recordShapeType === 5 || recordShapeType === 15) {
+        records.push({
+          contentOffset,
+          contentLengthBytes,
+          bbox: {
+            minX: view.getFloat64(contentOffset + 4, true),
+            minY: view.getFloat64(contentOffset + 12, true),
+            maxX: view.getFloat64(contentOffset + 20, true),
+            maxY: view.getFloat64(contentOffset + 28, true),
+          },
+        });
+      }
+
+      offset = contentEnd;
+    }
+
+    return { view, records };
+  }
+
+  async function getLocalCadastralDataset() {
+    if (!localCadastralDatasetPromise) {
+      localCadastralDatasetPromise = fetch(localCadastralShpPath).then(async (response) => {
+        if (!response.ok) {
+          throw new Error("Local cadastral shapefile fetch failed");
+        }
+
+        return parseLocalCadastralShp(await response.arrayBuffer());
+      });
+    }
+
+    return localCadastralDatasetPromise;
+  }
+
+  function parseLocalCadastralFeature(view, record, center, radiusMeters) {
+    const contentOffset = record.contentOffset;
+    const numberOfParts = view.getInt32(contentOffset + 36, true);
+    const numberOfPoints = view.getInt32(contentOffset + 40, true);
+    const partsOffset = contentOffset + 44;
+    const pointsOffset = partsOffset + numberOfParts * 4;
+    const expectedPointsEnd = pointsOffset + numberOfPoints * 16;
+
+    if (numberOfParts <= 0 || numberOfPoints <= 0 || expectedPointsEnd > contentOffset + record.contentLengthBytes) {
+      return null;
+    }
+
+    const partStarts = [];
+
+    for (let index = 0; index < numberOfParts; index += 1) {
+      partStarts.push(view.getInt32(partsOffset + index * 4, true));
+    }
+
+    const rings = [];
+    let intersectsRadius = false;
+
+    for (let partIndex = 0; partIndex < numberOfParts; partIndex += 1) {
+      const start = partStarts[partIndex];
+      const end = partStarts[partIndex + 1] ?? numberOfPoints;
+      const ring = [];
+
+      for (let pointIndex = start; pointIndex < end; pointIndex += 1) {
+        const pointOffset = pointsOffset + pointIndex * 16;
+        ring.push({
+          x: view.getFloat64(pointOffset, true),
+          y: view.getFloat64(pointOffset + 8, true),
+        });
+      }
+
+      if (ring.length >= 4) {
+        intersectsRadius = intersectsRadius || doesRingIntersectRadius(ring, center, radiusMeters);
+        rings.push(ring);
+      }
+    }
+
+    if (!intersectsRadius || !rings.length) {
+      return null;
+    }
+
+    const coordinates = rings.map((ring) => [
+      ring.map((point) => {
+        const converted = epsg5186ToWgs84(point.x, point.y);
+        return [converted.longitude, converted.latitude];
+      }),
+    ]);
+
+    return {
+      type: "Feature",
+      properties: {
+        source: "local-cadastral",
+        title: "연속지적도",
+      },
+      geometry:
+        coordinates.length === 1
+          ? {
+              type: "Polygon",
+              coordinates: coordinates[0],
+            }
+          : {
+              type: "MultiPolygon",
+              coordinates,
+            },
+    };
+  }
+
+  async function searchLocalCadastralFeatures(point, radiusMeters = localCadastralRadiusMeters) {
+    const dataset = await getLocalCadastralDataset();
+    const center = wgs84ToEpsg5186(point.latitude, point.longitude);
+    const extent = {
+      minX: center.x - radiusMeters,
+      minY: center.y - radiusMeters,
+      maxX: center.x + radiusMeters,
+      maxY: center.y + radiusMeters,
+    };
+    const features = [];
+
+    for (const record of dataset.records) {
+      if (!bboxIntersects(record.bbox, extent)) {
+        continue;
+      }
+
+      const feature = parseLocalCadastralFeature(dataset.view, record, center, radiusMeters);
+
+      if (feature) {
+        features.push(feature);
+      }
+
+      if (features.length >= maxLocalCadastralFeatures) {
+        break;
+      }
+    }
+
+    return features;
   }
 
   function createVworldParcelWfsUrl() {
@@ -633,6 +958,10 @@ function initPortalTabs() {
   }
 
   function getParcelPopup(properties = {}) {
+    if (properties.source === "local-cadastral") {
+      return "연속지적도<br>주소 기준 50m 이내";
+    }
+
     const lines = [
       properties.jibun ? `지번: ${properties.jibun}` : "",
       properties.pnu ? `PNU: ${properties.pnu}` : "",
@@ -729,8 +1058,19 @@ function initPortalTabs() {
       },
       {
         style(feature) {
+          const isLocalCadastral = feature.properties?.source === "local-cadastral";
           const featurePnu = normalizePnu(feature.properties?.pnu);
           const isSelected = highlightAll || (featurePnu && selectedPnu && featurePnu === selectedPnu) || isPointInParcelFeature(point, feature);
+
+          if (isLocalCadastral) {
+            return {
+              color: "#ffd84d",
+              fillColor: "#ffd84d",
+              fillOpacity: 0.08,
+              opacity: 1,
+              weight: 2.5,
+            };
+          }
 
           return {
             color: isSelected ? "#f2c76b" : "#67e8f9",
@@ -818,18 +1158,19 @@ function initPortalTabs() {
     }).addTo(vworldMap);
 
     try {
-      const features = await searchVworldParcels(point.latitude, point.longitude, 50);
+      updateAerialStatus(`${point.title} 기준 50m 이내 연속지적도를 불러오는 중입니다.`);
+      const features = await searchLocalCadastralFeatures(point, localCadastralRadiusMeters);
 
       if (!features.length) {
-        updateAerialStatus(`${point.title} 기준 50m 반경의 필지 도형을 찾지 못했습니다.`);
+        updateAerialStatus(`${point.title} 기준 50m 이내 연속지적도 도형을 찾지 못했습니다.`);
         return;
       }
 
-      renderVworldParcelLayer(features, point);
+      renderVworldParcelLayer(features, point, { highlightAll: true });
 
-      updateAerialStatus(`${point.title} 기준 50m 반경 필지 도형 ${features.length}개를 표시했습니다.`);
+      updateAerialStatus(`${point.title} 기준 50m 이내 연속지적도 ${features.length}개를 표시했습니다.`);
     } catch (error) {
-      updateAerialStatus("50m 반경 필지 도형을 불러오지 못했습니다. 잠시 후 다시 검색해 주세요.");
+      updateAerialStatus("cadastral 폴더의 연속지적도 SHP를 불러오지 못했습니다. 로컬 서버에서 실행 중인지 확인해 주세요.");
     }
   }
 
@@ -1057,7 +1398,7 @@ function initPortalTabs() {
         vworldMarker.openPopup();
       }
       status.textContent = `${point.title} 기준으로 V-World 항공사진을 표시 중입니다.`;
-      loadSelectedParcelShape(point);
+      loadNearbyParcelShapes(point);
     } catch (error) {
       status.textContent = "V-World 주소 검색 중 오류가 발생했습니다. 네트워크 상태를 확인해 주세요.";
     }
