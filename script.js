@@ -29,6 +29,8 @@ let vworldMap = null;
 let vworldMarker = null;
 let vworldBaseLayer = null;
 let vworldHybridLayer = null;
+let vworldParcelLayer = null;
+let vworldRadiusLayer = null;
 let vworldCurrentLayer = "satellite";
 let vworldCurrentPoint = null;
 let vworldMarkerVisible = true;
@@ -315,6 +317,10 @@ function initPortalTabs() {
                 <i data-lucide="map-pin"></i>
                 마커
               </button>
+              <button type="button" data-vworld-action="parcels">
+                <i data-lucide="shapes"></i>
+                50m도형
+              </button>
               <button type="button" data-vworld-action="distance">
                 <i data-lucide="ruler"></i>
                 거리재기
@@ -425,6 +431,31 @@ function initPortalTabs() {
     }
 
     return null;
+  }
+
+  function getRadiusBbox(latitude, longitude, radiusMeters) {
+    const latitudeDelta = radiusMeters / 111320;
+    const longitudeDelta = radiusMeters / (111320 * Math.cos((latitude * Math.PI) / 180));
+
+    return [longitude - longitudeDelta, latitude - latitudeDelta, longitude + longitudeDelta, latitude + latitudeDelta];
+  }
+
+  async function searchVworldParcels(latitude, longitude, radiusMeters = 50) {
+    const bbox = getRadiusBbox(latitude, longitude, radiusMeters);
+    const url = new URL("https://api.vworld.kr/req/wfs");
+
+    url.searchParams.set("key", vworldApiKey);
+    url.searchParams.set("SERVICE", "WFS");
+    url.searchParams.set("version", "1.1.0");
+    url.searchParams.set("request", "GetFeature");
+    url.searchParams.set("TYPENAME", "lt_c_landinfobasemap");
+    url.searchParams.set("OUTPUT", "text/javascript");
+    url.searchParams.set("SRSNAME", "EPSG:4326");
+    url.searchParams.set("BBOX", bbox.join(","));
+    url.searchParams.set("MAXFEATURES", "120");
+
+    const data = await requestVworldJson(url);
+    return data?.features || [];
   }
 
   async function resolveParcelAddress() {
@@ -565,6 +596,95 @@ function initPortalTabs() {
     vworldMarker = window.L.marker([vworldCurrentPoint.latitude, vworldCurrentPoint.longitude]).addTo(vworldMap).bindPopup(vworldCurrentPoint.title);
   }
 
+  function clearVworldParcels() {
+    if (vworldParcelLayer && vworldMap) {
+      vworldMap.removeLayer(vworldParcelLayer);
+    }
+
+    if (vworldRadiusLayer && vworldMap) {
+      vworldMap.removeLayer(vworldRadiusLayer);
+    }
+
+    vworldParcelLayer = null;
+    vworldRadiusLayer = null;
+  }
+
+  function getParcelPopup(properties = {}) {
+    const lines = [
+      properties.jibun ? `지번: ${properties.jibun}` : "",
+      properties.pnu ? `PNU: ${properties.pnu}` : "",
+      properties.jimok ? `지목: ${properties.jimok}` : "",
+      properties.sido_nm || properties.sgg_nm || properties.emd_nm
+        ? `위치: ${[properties.sido_nm, properties.sgg_nm, properties.emd_nm, properties.ri_nm].filter(Boolean).join(" ")}`
+        : "",
+    ].filter(Boolean);
+
+    return lines.length ? lines.join("<br>") : "필지 도형";
+  }
+
+  async function loadNearbyParcelShapes(point) {
+    if (!vworldMap || !window.L || !point) {
+      return;
+    }
+
+    clearVworldParcels();
+
+    const center = [point.latitude, point.longitude];
+
+    vworldRadiusLayer = window.L.circle(center, {
+      radius: 50,
+      color: "#f2c76b",
+      fillColor: "#f2c76b",
+      fillOpacity: 0.08,
+      weight: 2,
+      dashArray: "6 6",
+    }).addTo(vworldMap);
+
+    try {
+      const features = await searchVworldParcels(point.latitude, point.longitude, 50);
+
+      if (!features.length) {
+        updateAerialStatus(`${point.title} 기준 50m 반경의 필지 도형을 찾지 못했습니다.`);
+        return;
+      }
+
+      vworldParcelLayer = window.L.geoJSON(
+        {
+          type: "FeatureCollection",
+          features,
+        },
+        {
+          style(feature) {
+            const isSelected = feature.properties?.pnu && point.pnu && feature.properties.pnu === point.pnu;
+
+            return {
+              color: isSelected ? "#f2c76b" : "#67e8f9",
+              fillColor: isSelected ? "#f2c76b" : "#0f7f84",
+              fillOpacity: isSelected ? 0.32 : 0.16,
+              opacity: 0.95,
+              weight: isSelected ? 3 : 2,
+            };
+          },
+          onEachFeature(feature, layer) {
+            layer.bindPopup(getParcelPopup(feature.properties));
+
+            if (feature.properties?.jibun) {
+              layer.bindTooltip(feature.properties.jibun, {
+                direction: "center",
+                permanent: true,
+                className: "parcel-label",
+              });
+            }
+          },
+        }
+      ).addTo(vworldMap);
+
+      updateAerialStatus(`${point.title} 기준 50m 반경 필지 도형 ${features.length}개를 표시했습니다.`);
+    } catch (error) {
+      updateAerialStatus("50m 반경 필지 도형을 불러오지 못했습니다. 잠시 후 다시 검색해 주세요.");
+    }
+  }
+
   function formatDistance(meters) {
     if (meters >= 1000) {
       return `${(meters / 1000).toFixed(2)} km`;
@@ -703,6 +823,10 @@ function initPortalTabs() {
           updateAerialStatus(vworldMarkerVisible ? "마커를 표시했습니다." : "마커를 숨겼습니다.");
         }
 
+        if (action === "parcels") {
+          loadNearbyParcelShapes(vworldCurrentPoint);
+        }
+
         if (action === "distance") {
           setVworldMeasureMode("distance");
         }
@@ -731,6 +855,8 @@ function initPortalTabs() {
       vworldMarker = null;
       vworldBaseLayer = null;
       vworldHybridLayer = null;
+      vworldParcelLayer = null;
+      vworldRadiusLayer = null;
       vworldMeasureLayer = null;
       vworldMeasurePoints = [];
       vworldMeasureMode = "";
@@ -783,6 +909,7 @@ function initPortalTabs() {
         vworldMarker.openPopup();
       }
       status.textContent = `${point.title} 기준으로 V-World 항공사진을 표시 중입니다.`;
+      loadNearbyParcelShapes(point);
     } catch (error) {
       status.textContent = "V-World 주소 검색 중 오류가 발생했습니다. 네트워크 상태를 확인해 주세요.";
     }

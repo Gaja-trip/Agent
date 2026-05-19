@@ -1124,6 +1124,17 @@ input {
   font-weight: 700;
 }
 
+.parcel-label {
+  padding: 2px 5px;
+  color: #17382f;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(31, 107, 85, 0.22);
+  border-radius: 6px;
+  box-shadow: none;
+  font-size: 0.74rem;
+  font-weight: 900;
+}
+
 .page-main {
   min-height: calc(100vh - 72px);
   background: #f7faf8;
