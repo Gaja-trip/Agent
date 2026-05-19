@@ -1,33 +1,18 @@
 const portalData = {
   eum: {
-    eyebrow: "토지이용계획 확인",
     title: "토지이음",
-    icon: "layers",
     url: "https://www.eum.go.kr/web/am/amMain.jsp",
     frameTitle: "토지이음 웹페이지",
-    copy: "대상 필지의 토지이용계획, 용도지역·지구, 행위제한, 도시계획시설 여부를 확인합니다.",
-    checks: ["지번 기반 토지이용계획 열람", "용도지역, 용도지구, 구역 지정 여부", "허가 가능성에 영향을 주는 행위제한"],
-    points: ["허가부서 상담 전 기초 규제 확인", "토지이음 지도 현황 검토와 비교", "법령정보에서 근거 조항 확인"],
   },
   map: {
-    eyebrow: "이음지도와 현장 여건",
     title: "토지이음 지도",
-    icon: "map-pinned",
     url: "https://www.eum.go.kr/web/mp/mpMapDet.jsp",
     frameTitle: "토지이음 지도 웹페이지",
-    copy: "이음지도를 활용해 대상 토지의 지적도, 주변 토지 이용 상태, 지역·지구 도면 정보를 함께 살핍니다.",
-    checks: ["이음지도에서 연속지적도와 주변 필지 확인", "지역·지구와 도시계획시설 도면 확인", "지목과 실제 이용 상태의 차이 검토"],
-    points: ["지적측량 전 현장 확인 포인트 정리", "허가부서 상담 시 도로·배수 이슈 설명", "토지이음 규제 정보와 지도 현황 비교"],
   },
   law: {
-    eyebrow: "법령과 조례 근거",
     title: "법령정보",
-    icon: "scale",
     url: "https://www.law.go.kr/main.html",
     frameTitle: "국가법령정보센터 웹페이지",
-    copy: "국가법령정보센터에서 허가, 지적측량, 토지이동, 등기촉탁과 관련된 법령 근거를 확인합니다.",
-    checks: ["개발행위허가 관련 법령 검색", "지적공부 정리와 토지이동 관련 규정 확인", "지자체 조례와 별도 기준 검토"],
-    points: ["민원 보완 요청의 근거 조항 확인", "상담 설명의 신뢰도 보강", "허가 조건과 후속 절차의 법적 기준 정리"],
   },
 };
 
@@ -115,10 +100,6 @@ const readyMessages = [
   },
 ];
 
-function createList(items) {
-  return items.map((item) => `<li>${item}</li>`).join("");
-}
-
 function refreshIcons() {
   if (window.lucide) {
     window.lucide.createIcons();
@@ -143,35 +124,7 @@ function initPortalTabs() {
     });
 
     portalPanel.innerHTML = `
-      <div class="portal-panel__summary">
-        <div class="portal-panel__main">
-          <div class="portal-panel__top">
-            <span class="portal-panel__icon" aria-hidden="true">
-              <i data-lucide="${portal.icon}"></i>
-            </span>
-            <div>
-              <p class="eyebrow">${portal.eyebrow}</p>
-              <h2>${portal.title}</h2>
-            </div>
-          </div>
-          <p class="portal-panel__copy">${portal.copy}</p>
-        </div>
-        <div class="portal-panel__details">
-          <div>
-            <h3>확인할 내용</h3>
-            <ul>${createList(portal.checks)}</ul>
-          </div>
-          <div>
-            <h3>상담 연결 포인트</h3>
-            <ul>${createList(portal.points)}</ul>
-          </div>
-        </div>
-      </div>
       <div class="embedded-site">
-        <div class="embedded-site__bar">
-          <strong>${portal.title}</strong>
-          <span>아래 영역에서 기관 웹페이지를 표시합니다. 비어 있으면 기관 보안 정책으로 제한된 상태입니다.</span>
-        </div>
         <iframe
           class="embedded-site__frame"
           title="${portal.frameTitle}"
@@ -179,9 +132,6 @@ function initPortalTabs() {
           loading="lazy"
           referrerpolicy="no-referrer-when-downgrade"
         ></iframe>
-        <p class="embedded-site__notice">
-          기관 사이트의 보안 정책에 따라 일부 화면은 표시가 제한될 수 있습니다.
-        </p>
       </div>
     `;
 
