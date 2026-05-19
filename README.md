@@ -9,8 +9,13 @@
 ## 구성
 
 - `index.html`: 메인 탭 화면
-- `info.html`: 정보 연결 안내
 - `process.html`: 토지 정리 진행 절차
 - `checklist.html`: 상담 전 준비자료 체크리스트
+- `manual.html`: 통합 화면 사용 매뉴얼
+- `knowledge.html`: 상담지식 요약
 - `styles.css`: 반응형 화면 스타일
 - `script.js`: 메인 탭, 절차 탭, 준비자료 체크리스트 상호작용
+
+## V-World 항공사진
+
+메인 화면의 항공사진 탭에서 V-World 인증키를 입력하면 토지이음 기준 지번/주소로 항공사진을 표시합니다.

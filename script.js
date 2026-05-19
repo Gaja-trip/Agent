@@ -8,10 +8,10 @@ const portalData = {
     title: "토지이음 지도",
     url: "https://www.eum.go.kr/web/mp/mpMapDet.jsp",
     frameTitle: "토지이음 지도 웹페이지",
-    embed: false,
-    description:
-      "위성·항공사진과 지적도 레이어는 토지이음 지도 원문 화면에서 가장 안정적으로 표시됩니다.",
-    actionLabel: "토지이음 지도 새 창 열기",
+  },
+  aerial: {
+    title: "항공사진",
+    type: "aerial",
   },
   law: {
     title: "법령정보",
@@ -19,6 +19,12 @@ const portalData = {
     frameTitle: "국가법령정보센터 웹페이지",
   },
 };
+
+const parcelStorageKey = "landInfoPortal.parcelAddress";
+const vworldKeyStorageKey = "landInfoPortal.vworldApiKey";
+const defaultAerialCenter = [37.5665, 126.978];
+let vworldMap = null;
+let vworldMarker = null;
 
 const processSteps = {
   consult: {
@@ -110,17 +116,81 @@ function refreshIcons() {
   }
 }
 
+function readStoredValue(key) {
+  try {
+    return window.localStorage.getItem(key) || "";
+  } catch (error) {
+    return "";
+  }
+}
+
+function writeStoredValue(key, value) {
+  try {
+    window.localStorage.setItem(key, value);
+  } catch (error) {
+    // Storage can be unavailable in strict browser modes. The live UI still works.
+  }
+}
+
+function escapeHtml(value) {
+  return value.replace(/[&<>"']/g, (char) => {
+    const entities = {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#039;",
+    };
+    return entities[char];
+  });
+}
+
 function initPortalTabs() {
   const portalTabs = document.querySelectorAll(".portal-tab");
   const portalPanel = document.querySelector("[data-portal-panel]");
+  const parcelForm = document.querySelector("[data-parcel-form]");
+  const parcelInput = document.querySelector("[data-parcel-input]");
+  let activePortalKey = "eum";
 
   if (!portalTabs.length || !portalPanel) {
     return;
   }
 
+  function getParcelAddress() {
+    return parcelInput ? parcelInput.value.trim() : readStoredValue(parcelStorageKey);
+  }
+
+  function getVworldApiKey() {
+    return window.VWORLD_API_KEY || readStoredValue(vworldKeyStorageKey);
+  }
+
+  function saveParcelAddress() {
+    writeStoredValue(parcelStorageKey, getParcelAddress());
+  }
+
+  function renderSharedParcel() {
+    const parcelAddress = escapeHtml(getParcelAddress());
+    const displayText = parcelAddress || "아직 입력 전";
+
+    return `
+      <div class="portal-context">
+        <span>토지이음 기준 지번/주소</span>
+        <strong data-shared-parcel>${displayText}</strong>
+      </div>
+    `;
+  }
+
+  function syncSharedParcelText() {
+    const displayText = getParcelAddress() || "아직 입력 전";
+    document.querySelectorAll("[data-shared-parcel]").forEach((target) => {
+      target.textContent = displayText;
+    });
+  }
+
   function renderEmbeddedPortal(portal) {
     return `
       <div class="embedded-site">
+        ${renderSharedParcel()}
         <iframe
           class="embedded-site__frame"
           title="${portal.frameTitle}"
@@ -132,29 +202,180 @@ function initPortalTabs() {
     `;
   }
 
-  function renderExternalPortal(portal) {
+  function renderAerialPortal() {
+    const parcelAddress = escapeHtml(getParcelAddress());
+    const apiKey = escapeHtml(getVworldApiKey());
+
     return `
-      <div class="external-portal">
-        <div class="external-portal__visual" aria-hidden="true">
-          <span class="external-portal__road"></span>
-          <span class="external-portal__parcel external-portal__parcel--primary"></span>
-          <span class="external-portal__parcel external-portal__parcel--secondary"></span>
-        </div>
-        <div class="external-portal__content">
-          <p class="eyebrow">Satellite Layer</p>
-          <h2>${portal.title}</h2>
-          <p>${portal.description}</p>
-          <a class="button button--primary" href="${portal.url}" target="_blank" rel="noopener noreferrer">
-            <i data-lucide="external-link"></i>
-            ${portal.actionLabel}
-          </a>
+      <div class="aerial-portal">
+        <aside class="aerial-portal__panel">
+          <p class="eyebrow">V-World Aerial Photo</p>
+          <h2>항공사진</h2>
+          <p>상단에서 입력한 토지이음 기준 지번/주소를 V-World 항공사진 위에 표시합니다.</p>
+          <div class="portal-context portal-context--aerial">
+            <span>표시 지번/주소</span>
+            <strong data-shared-parcel>${parcelAddress || "아직 입력 전"}</strong>
+          </div>
+          <form class="vworld-key-form" data-vworld-key-form>
+            <label for="vworld-api-key">V-World 인증키</label>
+            <div>
+              <input
+                id="vworld-api-key"
+                name="vworldApiKey"
+                type="text"
+                value="${apiKey}"
+                placeholder="발급받은 V-World API 키"
+                autocomplete="off"
+              />
+              <button class="button button--primary" type="submit">
+                <i data-lucide="key-round"></i>
+                지도 표시
+              </button>
+            </div>
+          </form>
+          <p class="aerial-status" data-aerial-status>
+            ${apiKey ? "항공사진을 준비 중입니다." : "V-World 인증키를 입력하면 항공사진이 표시됩니다."}
+          </p>
+        </aside>
+        <div class="vworld-map-shell">
+          <div class="vworld-map" id="vworld-map" aria-label="V-World 항공사진 지도"></div>
+          <div class="vworld-map__empty" data-vworld-empty>
+            <i data-lucide="satellite"></i>
+            <strong>${parcelAddress || "토지이음 기준 지번/주소를 입력하세요"}</strong>
+            <span>V-World 인증키와 지번/주소가 준비되면 항공사진 위치를 표시합니다.</span>
+          </div>
         </div>
       </div>
     `;
   }
 
+  async function searchVworldAddress(query, apiKey) {
+    const categories = ["parcel", "road"];
+
+    for (const category of categories) {
+      const url = new URL("https://api.vworld.kr/req/search");
+      url.searchParams.set("service", "search");
+      url.searchParams.set("request", "search");
+      url.searchParams.set("version", "2.0");
+      url.searchParams.set("crs", "EPSG:4326");
+      url.searchParams.set("size", "1");
+      url.searchParams.set("page", "1");
+      url.searchParams.set("type", "address");
+      url.searchParams.set("category", category);
+      url.searchParams.set("format", "json");
+      url.searchParams.set("errorformat", "json");
+      url.searchParams.set("key", apiKey);
+      url.searchParams.set("query", query);
+
+      const response = await fetch(url.toString());
+
+      if (!response.ok) {
+        continue;
+      }
+
+      const data = await response.json();
+      const item = data.response?.result?.items?.[0];
+      const longitude = Number(item?.point?.x);
+      const latitude = Number(item?.point?.y);
+
+      if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
+        return {
+          latitude,
+          longitude,
+          title: item.title || query,
+        };
+      }
+    }
+
+    return null;
+  }
+
+  function bindVworldKeyForm() {
+    const keyForm = document.querySelector("[data-vworld-key-form]");
+    const keyInput = document.querySelector("#vworld-api-key");
+
+    if (!keyForm || !keyInput) {
+      return;
+    }
+
+    keyForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      writeStoredValue(vworldKeyStorageKey, keyInput.value.trim());
+      setActivePortal("aerial");
+    });
+  }
+
+  async function initAerialMap() {
+    const mapNode = document.querySelector("#vworld-map");
+    const emptyState = document.querySelector("[data-vworld-empty]");
+    const status = document.querySelector("[data-aerial-status]");
+    const parcelAddress = getParcelAddress();
+    const apiKey = getVworldApiKey();
+
+    if (vworldMap) {
+      vworldMap.remove();
+      vworldMap = null;
+      vworldMarker = null;
+    }
+
+    if (!mapNode || !emptyState || !status) {
+      return;
+    }
+
+    if (!apiKey) {
+      mapNode.classList.add("is-hidden");
+      emptyState.hidden = false;
+      status.textContent = "V-World 인증키를 입력하면 항공사진이 표시됩니다.";
+      return;
+    }
+
+    if (!window.L) {
+      mapNode.classList.add("is-hidden");
+      emptyState.hidden = false;
+      status.textContent = "지도 라이브러리를 불러오지 못했습니다. 네트워크 연결을 확인해 주세요.";
+      return;
+    }
+
+    mapNode.classList.remove("is-hidden");
+    emptyState.hidden = true;
+
+    vworldMap = window.L.map(mapNode, {
+      zoomControl: true,
+    }).setView(defaultAerialCenter, 16);
+
+    window.L.tileLayer(`https://api.vworld.kr/req/wmts/1.0.0/${encodeURIComponent(apiKey)}/Satellite/{z}/{y}/{x}.jpeg`, {
+      maxZoom: 19,
+      attribution: "V-World",
+    }).addTo(vworldMap);
+
+    if (!parcelAddress) {
+      status.textContent = "토지이음 기준 지번/주소를 입력하면 해당 위치로 항공사진을 이동합니다.";
+      return;
+    }
+
+    status.textContent = `"${parcelAddress}" 위치를 V-World에서 검색 중입니다.`;
+
+    try {
+      const point = await searchVworldAddress(parcelAddress, apiKey);
+
+      if (!point) {
+        status.textContent = `"${parcelAddress}" 검색 결과를 찾지 못했습니다. 지번을 더 정확히 입력해 주세요.`;
+        return;
+      }
+
+      const position = [point.latitude, point.longitude];
+      vworldMap.setView(position, 18);
+      vworldMarker = window.L.marker(position).addTo(vworldMap).bindPopup(point.title);
+      vworldMarker.openPopup();
+      status.textContent = `${point.title} 기준으로 V-World 항공사진을 표시 중입니다.`;
+    } catch (error) {
+      status.textContent = "V-World 주소 검색 중 오류가 발생했습니다. 인증키와 네트워크 상태를 확인해 주세요.";
+    }
+  }
+
   function setActivePortal(portalKey) {
     const portal = portalData[portalKey];
+    activePortalKey = portalKey;
 
     portalTabs.forEach((button) => {
       const isActive = button.dataset.portal === portalKey;
@@ -162,9 +383,31 @@ function initPortalTabs() {
       button.setAttribute("aria-selected", String(isActive));
     });
 
-    portalPanel.innerHTML = portal.embed === false ? renderExternalPortal(portal) : renderEmbeddedPortal(portal);
+    portalPanel.innerHTML = portal.type === "aerial" ? renderAerialPortal() : renderEmbeddedPortal(portal);
 
     refreshIcons();
+    syncSharedParcelText();
+
+    if (portal.type === "aerial") {
+      bindVworldKeyForm();
+      window.requestAnimationFrame(() => initAerialMap());
+    }
+  }
+
+  if (parcelInput) {
+    parcelInput.value = readStoredValue(parcelStorageKey);
+    parcelInput.addEventListener("input", () => {
+      saveParcelAddress();
+      syncSharedParcelText();
+    });
+  }
+
+  if (parcelForm) {
+    parcelForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      saveParcelAddress();
+      setActivePortal(activePortalKey);
+    });
   }
 
   portalTabs.forEach((button) => {

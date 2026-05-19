@@ -5,29 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="토지이음, 토지이음 지도, 국가법령정보센터를 메인 페이지 안에서 연결하는 토지정보 통합 안내 페이지"
+      content="토지이음, 토지이음 지도, V-World 항공사진, 국가법령정보센터를 한 화면에서 연결하는 토지정보 통합 안내 페이지"
     />
     <title>토지정보 통합 안내</title>
     <link rel="preconnect" href="https://images.unsplash.com" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="styles.css" />
     <script defer src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script defer src="script.js"></script>
   </head>
   <body>
     <header class="site-header">
       <a class="brand" href="index.html" aria-label="토지정보 통합 안내 첫 화면">
         <span class="brand__mark" aria-hidden="true">
-          <i data-lucide="map"></i>
+          <i data-lucide="land-plot"></i>
         </span>
-        <span>
-          <strong>토지정보 통합 안내</strong>
-          <small>공개 안내 페이지</small>
-        </span>
+        <strong>토지정보 통합 안내</strong>
       </a>
       <nav class="main-nav" aria-label="주요 메뉴">
-        <a href="info.html">정보 연결</a>
+        <a class="main-nav__home is-active" href="index.html" aria-label="홈">
+          <i data-lucide="house"></i>
+          <span>홈</span>
+        </a>
         <a href="process.html">진행 절차</a>
         <a href="checklist.html">준비자료</a>
+        <a href="manual.html">매뉴얼</a>
+        <a href="knowledge.html">상담지식</a>
       </nav>
     </header>
 
@@ -44,6 +48,22 @@
           <h1 id="main-title">토지정보 통합 안내</h1>
 
           <div class="portal-workspace">
+            <form class="parcel-search" data-parcel-form>
+              <label for="parcel-address">토지이음 기준 지번/주소</label>
+              <input
+                id="parcel-address"
+                type="search"
+                name="parcel"
+                data-parcel-input
+                placeholder="예: 서울특별시 중구 세종대로 110"
+                autocomplete="street-address"
+              />
+              <button class="button button--primary" type="submit">
+                <i data-lucide="search"></i>
+                적용
+              </button>
+            </form>
+
             <div class="portal-tabs" role="tablist" aria-label="토지정보 연결 서비스">
               <button class="portal-tab is-active" type="button" role="tab" aria-selected="true" data-portal="eum">
                 <i data-lucide="layers"></i>
@@ -52,6 +72,10 @@
               <button class="portal-tab" type="button" role="tab" aria-selected="false" data-portal="map">
                 <i data-lucide="map-pinned"></i>
                 토지이음 지도
+              </button>
+              <button class="portal-tab" type="button" role="tab" aria-selected="false" data-portal="aerial">
+                <i data-lucide="satellite"></i>
+                항공사진
               </button>
               <button class="portal-tab" type="button" role="tab" aria-selected="false" data-portal="law">
                 <i data-lucide="scale"></i>
