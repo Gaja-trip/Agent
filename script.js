@@ -440,8 +440,7 @@ function initPortalTabs() {
     return [longitude - longitudeDelta, latitude - latitudeDelta, longitude + longitudeDelta, latitude + latitudeDelta];
   }
 
-  async function searchVworldParcels(latitude, longitude, radiusMeters = 50) {
-    const bbox = getRadiusBbox(latitude, longitude, radiusMeters);
+  function createVworldParcelWfsUrl() {
     const url = new URL("https://api.vworld.kr/req/wfs");
 
     url.searchParams.set("key", vworldApiKey);
@@ -451,8 +450,32 @@ function initPortalTabs() {
     url.searchParams.set("TYPENAME", "lt_c_landinfobasemap");
     url.searchParams.set("OUTPUT", "text/javascript");
     url.searchParams.set("SRSNAME", "EPSG:4326");
+
+    return url;
+  }
+
+  async function searchVworldParcels(latitude, longitude, radiusMeters = 50) {
+    const bbox = getRadiusBbox(latitude, longitude, radiusMeters);
+    const url = createVworldParcelWfsUrl();
+
     url.searchParams.set("BBOX", bbox.join(","));
     url.searchParams.set("MAXFEATURES", "120");
+
+    const data = await requestVworldJson(url);
+    return data?.features || [];
+  }
+
+  async function searchVworldParcelByPnu(pnu) {
+    const selectedPnu = normalizePnu(pnu);
+
+    if (!selectedPnu) {
+      return [];
+    }
+
+    const url = createVworldParcelWfsUrl();
+
+    url.searchParams.set("CQL_FILTER", `pnu='${selectedPnu}'`);
+    url.searchParams.set("MAXFEATURES", "20");
 
     const data = await requestVworldJson(url);
     return data?.features || [];
@@ -622,6 +645,160 @@ function initPortalTabs() {
     return lines.length ? lines.join("<br>") : "필지 도형";
   }
 
+  function normalizePnu(value) {
+    return String(value || "").replace(/\D/g, "");
+  }
+
+  function isPointInRing(point, ring = []) {
+    const longitude = Number(point?.longitude);
+    const latitude = Number(point?.latitude);
+    let inside = false;
+
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude) || ring.length < 3) {
+      return false;
+    }
+
+    for (let i = 0, j = ring.length - 1; i < ring.length; j = i, i += 1) {
+      const start = ring[i];
+      const end = ring[j];
+      const startLng = Number(start?.[0]);
+      const startLat = Number(start?.[1]);
+      const endLng = Number(end?.[0]);
+      const endLat = Number(end?.[1]);
+
+      if (![startLng, startLat, endLng, endLat].every(Number.isFinite)) {
+        continue;
+      }
+
+      if ((startLat > latitude) !== (endLat > latitude)) {
+        const crossingLongitude = ((endLng - startLng) * (latitude - startLat)) / (endLat - startLat) + startLng;
+
+        if (longitude < crossingLongitude) {
+          inside = !inside;
+        }
+      }
+    }
+
+    return inside;
+  }
+
+  function isPointInPolygonCoordinates(point, coordinates = []) {
+    const [outerRing, ...holes] = coordinates;
+
+    return Boolean(outerRing?.length && isPointInRing(point, outerRing) && !holes.some((ring) => isPointInRing(point, ring)));
+  }
+
+  function isPointInParcelFeature(point, feature) {
+    const geometry = feature?.geometry;
+
+    if (geometry?.type === "Polygon") {
+      return isPointInPolygonCoordinates(point, geometry.coordinates);
+    }
+
+    if (geometry?.type === "MultiPolygon") {
+      return geometry.coordinates?.some((polygon) => isPointInPolygonCoordinates(point, polygon));
+    }
+
+    return false;
+  }
+
+  function getSelectedParcelFeatures(features, point) {
+    const selectedPnu = normalizePnu(point?.pnu);
+    const pnuMatches = selectedPnu ? features.filter((feature) => normalizePnu(feature.properties?.pnu) === selectedPnu) : [];
+
+    if (pnuMatches.length) {
+      return pnuMatches;
+    }
+
+    return features.filter((feature) => isPointInParcelFeature(point, feature));
+  }
+
+  function renderVworldParcelLayer(features, point, options = {}) {
+    const selectedPnu = normalizePnu(point?.pnu);
+    const highlightAll = Boolean(options.highlightAll);
+
+    if (vworldParcelLayer && vworldMap) {
+      vworldMap.removeLayer(vworldParcelLayer);
+      vworldParcelLayer = null;
+    }
+
+    vworldParcelLayer = window.L.geoJSON(
+      {
+        type: "FeatureCollection",
+        features,
+      },
+      {
+        style(feature) {
+          const featurePnu = normalizePnu(feature.properties?.pnu);
+          const isSelected = highlightAll || (featurePnu && selectedPnu && featurePnu === selectedPnu) || isPointInParcelFeature(point, feature);
+
+          return {
+            color: isSelected ? "#f2c76b" : "#67e8f9",
+            fillColor: isSelected ? "#f2c76b" : "#0f7f84",
+            fillOpacity: isSelected ? 0.34 : 0.16,
+            opacity: 0.95,
+            weight: isSelected ? 4 : 2,
+          };
+        },
+        onEachFeature(feature, layer) {
+          layer.bindPopup(getParcelPopup(feature.properties));
+
+          if (feature.properties?.jibun) {
+            layer.bindTooltip(feature.properties.jibun, {
+              direction: "center",
+              permanent: true,
+              className: "parcel-label",
+            });
+          }
+        },
+      }
+    ).addTo(vworldMap);
+
+    if (options.fitBounds) {
+      const bounds = vworldParcelLayer.getBounds();
+
+      if (bounds.isValid()) {
+        vworldMap.fitBounds(bounds.pad(0.28), { maxZoom: 19 });
+      }
+    }
+  }
+
+  async function loadSelectedParcelShape(point) {
+    if (!vworldMap || !window.L || !point) {
+      return;
+    }
+
+    clearVworldParcels();
+
+    try {
+      let selectedFeatures = [];
+
+      if (normalizePnu(point.pnu)) {
+        try {
+          const pnuFeatures = await searchVworldParcelByPnu(point.pnu);
+          selectedFeatures = getSelectedParcelFeatures(pnuFeatures, point);
+        } catch (error) {
+          selectedFeatures = [];
+        }
+      }
+
+      if (!selectedFeatures.length) {
+        const nearbyFeatures = await searchVworldParcels(point.latitude, point.longitude, 80);
+        selectedFeatures = getSelectedParcelFeatures(nearbyFeatures, point);
+      }
+
+      if (!selectedFeatures.length) {
+        updateAerialStatus(`${point.title} 번지의 필지 도형을 찾지 못했습니다. 50m도형으로 주변 필지를 확인해 주세요.`);
+        return;
+      }
+
+      renderVworldParcelLayer(selectedFeatures, point, { fitBounds: true, highlightAll: true });
+      updateAerialStatus(`${point.title} 번지 도형을 항공사진 위에 중첩했습니다.`);
+    } catch (error) {
+      updateAerialStatus("해당 번지 필지 도형을 불러오지 못했습니다. 잠시 후 다시 검색해 주세요.");
+    }
+  }
+
   async function loadNearbyParcelShapes(point) {
     if (!vworldMap || !window.L || !point) {
       return;
@@ -648,36 +825,7 @@ function initPortalTabs() {
         return;
       }
 
-      vworldParcelLayer = window.L.geoJSON(
-        {
-          type: "FeatureCollection",
-          features,
-        },
-        {
-          style(feature) {
-            const isSelected = feature.properties?.pnu && point.pnu && feature.properties.pnu === point.pnu;
-
-            return {
-              color: isSelected ? "#f2c76b" : "#67e8f9",
-              fillColor: isSelected ? "#f2c76b" : "#0f7f84",
-              fillOpacity: isSelected ? 0.32 : 0.16,
-              opacity: 0.95,
-              weight: isSelected ? 3 : 2,
-            };
-          },
-          onEachFeature(feature, layer) {
-            layer.bindPopup(getParcelPopup(feature.properties));
-
-            if (feature.properties?.jibun) {
-              layer.bindTooltip(feature.properties.jibun, {
-                direction: "center",
-                permanent: true,
-                className: "parcel-label",
-              });
-            }
-          },
-        }
-      ).addTo(vworldMap);
+      renderVworldParcelLayer(features, point);
 
       updateAerialStatus(`${point.title} 기준 50m 반경 필지 도형 ${features.length}개를 표시했습니다.`);
     } catch (error) {
@@ -909,7 +1057,7 @@ function initPortalTabs() {
         vworldMarker.openPopup();
       }
       status.textContent = `${point.title} 기준으로 V-World 항공사진을 표시 중입니다.`;
-      loadNearbyParcelShapes(point);
+      loadSelectedParcelShape(point);
     } catch (error) {
       status.textContent = "V-World 주소 검색 중 오류가 발생했습니다. 네트워크 상태를 확인해 주세요.";
     }
