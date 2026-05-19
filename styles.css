@@ -1229,14 +1229,6 @@ input {
   font-size: 1.06rem;
 }
 
-.page-title--guide {
-  padding-bottom: 22px;
-}
-
-.page-title--guide h1 {
-  margin: 0;
-}
-
 .section--compact {
   padding-top: clamp(34px, 5vw, 56px);
 }
