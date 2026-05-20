@@ -33,15 +33,14 @@
       <section class="page-title page-title--compact page-title--with-search" aria-labelledby="page-title">
         <h1 id="page-title">상담지식</h1>
         <form class="page-search page-search--compact" data-page-search>
-          <label for="knowledge-search-input">상담지식 검색</label>
+          <label class="visually-hidden" for="knowledge-search-input">상담지식 검색</label>
           <div class="page-search__row">
             <input id="knowledge-search-input" type="search" placeholder="예: 진입로, 조례, 지목, 등기" data-page-search-input />
-            <button class="button button--primary" type="submit">
+            <button class="button button--primary page-search__button" type="submit" aria-label="상담지식 찾기">
               <i data-lucide="search"></i>
-              찾기
             </button>
           </div>
-          <output data-page-search-status>검색어를 입력하면 상담지식 문구를 바로 찾습니다.</output>
+          <output class="visually-hidden" data-page-search-status></output>
         </form>
       </section>
 
