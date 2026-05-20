@@ -12,7 +12,8 @@ const portalData = {
   },
   aerial: {
     title: "항공사진",
-    type: "aerial",
+    url: "https://map.vworld.kr/map/dtkmap.do",
+    frameTitle: "브이월드 지도 페이지",
   },
   law: {
     title: "법령정보",
@@ -274,7 +275,7 @@ function initPortalTabs() {
           class="embedded-site__frame"
           title="${portal.frameTitle}"
           src="${iframeUrl}"
-          loading="lazy"
+          loading="eager"
           referrerpolicy="no-referrer-when-downgrade"
         ></iframe>
       </div>
