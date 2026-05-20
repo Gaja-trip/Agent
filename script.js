@@ -29,6 +29,7 @@ const vworldApiKey = "39B6F1DE-2D35-3582-9008-A537EF6A6BC4";
 const vworldParcelDataId = "LP_PA_CBND_BUBUN";
 const vworldParcelWfsDataIds = ["lp_pa_cbnd_bubun", "lt_c_landinfobasemap"];
 const vworldParcelRadiusMeters = 50;
+const vworldLotNumberMinZoom = 18;
 const landCategoryCodeLabels = {
   "01": "전",
   "02": "답",
@@ -1338,6 +1339,28 @@ function initPortalTabs() {
     vworldLotNumberLayer = null;
   }
 
+  function shouldShowVworldLotNumberLabels() {
+    return Boolean(vworldMap && vworldMap.getZoom() >= vworldLotNumberMinZoom);
+  }
+
+  function syncVworldLotNumberLayerVisibility() {
+    if (!vworldMap || !vworldLotNumberLayer) {
+      return;
+    }
+
+    const isVisible = vworldMap.hasLayer(vworldLotNumberLayer);
+    const shouldShow = shouldShowVworldLotNumberLabels();
+
+    if (shouldShow && !isVisible) {
+      vworldLotNumberLayer.addTo(vworldMap);
+      return;
+    }
+
+    if (!shouldShow && isVisible) {
+      vworldMap.removeLayer(vworldLotNumberLayer);
+    }
+  }
+
   function getVworldLotNumberHtml(lotNumber, jimok = "") {
     const lotText = String(lotNumber || "").trim();
     const jimokText = String(jimok || "").trim();
@@ -1384,7 +1407,8 @@ function initPortalTabs() {
       return 0;
     }
 
-    vworldLotNumberLayer = window.L.layerGroup(markers).addTo(vworldMap);
+    vworldLotNumberLayer = window.L.layerGroup(markers);
+    syncVworldLotNumberLayerVisibility();
     return markers.length;
   }
 
@@ -2086,6 +2110,7 @@ function initPortalTabs() {
       zoomControl: true,
     }).setView(defaultAerialCenter, 16);
     vworldMap.on("click", handleVworldMapClick);
+    vworldMap.on("zoomend", syncVworldLotNumberLayerVisibility);
 
     setVworldLayer(vworldCurrentLayer);
     bindVworldTools();
@@ -2153,6 +2178,7 @@ function initPortalTabs() {
     vworldMap = window.L.map(mapNode, {
       zoomControl: true,
     }).setView([36.4, 127.8], 7);
+    vworldMap.on("zoomend", syncVworldLotNumberLayerVisibility);
 
     setVworldLayer("satellite");
     setVworldCadastralLayer();
