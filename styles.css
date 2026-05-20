@@ -873,7 +873,7 @@ input {
   min-height: calc(100vh - 72px);
   flex-direction: column;
   margin: 0 auto;
-  padding: clamp(18px, 3vw, 32px) clamp(10px, 1.5vw, 16px) clamp(18px, 3vw, 32px);
+  padding: 0 clamp(10px, 1.5vw, 16px) clamp(18px, 3vw, 32px);
 }
 
 .home-landing h1,
@@ -891,7 +891,7 @@ input {
   display: flex;
   flex: 1;
   flex-direction: column;
-  margin-top: clamp(14px, 2.2vw, 24px);
+  margin-top: 0;
 }
 
 .parcel-search {
@@ -933,9 +933,14 @@ input {
 }
 
 .portal-tabs {
+  position: relative;
+  z-index: 8;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
+  padding: 10px 0 12px;
+  background: rgba(17, 70, 54, 0.96);
+  backdrop-filter: blur(12px);
 }
 
 .portal-tab {
@@ -970,7 +975,7 @@ input {
 .portal-panel {
   display: grid;
   flex: 1;
-  margin-top: 12px;
+  margin-top: 0;
   padding: 0;
   color: var(--ink);
   background: #fff;
@@ -1028,8 +1033,8 @@ input {
   width: 100%;
   min-width: 1180px;
   flex: 1;
-  height: calc(100vh - 238px);
-  min-height: 860px;
+  height: calc(100vh - 150px);
+  min-height: 820px;
   border: 0;
   background: #fff;
 }
@@ -1348,7 +1353,7 @@ input {
   }
 
   .embedded-site__frame {
-    height: calc(100vh - 310px);
+    height: calc(100vh - 190px);
     min-width: 1040px;
     min-height: 720px;
   }
