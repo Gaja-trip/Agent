@@ -1100,6 +1100,16 @@ input {
   box-shadow: var(--shadow);
 }
 
+.portal-view {
+  display: grid;
+  min-width: 0;
+  min-height: 0;
+}
+
+.portal-view[hidden] {
+  display: none;
+}
+
 .embedded-site {
   position: relative;
   display: flex;
@@ -1319,6 +1329,7 @@ input {
 }
 
 .vworld-tool-group button:hover,
+.vworld-tool-group button.is-active,
 .vworld-segment button:hover,
 .vworld-segment button.is-active {
   color: #fff;

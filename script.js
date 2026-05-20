@@ -223,10 +223,13 @@ function initPortalTabs() {
   const parcelInput = document.querySelector("[data-parcel-input]");
   const parcelStatus = document.querySelector("[data-parcel-status]");
   let activePortalKey = "eum";
+  const portalViews = new Map();
 
   if (!portalTabs.length || !portalPanel) {
     return;
   }
+
+  portalPanel.replaceChildren();
 
   function getParcelAddress() {
     return (parcelInput ? parcelInput.value : readStoredValue(parcelStorageKey)).trim();
@@ -351,7 +354,8 @@ function initPortalTabs() {
         <iframe
           class="embedded-site__frame"
           title="${portal.frameTitle}"
-          src="${iframeUrl}"
+          src="${escapeHtml(iframeUrl)}"
+          data-current-src="${escapeHtml(iframeUrl)}"
           loading="eager"
           allow="geolocation; fullscreen"
           referrerpolicy="no-referrer-when-downgrade"
@@ -471,6 +475,43 @@ function initPortalTabs() {
           <div class="aerial-results" data-aerial-results>
             <p>검색 결과를 선택하면 항공사진과 연속지적도가 함께 이동합니다.</p>
           </div>
+          <div class="vworld-tools" aria-label="항공사진 지도 도구">
+            <div class="vworld-tool-group">
+              <strong>지도</strong>
+              <div class="vworld-segment" role="group" aria-label="배경지도 선택">
+                <button type="button" class="is-active" data-vworld-layer="satellite">항공</button>
+                <button type="button" data-vworld-layer="base">일반</button>
+                <button type="button" data-vworld-layer="hybrid">라벨</button>
+              </div>
+            </div>
+            <div class="vworld-tool-group">
+              <strong>측정</strong>
+              <button type="button" data-vworld-action="distance">
+                <i data-lucide="ruler"></i>
+                거리재기
+              </button>
+              <button type="button" data-vworld-action="area">
+                <i data-lucide="pentagon"></i>
+                면적재기
+              </button>
+              <button type="button" data-vworld-action="clear">
+                <i data-lucide="eraser"></i>
+                초기화
+              </button>
+            </div>
+            <div class="vworld-tool-group">
+              <strong>보기</strong>
+              <button type="button" data-vworld-action="center">
+                <i data-lucide="crosshair"></i>
+                검색위치
+              </button>
+              <button type="button" data-vworld-action="toggle-marker">
+                <i data-lucide="map-pin"></i>
+                마커
+              </button>
+            </div>
+            <output class="vworld-measure" data-vworld-measure>거리 또는 면적을 선택한 뒤 도면을 클릭하세요.</output>
+          </div>
         </aside>
         <div class="vworld-map-shell">
           <div class="vworld-map" id="vworld-map" aria-label="V-World 항공사진과 연속지적도"></div>
@@ -483,6 +524,46 @@ function initPortalTabs() {
         </div>
       </div>
     `;
+  }
+
+  function getEmbeddedPortalUrl(portal) {
+    if (portal === portalData.map) {
+      return getMapUrl();
+    }
+
+    if (portal === portalData.eum) {
+      return getEumUrl();
+    }
+
+    return portal.url;
+  }
+
+  function ensurePortalView(portalKey) {
+    const portal = portalData[portalKey];
+    let view = portalViews.get(portalKey);
+
+    if (!view) {
+      view = document.createElement("div");
+      view.className = "portal-view";
+      view.dataset.portalView = portalKey;
+      view.hidden = true;
+      view.innerHTML = portal.type === "aerial" ? renderAerialPortalConnected() : renderEmbeddedPortal(portal);
+      portalPanel.append(view);
+      portalViews.set(portalKey, view);
+      return { view, isNew: true };
+    }
+
+    if (portal.type !== "aerial") {
+      const iframe = view.querySelector(".embedded-site__frame");
+      const nextUrl = getEmbeddedPortalUrl(portal);
+
+      if (iframe && iframe.dataset.currentSrc !== nextUrl) {
+        iframe.src = nextUrl;
+        iframe.dataset.currentSrc = nextUrl;
+      }
+    }
+
+    return { view, isNew: false };
   }
 
   function requestVworldJsonp(url) {
@@ -1998,6 +2079,9 @@ function initPortalTabs() {
     }
 
     vworldMeasureLayer = null;
+    document.querySelectorAll('[data-vworld-action="distance"], [data-vworld-action="area"]').forEach((button) => {
+      button.classList.remove("is-active");
+    });
     updateMeasureOutput("지도 도구를 선택하세요.");
   }
 
@@ -2068,6 +2152,9 @@ function initPortalTabs() {
   function setVworldMeasureMode(mode) {
     clearVworldMeasure();
     vworldMeasureMode = mode;
+    document.querySelectorAll('[data-vworld-action="distance"], [data-vworld-action="area"]').forEach((button) => {
+      button.classList.toggle("is-active", button.dataset.vworldAction === mode);
+    });
     updateMeasureOutput(mode === "distance" ? "거리재기: 지도에서 지점을 클릭하세요." : "면적재기: 지도에서 3개 이상 지점을 클릭하세요.");
   }
 
@@ -2226,6 +2313,7 @@ function initPortalTabs() {
       zoomControl: true,
       maxZoom: vworldMapMaxZoom,
     }).setView([36.4, 127.8], 7);
+    vworldMap.on("click", handleVworldMapClick);
     vworldMap.on("zoomend", syncVworldLotNumberLayerVisibility);
 
     setVworldLayer("satellite");
@@ -2262,6 +2350,7 @@ function initPortalTabs() {
   function setActivePortal(portalKey) {
     const portal = portalData[portalKey];
     activePortalKey = portalKey;
+    const { view, isNew } = ensurePortalView(portalKey);
 
     portalTabs.forEach((button) => {
       const isActive = button.dataset.portal === portalKey;
@@ -2269,13 +2358,28 @@ function initPortalTabs() {
       button.setAttribute("aria-selected", String(isActive));
     });
 
-    portalPanel.innerHTML = portal.type === "aerial" ? renderAerialPortalConnected() : renderEmbeddedPortal(portal);
+    portalViews.forEach((portalView, key) => {
+      portalView.hidden = key !== portalKey;
+    });
 
     refreshIcons();
 
     if (portal.type === "aerial") {
-      bindAerialSearchFormConnected();
-      window.requestAnimationFrame(() => initAerialMapConnected());
+      if (isNew || !view.dataset.aerialInitialized) {
+        bindAerialSearchFormConnected();
+        view.dataset.aerialInitialized = "true";
+        window.requestAnimationFrame(() => initAerialMapConnected());
+      } else {
+        const state = getParcelState();
+
+        if (vworldMap) {
+          window.requestAnimationFrame(() => vworldMap.invalidateSize());
+
+          if (Number.isFinite(state.latitude) && Number.isFinite(state.longitude)) {
+            moveVworldToResult(state);
+          }
+        }
+      }
     }
 
     if ((portalKey === "eum" || portalKey === "map") && getParcelAddress() && !getParcelState().pnu) {
