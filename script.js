@@ -24,10 +24,9 @@ const portalData = {
 const parcelStorageKey = "landInfoPortal.parcelAddress";
 const parcelStateStorageKey = "landInfoPortal.parcelState";
 const vworldApiKey = "39B6F1DE-2D35-3582-9008-A537EF6A6BC4";
+const vworldParcelDataId = "LP_PA_CBND_BUBUN";
+const vworldParcelRadiusMeters = 50;
 const defaultAerialCenter = [37.5665, 126.978];
-const localCadastralShpPath = "cadastral/AL_52800_LAND_INFO_BASE_MAP_202604/52800.shp";
-const localCadastralRadiusMeters = 50;
-const maxLocalCadastralFeatures = 800;
 let vworldMap = null;
 let vworldMarker = null;
 let vworldBaseLayer = null;
@@ -40,7 +39,6 @@ let vworldMarkerVisible = true;
 let vworldMeasureMode = "";
 let vworldMeasurePoints = [];
 let vworldMeasureLayer = null;
-let localCadastralDatasetPromise = null;
 
 const processSteps = {
   consult: {
@@ -189,12 +187,16 @@ function initPortalTabs() {
   }
 
   function getParcelAddress() {
-    return parcelInput ? parcelInput.value.trim() : readStoredValue(parcelStorageKey);
+    return (parcelInput ? parcelInput.value : readStoredValue(parcelStorageKey)).trim();
   }
 
-  function saveParcelAddress() {
-    const address = getParcelAddress();
+  function saveParcelAddress(nextAddress = getParcelAddress()) {
+    const address = String(nextAddress || "").trim();
     const savedState = readStoredJson(parcelStateStorageKey);
+
+    if (parcelInput && parcelInput.value !== address) {
+      parcelInput.value = address;
+    }
 
     writeStoredValue(parcelStorageKey, address);
 
@@ -263,12 +265,11 @@ function initPortalTabs() {
     });
   }
 
-  function renderEmbeddedPortal(portal, options = {}) {
+  function renderEmbeddedPortal(portal) {
     const iframeUrl = portal === portalData.map ? getMapUrl() : portal === portalData.eum ? getEumUrl() : portal.url;
 
     return `
       <div class="embedded-site">
-        ${options.showParcelContext ? renderSharedParcel() : ""}
         <iframe
           class="embedded-site__frame"
           title="${portal.frameTitle}"
@@ -615,7 +616,7 @@ function initPortalTabs() {
     const shapeType = view.getInt32(32, true);
 
     if (fileCode !== 9994 || (shapeType !== 5 && shapeType !== 15)) {
-      throw new Error("Unsupported cadastral shapefile");
+      throw new Error("Unsupported cadastral geometry file");
     }
 
     const records = [];
@@ -652,17 +653,7 @@ function initPortalTabs() {
   }
 
   async function getLocalCadastralDataset() {
-    if (!localCadastralDatasetPromise) {
-      localCadastralDatasetPromise = fetch(localCadastralShpPath).then(async (response) => {
-        if (!response.ok) {
-          throw new Error("Local cadastral shapefile fetch failed");
-        }
-
-        return parseLocalCadastralShp(await response.arrayBuffer());
-      });
-    }
-
-    return localCadastralDatasetPromise;
+    return { view: null, records: [] };
   }
 
   function parseLocalCadastralFeature(view, record, center, radiusMeters) {
@@ -735,59 +726,44 @@ function initPortalTabs() {
     };
   }
 
-  async function searchLocalCadastralFeatures(point, radiusMeters = localCadastralRadiusMeters) {
-    const dataset = await getLocalCadastralDataset();
-    const center = wgs84ToEpsg5186(point.latitude, point.longitude);
-    const extent = {
-      minX: center.x - radiusMeters,
-      minY: center.y - radiusMeters,
-      maxX: center.x + radiusMeters,
-      maxY: center.y + radiusMeters,
-    };
-    const features = [];
-
-    for (const record of dataset.records) {
-      if (!bboxIntersects(record.bbox, extent)) {
-        continue;
-      }
-
-      const feature = parseLocalCadastralFeature(dataset.view, record, center, radiusMeters);
-
-      if (feature) {
-        features.push(feature);
-      }
-
-      if (features.length >= maxLocalCadastralFeatures) {
-        break;
-      }
-    }
-
-    return features;
+  async function searchLocalCadastralFeatures() {
+    return [];
   }
 
-  function createVworldParcelWfsUrl() {
-    const url = new URL("https://api.vworld.kr/req/wfs");
+  function createVworldParcelDataUrl() {
+    const url = new URL("https://api.vworld.kr/req/data");
 
-    url.searchParams.set("key", vworldApiKey);
-    url.searchParams.set("SERVICE", "WFS");
-    url.searchParams.set("version", "1.1.0");
+    url.searchParams.set("service", "data");
     url.searchParams.set("request", "GetFeature");
-    url.searchParams.set("TYPENAME", "lt_c_landinfobasemap");
-    url.searchParams.set("OUTPUT", "text/javascript");
-    url.searchParams.set("SRSNAME", "EPSG:4326");
+    url.searchParams.set("version", "2.0");
+    url.searchParams.set("data", vworldParcelDataId);
+    url.searchParams.set("format", "json");
+    url.searchParams.set("errorformat", "json");
+    url.searchParams.set("crs", "EPSG:4326");
+    url.searchParams.set("key", vworldApiKey);
+    url.searchParams.set("domain", window.location.origin);
 
     return url;
   }
 
-  async function searchVworldParcels(latitude, longitude, radiusMeters = 50) {
-    const bbox = getRadiusBbox(latitude, longitude, radiusMeters);
-    const url = createVworldParcelWfsUrl();
+  function extractVworldFeatures(data) {
+    if (data?.response?.status === "ERROR") {
+      throw new Error(data.response?.error?.text || "V-World data API error");
+    }
 
-    url.searchParams.set("BBOX", bbox.join(","));
-    url.searchParams.set("MAXFEATURES", "120");
+    return data?.response?.result?.featureCollection?.features || data?.response?.result?.features || data?.features || [];
+  }
+
+  async function searchVworldParcels(latitude, longitude, radiusMeters = vworldParcelRadiusMeters) {
+    const bbox = getRadiusBbox(latitude, longitude, radiusMeters);
+    const url = createVworldParcelDataUrl();
+
+    url.searchParams.set("geomFilter", `BOX(${bbox.join(",")})`);
+    url.searchParams.set("size", "200");
+    url.searchParams.set("page", "1");
 
     const data = await requestVworldJson(url);
-    return data?.features || [];
+    return extractVworldFeatures(data);
   }
 
   async function searchVworldParcelByPnu(pnu) {
@@ -797,13 +773,14 @@ function initPortalTabs() {
       return [];
     }
 
-    const url = createVworldParcelWfsUrl();
+    const url = createVworldParcelDataUrl();
 
-    url.searchParams.set("CQL_FILTER", `pnu='${selectedPnu}'`);
-    url.searchParams.set("MAXFEATURES", "20");
+    url.searchParams.set("attrFilter", `pnu:=:${selectedPnu}`);
+    url.searchParams.set("size", "20");
+    url.searchParams.set("page", "1");
 
     const data = await requestVworldJson(url);
-    return data?.features || [];
+    return extractVworldFeatures(data);
   }
 
   async function resolveParcelAddress() {
@@ -849,15 +826,18 @@ function initPortalTabs() {
         parcelInput.value = aerialInput.value;
       }
 
-      saveParcelAddress();
+      saveParcelAddress(aerialInput.value);
     });
 
     aerialForm.addEventListener("submit", async (event) => {
       event.preventDefault();
+      const address = aerialInput.value.trim();
+
       if (parcelInput) {
-        parcelInput.value = aerialInput.value.trim();
+        parcelInput.value = address;
       }
-      saveParcelAddress();
+
+      saveParcelAddress(address);
       await resolveParcelAddress();
       setActivePortal("aerial");
     });
@@ -957,11 +937,31 @@ function initPortalTabs() {
     vworldRadiusLayer = null;
   }
 
-  function getParcelPopup(properties = {}) {
-    if (properties.source === "local-cadastral") {
-      return "연속지적도<br>주소 기준 50m 이내";
+  function getFeatureProperty(properties = {}, names = []) {
+    for (const name of names) {
+      if (properties[name] !== undefined && properties[name] !== null && properties[name] !== "") {
+        return properties[name];
+      }
     }
 
+    const entries = Object.entries(properties);
+
+    for (const name of names) {
+      const match = entries.find(([key, value]) => key.toLowerCase() === name.toLowerCase() && value !== undefined && value !== null && value !== "");
+
+      if (match) {
+        return match[1];
+      }
+    }
+
+    return "";
+  }
+
+  function getFeaturePnu(feature) {
+    return normalizePnu(getFeatureProperty(feature?.properties, ["pnu", "PNU"]));
+  }
+
+  function getParcelPopup(properties = {}) {
     const lines = [
       properties.jibun ? `지번: ${properties.jibun}` : "",
       properties.pnu ? `PNU: ${properties.pnu}` : "",
@@ -1033,7 +1033,7 @@ function initPortalTabs() {
 
   function getSelectedParcelFeatures(features, point) {
     const selectedPnu = normalizePnu(point?.pnu);
-    const pnuMatches = selectedPnu ? features.filter((feature) => normalizePnu(feature.properties?.pnu) === selectedPnu) : [];
+    const pnuMatches = selectedPnu ? features.filter((feature) => getFeaturePnu(feature) === selectedPnu) : [];
 
     if (pnuMatches.length) {
       return pnuMatches;
@@ -1058,19 +1058,8 @@ function initPortalTabs() {
       },
       {
         style(feature) {
-          const isLocalCadastral = feature.properties?.source === "local-cadastral";
-          const featurePnu = normalizePnu(feature.properties?.pnu);
+          const featurePnu = getFeaturePnu(feature);
           const isSelected = highlightAll || (featurePnu && selectedPnu && featurePnu === selectedPnu) || isPointInParcelFeature(point, feature);
-
-          if (isLocalCadastral) {
-            return {
-              color: "#ffd84d",
-              fillColor: "#ffd84d",
-              fillOpacity: 0.08,
-              opacity: 1,
-              weight: 2.5,
-            };
-          }
 
           return {
             color: isSelected ? "#f2c76b" : "#67e8f9",
@@ -1083,8 +1072,10 @@ function initPortalTabs() {
         onEachFeature(feature, layer) {
           layer.bindPopup(getParcelPopup(feature.properties));
 
-          if (feature.properties?.jibun) {
-            layer.bindTooltip(feature.properties.jibun, {
+          const jibun = getFeatureProperty(feature.properties, ["jibun", "JIBUN", "addr", "ADDR"]);
+
+          if (jibun) {
+            layer.bindTooltip(jibun, {
               direction: "center",
               permanent: true,
               className: "parcel-label",
@@ -1149,7 +1140,7 @@ function initPortalTabs() {
     const center = [point.latitude, point.longitude];
 
     vworldRadiusLayer = window.L.circle(center, {
-      radius: 50,
+      radius: vworldParcelRadiusMeters,
       color: "#f2c76b",
       fillColor: "#f2c76b",
       fillOpacity: 0.08,
@@ -1158,19 +1149,19 @@ function initPortalTabs() {
     }).addTo(vworldMap);
 
     try {
-      updateAerialStatus(`${point.title} 기준 50m 이내 연속지적도를 불러오는 중입니다.`);
-      const features = await searchLocalCadastralFeatures(point, localCadastralRadiusMeters);
+      updateAerialStatus(`${point.title} 기준 ${vworldParcelRadiusMeters}m 이내 연속지적도를 불러오는 중입니다.`);
+      const features = await searchVworldParcels(point.latitude, point.longitude, vworldParcelRadiusMeters);
 
       if (!features.length) {
-        updateAerialStatus(`${point.title} 기준 50m 이내 연속지적도 도형을 찾지 못했습니다.`);
+        updateAerialStatus(`${point.title} 기준 ${vworldParcelRadiusMeters}m 이내 연속지적도 도형을 찾지 못했습니다.`);
         return;
       }
 
       renderVworldParcelLayer(features, point, { highlightAll: true });
 
-      updateAerialStatus(`${point.title} 기준 50m 이내 연속지적도 ${features.length}개를 표시했습니다.`);
+      updateAerialStatus(`${point.title} 기준 ${vworldParcelRadiusMeters}m 이내 연속지적도 ${features.length}개를 표시했습니다.`);
     } catch (error) {
-      updateAerialStatus("cadastral 폴더의 연속지적도 SHP를 불러오지 못했습니다. 로컬 서버에서 실행 중인지 확인해 주세요.");
+      updateAerialStatus("V-World 연속지적도 API를 불러오지 못했습니다. API 키 또는 도메인 설정을 확인해 주세요.");
     }
   }
 
@@ -1418,11 +1409,9 @@ function initPortalTabs() {
       button.setAttribute("aria-selected", String(isActive));
     });
 
-    portalPanel.innerHTML =
-      portal.type === "aerial" ? renderAerialPortal() : renderEmbeddedPortal(portal, { showParcelContext: portalKey === "eum" || portalKey === "map" });
+    portalPanel.innerHTML = portal.type === "aerial" ? renderAerialPortal() : renderEmbeddedPortal(portal);
 
     refreshIcons();
-    syncSharedParcelText();
 
     if (portal.type === "aerial") {
       bindAerialSearchForm();
@@ -1442,7 +1431,6 @@ function initPortalTabs() {
     parcelInput.value = readStoredValue(parcelStorageKey);
     parcelInput.addEventListener("input", () => {
       saveParcelAddress();
-      syncSharedParcelText();
     });
   }
 

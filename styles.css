@@ -75,9 +75,9 @@ input {
 
 .brand__mark {
   display: grid;
-  flex: 0 0 42px;
-  width: 42px;
-  height: 42px;
+  flex: 0 0 48px;
+  width: 48px;
+  height: 48px;
   place-items: center;
   color: #fff;
   background: var(--green);
@@ -86,7 +86,14 @@ input {
 
 .brand strong {
   display: block;
-  font-size: 1.03rem;
+  font-size: clamp(1.2rem, 1.9vw, 1.48rem);
+  line-height: 1.25;
+}
+
+.brand small {
+  display: block;
+  color: var(--muted);
+  font-size: 0.9rem;
   line-height: 1.25;
 }
 
