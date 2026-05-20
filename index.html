@@ -45,6 +45,23 @@
         <div class="home-landing__overlay" aria-hidden="true"></div>
         <div class="home-landing__content">
           <div class="portal-workspace">
+            <form class="parcel-search" data-parcel-form>
+              <label for="parcel-search-input">주소검색</label>
+              <input
+                id="parcel-search-input"
+                type="search"
+                name="parcelAddress"
+                data-parcel-input
+                placeholder="예: 서울특별시 중구 세종대로 110"
+                autocomplete="street-address"
+              />
+              <button class="button button--primary" type="submit">
+                <i data-lucide="search"></i>
+                검색
+              </button>
+              <output class="parcel-search__status" data-parcel-status>주소를 입력하면 토지이음·토지이음지도·항공사진이 같은 번지로 이동합니다.</output>
+            </form>
+
             <div class="portal-tabs" role="tablist" aria-label="토지정보 연결 서비스">
               <button class="portal-tab is-active" type="button" role="tab" aria-selected="true" data-portal="eum">
                 <i data-lucide="layers"></i>

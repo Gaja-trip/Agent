@@ -221,6 +221,7 @@ function initPortalTabs() {
   const portalPanel = document.querySelector("[data-portal-panel]");
   const parcelForm = document.querySelector("[data-parcel-form]");
   const parcelInput = document.querySelector("[data-parcel-input]");
+  const parcelStatus = document.querySelector("[data-parcel-status]");
   let activePortalKey = "eum";
 
   if (!portalTabs.length || !portalPanel) {
@@ -333,6 +334,12 @@ function initPortalTabs() {
     document.querySelectorAll("[data-shared-parcel]").forEach((target) => {
       target.textContent = displayText;
     });
+  }
+
+  function updateParcelStatus(message) {
+    if (parcelStatus) {
+      parcelStatus.textContent = message;
+    }
   }
 
   function renderEmbeddedPortal(portal) {
@@ -2256,10 +2263,6 @@ function initPortalTabs() {
     const portal = portalData[portalKey];
     activePortalKey = portalKey;
 
-    if (parcelForm) {
-      parcelForm.hidden = portalKey === "aerial" || portalKey === "law";
-    }
-
     portalTabs.forEach((button) => {
       const isActive = button.dataset.portal === portalKey;
       button.classList.toggle("is-active", isActive);
@@ -2295,8 +2298,28 @@ function initPortalTabs() {
     parcelForm.addEventListener("submit", async (event) => {
       event.preventDefault();
       saveParcelAddress();
-      await resolveParcelAddress();
-      setActivePortal(activePortalKey);
+      const address = getParcelAddress();
+
+      if (!address) {
+        updateParcelStatus("주소를 입력해 주세요.");
+        return;
+      }
+
+      updateParcelStatus(`"${address}" 주소를 확인하는 중입니다.`);
+
+      try {
+        const state = await resolveParcelAddress();
+
+        if (state?.pnu || (Number.isFinite(state?.latitude) && Number.isFinite(state?.longitude))) {
+          updateParcelStatus(`${state.title || address} 기준으로 토지이음·토지이음지도·항공사진을 연결했습니다.`);
+        } else {
+          updateParcelStatus(`"${address}" 검색 결과를 찾지 못했습니다. 지번이나 도로명을 더 정확히 입력해 주세요.`);
+        }
+
+        setActivePortal(activePortalKey);
+      } catch (error) {
+        updateParcelStatus("주소 검색 API를 불러오지 못했습니다. 네트워크 상태와 API 키를 확인해 주세요.");
+      }
     });
   }
 
@@ -2468,9 +2491,51 @@ function initGuidePrintButtons() {
   });
 }
 
+function initPageSearch() {
+  const forms = document.querySelectorAll("[data-page-search]");
+
+  forms.forEach((form) => {
+    const input = form.querySelector("[data-page-search-input]");
+    const status = form.querySelector("[data-page-search-status]");
+    const items = [...document.querySelectorAll("[data-search-item]")];
+
+    if (!input || !items.length) {
+      return;
+    }
+
+    const normalize = (value) => String(value || "").trim().toLowerCase();
+
+    function applySearch() {
+      const query = normalize(input.value);
+      let visibleCount = 0;
+
+      items.forEach((item) => {
+        const matches = !query || normalize(item.textContent).includes(query);
+        item.hidden = !matches;
+
+        if (matches) {
+          visibleCount += 1;
+        }
+      });
+
+      if (status) {
+        status.textContent = query ? `${visibleCount}건을 찾았습니다.` : "검색어를 입력하면 문구를 바로 찾습니다.";
+      }
+    }
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      applySearch();
+    });
+
+    input.addEventListener("input", applySearch);
+  });
+}
+
 initPortalTabs();
 initProcessSteps();
 initReadinessChecklist();
 initGuidePages();
 initGuidePrintButtons();
+initPageSearch();
 refreshIcons();

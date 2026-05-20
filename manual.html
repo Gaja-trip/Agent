@@ -36,8 +36,22 @@
         <p>토지이음, 토지이음 지도, V-World 항공사진, 법령정보를 같은 지번 기준으로 확인하는 순서입니다.</p>
       </section>
 
+      <section class="section section--compact section--search">
+        <form class="page-search" data-page-search>
+          <label for="manual-search-input">매뉴얼 검색</label>
+          <div class="page-search__row">
+            <input id="manual-search-input" type="search" placeholder="예: 가상계좌, 접수일, 항공사진" data-page-search-input />
+            <button class="button button--primary" type="submit">
+              <i data-lucide="search"></i>
+              찾기
+            </button>
+          </div>
+          <output data-page-search-status>검색어를 입력하면 매뉴얼 문구를 바로 찾습니다.</output>
+        </form>
+      </section>
+
       <section class="section section--compact manual-workday" aria-labelledby="office-start-title">
-        <article class="manual-step-card">
+        <article class="manual-step-card" data-search-item>
           <div class="manual-step-card__header">
             <span class="manual-step-card__number">1</span>
             <div>
@@ -65,7 +79,7 @@
 
       <section class="section section--compact">
         <div class="source-grid source-grid--manual">
-          <article class="source-card">
+          <article class="source-card" data-search-item>
             <div class="source-card__icon">
               <i data-lucide="search"></i>
             </div>
@@ -73,7 +87,7 @@
             <p>메인 화면의 토지이음 기준 지번/주소 입력칸에 상담 대상 토지의 주소나 지번을 입력하고 적용합니다.</p>
           </article>
 
-          <article class="source-card">
+          <article class="source-card" data-search-item>
             <div class="source-card__icon source-card__icon--amber">
               <i data-lucide="map-pinned"></i>
             </div>
@@ -81,7 +95,7 @@
             <p>토지이음과 토지이음 지도 탭에서 같은 지번이 표시되는지 확인하고, 용도지역과 주변 현황을 대조합니다.</p>
           </article>
 
-          <article class="source-card">
+          <article class="source-card" data-search-item>
             <div class="source-card__icon source-card__icon--rust">
               <i data-lucide="satellite"></i>
             </div>
@@ -89,7 +103,7 @@
             <p>항공사진 탭에서 같은 지번의 실제 현장 형태와 접근 조건을 확인합니다.</p>
           </article>
 
-          <article class="source-card">
+          <article class="source-card" data-search-item>
             <div class="source-card__icon">
               <i data-lucide="book-open-check"></i>
             </div>
