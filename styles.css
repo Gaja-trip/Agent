@@ -1135,99 +1135,8 @@ input {
 }
 
 .embedded-site--eum .embedded-site__frame {
-  min-width: 1360px;
-  min-height: 940px;
-}
-
-.eum-legend-assist {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  z-index: 4;
-  width: min(330px, calc(100% - 32px));
-  color: #243a33;
-  background: rgba(255, 255, 255, 0.96);
-  border: 1px solid rgba(31, 107, 85, 0.2);
-  border-radius: 8px;
-  box-shadow: 0 16px 42px rgba(18, 42, 35, 0.18);
-}
-
-.eum-legend-assist summary {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 46px;
-  padding: 10px 13px;
-  color: #17382f;
-  cursor: pointer;
-  font-weight: 950;
-  list-style: none;
-}
-
-.eum-legend-assist summary::-webkit-details-marker {
-  display: none;
-}
-
-.eum-legend-assist summary svg {
-  width: 18px;
-  height: 18px;
-  color: var(--green);
-  stroke-width: 2.5;
-}
-
-.eum-legend-assist__grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px 10px;
-  padding: 0 13px 12px;
-}
-
-.eum-legend-assist__grid span {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  min-width: 0;
-  color: #34453f;
-  font-size: 0.82rem;
-  font-weight: 850;
-}
-
-.eum-legend-assist__grid i {
-  display: inline-block;
-  flex: 0 0 18px;
-  width: 18px;
-  height: 14px;
-  background: var(--legend-color);
-  border: 1px solid rgba(31, 42, 39, 0.28);
-  border-radius: 3px;
-}
-
-.eum-legend-assist__grid .eum-legend-assist__line {
-  height: 0;
-  background: transparent;
-  border: 0;
-  border-top: 3px solid #e33d3d;
-  border-radius: 0;
-}
-
-.eum-legend-assist__grid .eum-legend-assist__dash {
-  height: 0;
-  background: transparent;
-  border: 0;
-  border-top: 3px dashed #365fb5;
-  border-radius: 0;
-}
-
-.eum-legend-assist p {
-  margin: 0;
-  padding: 10px 13px 12px;
-  color: var(--muted);
-  background: #f6faf8;
-  border-top: 1px solid var(--line);
-  border-radius: 0 0 8px 8px;
-  font-size: 0.78rem;
-  font-weight: 800;
-  line-height: 1.4;
+  min-width: 1440px;
+  min-height: 1080px;
 }
 
 .aerial-portal {
@@ -1686,6 +1595,11 @@ input {
     height: calc(100vh - 190px);
     min-width: 1040px;
     min-height: 720px;
+  }
+
+  .embedded-site--eum .embedded-site__frame {
+    min-width: 1280px;
+    min-height: 960px;
   }
 
   .aerial-portal {

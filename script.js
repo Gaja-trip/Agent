@@ -270,17 +270,46 @@ function initPortalTabs() {
     return portalData.map.url;
   }
 
+  function getPnuParts(pnu) {
+    const normalized = normalizePnu(pnu);
+
+    if (normalized.length !== 19) {
+      return null;
+    }
+
+    const mainNumber = Number(normalized.slice(11, 15));
+    const subNumber = Number(normalized.slice(15, 19));
+
+    return {
+      landGbn: normalized.slice(10, 11),
+      bobn: mainNumber ? String(mainNumber) : "",
+      bubn: subNumber ? normalized.slice(15, 19) : "",
+    };
+  }
+
   function getEumUrl() {
     const state = getParcelState();
 
     if (state.pnu) {
       const url = new URL(portalData.eum.landUseUrl);
+      const pnuParts = getPnuParts(state.pnu);
+
       url.searchParams.set("pnu", state.pnu);
+      url.searchParams.set("bobn", pnuParts?.bobn || "");
+      url.searchParams.set("bubn", pnuParts?.bubn || "");
+      url.searchParams.set("landGbn", pnuParts?.landGbn || "");
+      url.searchParams.set("chk", "0");
+      url.searchParams.set("scale", "");
       url.searchParams.set("isNoScr", "script");
       url.searchParams.set("mode", "search");
       url.searchParams.set("selGbn", "umd");
       url.searchParams.set("s_type", "1");
       url.searchParams.set("add", "land");
+
+      if (state.title || state.query || state.subtitle) {
+        url.searchParams.set("fullAddress", state.title || state.query || state.subtitle);
+      }
+
       return url.toString();
     }
 
@@ -306,55 +335,12 @@ function initPortalTabs() {
     });
   }
 
-  function renderEumLegendAssist() {
-    const legendItems = [
-      ["#f6d17c", "주거지역"],
-      ["#ef8a93", "상업지역"],
-      ["#c7a8da", "공업지역"],
-      ["#a8d28d", "녹지지역"],
-      ["#f0cf9d", "관리지역"],
-      ["#cce6ad", "농림지역"],
-      ["#9fc9e8", "자연환경보전지역"],
-    ];
-
-    return `
-      <details class="eum-legend-assist" open>
-        <summary>
-          <i data-lucide="list-tree"></i>
-          토지이음 범례
-        </summary>
-        <div class="eum-legend-assist__grid" aria-label="토지이음 보조 범례">
-          ${legendItems
-            .map(
-              ([color, label]) => `
-                <span>
-                  <i style="--legend-color: ${color}"></i>
-                  ${label}
-                </span>
-              `
-            )
-            .join("")}
-          <span>
-            <i class="eum-legend-assist__line"></i>
-            지구·구역선
-          </span>
-          <span>
-            <i class="eum-legend-assist__dash"></i>
-            시설·경계선
-          </span>
-        </div>
-        <p>내부 범례가 작거나 잘릴 때 상담용 참고 범례로 확인하세요.</p>
-      </details>
-    `;
-  }
-
   function renderEmbeddedPortal(portal) {
     const iframeUrl = portal === portalData.map ? getMapUrl() : portal === portalData.eum ? getEumUrl() : portal.url;
     const isEumPortal = portal === portalData.eum;
 
     return `
       <div class="embedded-site${isEumPortal ? " embedded-site--eum" : ""}">
-        ${isEumPortal ? renderEumLegendAssist() : ""}
         <iframe
           class="embedded-site__frame"
           title="${portal.frameTitle}"
@@ -563,11 +549,15 @@ function initPortalTabs() {
       const pnu = String(item?.id || "").match(/^\d{19}$/) ? String(item.id) : "";
 
       if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
+        const roadAddress = item?.address?.road || "";
+        const parcelAddress = item?.address?.parcel || "";
+
         return {
           latitude,
           longitude,
           pnu,
-          title: item.title || item.address?.parcel || item.address?.road || query,
+          title: item.title || parcelAddress || roadAddress || query,
+          subtitle: [roadAddress, parcelAddress, item?.category].filter(Boolean).join(" · "),
         };
       }
     }
