@@ -306,11 +306,55 @@ function initPortalTabs() {
     });
   }
 
-  function renderEmbeddedPortal(portal) {
-    const iframeUrl = portal === portalData.map ? getMapUrl() : portal === portalData.eum ? getEumUrl() : portal.url;
+  function renderEumLegendAssist() {
+    const legendItems = [
+      ["#f6d17c", "주거지역"],
+      ["#ef8a93", "상업지역"],
+      ["#c7a8da", "공업지역"],
+      ["#a8d28d", "녹지지역"],
+      ["#f0cf9d", "관리지역"],
+      ["#cce6ad", "농림지역"],
+      ["#9fc9e8", "자연환경보전지역"],
+    ];
 
     return `
-      <div class="embedded-site">
+      <details class="eum-legend-assist" open>
+        <summary>
+          <i data-lucide="list-tree"></i>
+          토지이음 범례
+        </summary>
+        <div class="eum-legend-assist__grid" aria-label="토지이음 보조 범례">
+          ${legendItems
+            .map(
+              ([color, label]) => `
+                <span>
+                  <i style="--legend-color: ${color}"></i>
+                  ${label}
+                </span>
+              `
+            )
+            .join("")}
+          <span>
+            <i class="eum-legend-assist__line"></i>
+            지구·구역선
+          </span>
+          <span>
+            <i class="eum-legend-assist__dash"></i>
+            시설·경계선
+          </span>
+        </div>
+        <p>내부 범례가 작거나 잘릴 때 상담용 참고 범례로 확인하세요.</p>
+      </details>
+    `;
+  }
+
+  function renderEmbeddedPortal(portal) {
+    const iframeUrl = portal === portalData.map ? getMapUrl() : portal === portalData.eum ? getEumUrl() : portal.url;
+    const isEumPortal = portal === portalData.eum;
+
+    return `
+      <div class="embedded-site${isEumPortal ? " embedded-site--eum" : ""}">
+        ${isEumPortal ? renderEumLegendAssist() : ""}
         <iframe
           class="embedded-site__frame"
           title="${portal.frameTitle}"
