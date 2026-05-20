@@ -1324,19 +1324,34 @@ input {
 
 .vworld-lot-number-label span {
   display: inline-grid;
-  min-width: 34px;
-  min-height: 24px;
+  min-width: 46px;
+  min-height: 32px;
   place-items: center;
-  padding: 2px 8px;
+  padding: 3px 7px;
   color: #123c30;
-  background: rgba(255, 255, 255, 0.9);
-  border: 2px solid #f2c76b;
-  border-radius: 999px;
-  box-shadow: 0 4px 14px rgba(18, 42, 35, 0.18);
-  font-size: 0.86rem;
-  font-weight: 950;
-  line-height: 1;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(18, 60, 48, 0.34);
+  border-radius: 6px;
+  box-shadow: 0 3px 10px rgba(18, 42, 35, 0.14);
+  line-height: 1.05;
   white-space: nowrap;
+}
+
+.vworld-lot-number-label b,
+.vworld-lot-number-label small {
+  display: block;
+  line-height: 1.05;
+}
+
+.vworld-lot-number-label b {
+  font-size: 0.78rem;
+  font-weight: 950;
+}
+
+.vworld-lot-number-label small {
+  color: #45685e;
+  font-size: 0.66rem;
+  font-weight: 900;
 }
 
 .page-main {

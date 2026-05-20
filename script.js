@@ -27,7 +27,38 @@ const parcelStorageKey = "landInfoPortal.parcelAddress";
 const parcelStateStorageKey = "landInfoPortal.parcelState";
 const vworldApiKey = "39B6F1DE-2D35-3582-9008-A537EF6A6BC4";
 const vworldParcelDataId = "LP_PA_CBND_BUBUN";
+const vworldParcelWfsDataIds = ["lp_pa_cbnd_bubun", "lt_c_landinfobasemap"];
 const vworldParcelRadiusMeters = 50;
+const landCategoryCodeLabels = {
+  "01": "전",
+  "02": "답",
+  "03": "과수원",
+  "04": "목장용지",
+  "05": "임야",
+  "06": "광천지",
+  "07": "염전",
+  "08": "대",
+  "09": "공장용지",
+  "10": "학교용지",
+  "11": "주차장",
+  "12": "주유소용지",
+  "13": "창고용지",
+  "14": "도로",
+  "15": "철도용지",
+  "16": "제방",
+  "17": "하천",
+  "18": "구거",
+  "19": "유지",
+  "20": "양어장",
+  "21": "수도용지",
+  "22": "공원",
+  "23": "체육용지",
+  "24": "유원지",
+  "25": "종교용지",
+  "26": "사적지",
+  "27": "묘지",
+  "28": "잡종지",
+};
 const defaultAerialCenter = [37.5665, 126.978];
 let vworldMap = null;
 let vworldMarker = null;
@@ -36,10 +67,11 @@ let vworldHybridLayer = null;
 let vworldParcelLayer = null;
 let vworldRadiusLayer = null;
 let vworldCadastralLayer = null;
-let vworldLotNumberMarker = null;
+let vworldLotNumberLayer = null;
 let vworldCurrentLayer = "satellite";
 let vworldCurrentPoint = null;
 let vworldSearchResults = [];
+let vworldLabelRequestId = 0;
 let vworldMarkerVisible = true;
 let vworldMeasureMode = "";
 let vworldMeasurePoints = [];
@@ -887,6 +919,24 @@ function initPortalTabs() {
     return url;
   }
 
+  function createVworldParcelWfsUrl(layerName, latitude, longitude, radiusMeters) {
+    const bbox = getRadiusBbox(latitude, longitude, radiusMeters);
+    const url = new URL("https://api.vworld.kr/req/wfs");
+
+    url.searchParams.set("service", "WFS");
+    url.searchParams.set("request", "GetFeature");
+    url.searchParams.set("version", "1.1.0");
+    url.searchParams.set("typename", layerName);
+    url.searchParams.set("srsname", "EPSG:4326");
+    url.searchParams.set("bbox", bbox.join(","));
+    url.searchParams.set("maxfeatures", "200");
+    url.searchParams.set("output", "text/javascript");
+    url.searchParams.set("key", vworldApiKey);
+    url.searchParams.set("domain", window.location.origin);
+
+    return url;
+  }
+
   function extractVworldFeatures(data) {
     if (data?.response?.status === "ERROR") {
       throw new Error(data.response?.error?.text || "V-World data API error");
@@ -903,8 +953,41 @@ function initPortalTabs() {
     url.searchParams.set("size", "200");
     url.searchParams.set("page", "1");
 
-    const data = await requestVworldJson(url);
-    return extractVworldFeatures(data);
+    try {
+      const data = await requestVworldJson(url);
+      return extractVworldFeatures(data);
+    } catch (dataApiError) {
+      const wfsFeatures = await searchVworldParcelWfsFeatures(latitude, longitude, radiusMeters);
+
+      if (wfsFeatures.length) {
+        return wfsFeatures;
+      }
+
+      throw dataApiError;
+    }
+  }
+
+  async function searchVworldParcelWfsFeatures(latitude, longitude, radiusMeters = vworldParcelRadiusMeters) {
+    const errors = [];
+
+    for (const layerName of vworldParcelWfsDataIds) {
+      try {
+        const data = await requestVworldJson(createVworldParcelWfsUrl(layerName, latitude, longitude, radiusMeters));
+        const features = extractVworldFeatures(data);
+
+        if (features.length) {
+          return features;
+        }
+      } catch (error) {
+        errors.push(error);
+      }
+    }
+
+    if (errors.length) {
+      throw errors[0];
+    }
+
+    return [];
   }
 
   async function searchVworldParcelByPnu(pnu) {
@@ -995,6 +1078,7 @@ function initPortalTabs() {
     vworldMarkerVisible = true;
     vworldMap.setView([result.latitude, result.longitude], result.pnu ? 19 : 17);
     syncVworldMarker();
+    clearVworldParcels();
     syncVworldLotNumberLabel(vworldCurrentPoint);
     setVworldCadastralLayer();
 
@@ -1002,7 +1086,8 @@ function initPortalTabs() {
       vworldMarker.openPopup();
     }
 
-    updateAerialStatus(`${title} 위치로 이동했습니다. 연속지적도만 항공사진 위에 표시합니다.`);
+    updateAerialStatus(`${title} 위치로 이동했습니다. 반경 ${vworldParcelRadiusMeters}m 이내 지번과 지목을 불러오는 중입니다.`);
+    loadNearbyParcelNumberLabels(vworldCurrentPoint);
   }
 
   function bindAerialSearchFormConnected() {
@@ -1229,37 +1314,102 @@ function initPortalTabs() {
     return `${isMountain ? "산 " : ""}${mainNumber}${subNumber ? `-${subNumber}` : ""}`;
   }
 
-  function getLotNumberLabel(point) {
-    return getLotNumberFromPnu(point?.pnu) || String(point?.title || "").match(/산?\s?\d+(?:-\d+)?/)?.[0] || "";
+  function getCleanLotNumber(value) {
+    const text = String(value || "").trim();
+
+    if (!text) {
+      return "";
+    }
+
+    const matches = text.match(/산\s*\d+(?:-\d+)?|\d+(?:-\d+)?/g);
+
+    return matches?.length ? matches[matches.length - 1].replace(/\s+/g, " ") : text;
   }
 
-  function syncVworldLotNumberLabel(point) {
-    if (!vworldMap || !window.L || !point) {
-      return;
+  function getLotNumberLabel(point) {
+    return getLotNumberFromPnu(point?.pnu) || getCleanLotNumber(point?.title);
+  }
+
+  function clearVworldLotNumberLabels() {
+    if (vworldLotNumberLayer && vworldMap) {
+      vworldMap.removeLayer(vworldLotNumberLayer);
     }
 
-    if (vworldLotNumberMarker) {
-      vworldMap.removeLayer(vworldLotNumberMarker);
-      vworldLotNumberMarker = null;
+    vworldLotNumberLayer = null;
+  }
+
+  function getVworldLotNumberHtml(lotNumber, jimok = "") {
+    const lotText = String(lotNumber || "").trim();
+    const jimokText = String(jimok || "").trim();
+
+    if (!lotText) {
+      return "";
     }
 
-    const lotNumber = getLotNumberLabel(point);
+    return `<span><b>${escapeHtml(lotText)}</b>${jimokText ? `<small>${escapeHtml(jimokText)}</small>` : ""}</span>`;
+  }
 
-    if (!lotNumber) {
-      return;
+  function createVworldLotNumberMarker(label) {
+    const latitude = Number(label?.latitude);
+    const longitude = Number(label?.longitude);
+    const html = getVworldLotNumberHtml(label?.lotNumber, label?.jimok);
+
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude) || !html) {
+      return null;
     }
 
-    vworldLotNumberMarker = window.L.marker([point.latitude, point.longitude], {
+    return window.L.marker([latitude, longitude], {
       interactive: false,
       keyboard: false,
       zIndexOffset: 900,
       icon: window.L.divIcon({
         className: "vworld-lot-number-label",
-        html: `<span>${escapeHtml(lotNumber)}</span>`,
-        iconSize: [64, 28],
-        iconAnchor: [32, 14],
+        html,
+        iconSize: [76, 40],
+        iconAnchor: [38, 20],
       }),
-    }).addTo(vworldMap);
+    });
+  }
+
+  function renderVworldLotNumberLabels(labels = []) {
+    if (!vworldMap || !window.L) {
+      return 0;
+    }
+
+    clearVworldLotNumberLabels();
+
+    const markers = labels.map(createVworldLotNumberMarker).filter(Boolean);
+
+    if (!markers.length) {
+      return 0;
+    }
+
+    vworldLotNumberLayer = window.L.layerGroup(markers).addTo(vworldMap);
+    return markers.length;
+  }
+
+  function syncVworldLotNumberLabel(point) {
+    if (!point) {
+      clearVworldLotNumberLabels();
+      return 0;
+    }
+
+    const lotNumber = getLotNumberLabel(point);
+
+    if (!lotNumber) {
+      clearVworldLotNumberLabels();
+      return 0;
+    }
+
+    return renderVworldLotNumberLabels([
+      {
+        latitude: point.latitude,
+        longitude: point.longitude,
+        lotNumber,
+        jimok: "",
+        pnu: normalizePnu(point.pnu),
+      },
+    ]);
   }
 
   function clearVworldParcels() {
@@ -1297,6 +1447,235 @@ function initPortalTabs() {
 
   function getFeaturePnu(feature) {
     return normalizePnu(getFeatureProperty(feature?.properties, ["pnu", "PNU"]));
+  }
+
+  function formatJimokLabel(value) {
+    const label = String(value || "").trim();
+
+    if (!label) {
+      return "";
+    }
+
+    const normalizedCode = label.replace(/\D/g, "").padStart(2, "0");
+
+    return landCategoryCodeLabels[label] || landCategoryCodeLabels[normalizedCode] || label;
+  }
+
+  function getJimokLabel(properties = {}) {
+    const namedJimok = getFeatureProperty(properties, [
+      "jimok",
+      "JIMOK",
+      "jimok_nm",
+      "JIMOK_NM",
+      "jimokName",
+      "JIMOK_NAME",
+      "lndcgrCodeNm",
+      "LNDCGR_CODE_NM",
+      "lndcgr_code_nm",
+      "landCategory",
+      "LAND_CATEGORY",
+    ]);
+
+    if (namedJimok) {
+      return formatJimokLabel(namedJimok);
+    }
+
+    return formatJimokLabel(
+      getFeatureProperty(properties, ["jimok_cd", "JIMOK_CD", "lndcgrCode", "LNDCGR_CODE", "lndcgr_code", "landCategoryCode"])
+    );
+  }
+
+  function getFeatureLotNumber(feature) {
+    const pnuLotNumber = getLotNumberFromPnu(getFeaturePnu(feature));
+
+    if (pnuLotNumber) {
+      return pnuLotNumber;
+    }
+
+    return getCleanLotNumber(getFeatureProperty(feature?.properties, ["jibun", "JIBUN", "lotNo", "LOT_NO", "lotno", "addr", "ADDR"]));
+  }
+
+  function collectGeometryCoordinates(coordinates, points = []) {
+    if (!Array.isArray(coordinates)) {
+      return points;
+    }
+
+    const longitude = Number(coordinates[0]);
+    const latitude = Number(coordinates[1]);
+
+    if (Number.isFinite(longitude) && Number.isFinite(latitude)) {
+      points.push([longitude, latitude]);
+      return points;
+    }
+
+    coordinates.forEach((item) => collectGeometryCoordinates(item, points));
+    return points;
+  }
+
+  function getFeatureLabelPoint(feature) {
+    const points = collectGeometryCoordinates(feature?.geometry?.coordinates);
+
+    if (!points.length) {
+      return null;
+    }
+
+    const bounds = points.reduce(
+      (nextBounds, [longitude, latitude]) => ({
+        minLatitude: Math.min(nextBounds.minLatitude, latitude),
+        maxLatitude: Math.max(nextBounds.maxLatitude, latitude),
+        minLongitude: Math.min(nextBounds.minLongitude, longitude),
+        maxLongitude: Math.max(nextBounds.maxLongitude, longitude),
+      }),
+      {
+        minLatitude: Infinity,
+        maxLatitude: -Infinity,
+        minLongitude: Infinity,
+        maxLongitude: -Infinity,
+      }
+    );
+
+    return {
+      latitude: (bounds.minLatitude + bounds.maxLatitude) / 2,
+      longitude: (bounds.minLongitude + bounds.maxLongitude) / 2,
+    };
+  }
+
+  function getPointDistanceMeters(first, second) {
+    const from = [Number(first?.latitude), Number(first?.longitude)];
+    const to = [Number(second?.latitude), Number(second?.longitude)];
+
+    if (![...from, ...to].every(Number.isFinite)) {
+      return Infinity;
+    }
+
+    if (vworldMap?.distance) {
+      return vworldMap.distance(from, to);
+    }
+
+    const earthRadius = 6378137;
+    const latitude1 = (from[0] * Math.PI) / 180;
+    const latitude2 = (to[0] * Math.PI) / 180;
+    const latitudeDelta = ((to[0] - from[0]) * Math.PI) / 180;
+    const longitudeDelta = ((to[1] - from[1]) * Math.PI) / 180;
+    const haversine =
+      Math.sin(latitudeDelta / 2) ** 2 + Math.cos(latitude1) * Math.cos(latitude2) * Math.sin(longitudeDelta / 2) ** 2;
+
+    return 2 * earthRadius * Math.atan2(Math.sqrt(haversine), Math.sqrt(1 - haversine));
+  }
+
+  function isFeatureWithinRadius(feature, point, radiusMeters) {
+    if (isPointInParcelFeature(point, feature)) {
+      return true;
+    }
+
+    const labelPoint = getFeatureLabelPoint(feature);
+
+    if (labelPoint && getPointDistanceMeters(point, labelPoint) <= radiusMeters) {
+      return true;
+    }
+
+    return collectGeometryCoordinates(feature?.geometry?.coordinates).some(([longitude, latitude]) =>
+      getPointDistanceMeters(point, { latitude, longitude }) <= radiusMeters
+    );
+  }
+
+  function getNearbyParcelLabelItems(features = [], point, radiusMeters = vworldParcelRadiusMeters) {
+    const labels = [];
+    const seen = new Set();
+
+    features.forEach((feature) => {
+      const labelPoint = getFeatureLabelPoint(feature);
+      const lotNumber = getFeatureLotNumber(feature);
+
+      if (!labelPoint || !lotNumber || !isFeatureWithinRadius(feature, point, radiusMeters)) {
+        return;
+      }
+
+      const pnu = getFeaturePnu(feature);
+      const key = pnu || `${lotNumber}:${labelPoint.latitude.toFixed(7)}:${labelPoint.longitude.toFixed(7)}`;
+
+      if (seen.has(key)) {
+        return;
+      }
+
+      seen.add(key);
+      labels.push({
+        ...labelPoint,
+        lotNumber,
+        jimok: getJimokLabel(feature?.properties),
+        pnu,
+        distance: getPointDistanceMeters(point, labelPoint),
+      });
+    });
+
+    return ensureSelectedParcelLabel(labels, point)
+      .sort((first, second) => first.distance - second.distance)
+      .slice(0, 80);
+  }
+
+  function ensureSelectedParcelLabel(labels, point) {
+    const lotNumber = getLotNumberLabel(point);
+    const selectedPnu = normalizePnu(point?.pnu);
+
+    if (!lotNumber) {
+      return labels;
+    }
+
+    const hasSelectedLabel = labels.some(
+      (label) =>
+        (selectedPnu && label.pnu === selectedPnu) ||
+        (label.lotNumber === lotNumber && getPointDistanceMeters(label, point) <= 8)
+    );
+
+    if (hasSelectedLabel) {
+      return labels;
+    }
+
+    return [
+      {
+        latitude: point.latitude,
+        longitude: point.longitude,
+        lotNumber,
+        jimok: "",
+        pnu: selectedPnu,
+        distance: 0,
+      },
+      ...labels,
+    ];
+  }
+
+  async function loadNearbyParcelNumberLabels(point) {
+    if (!vworldMap || !window.L || !point) {
+      return;
+    }
+
+    const requestId = ++vworldLabelRequestId;
+
+    try {
+      const features = await searchVworldParcels(point.latitude, point.longitude, vworldParcelRadiusMeters);
+
+      if (requestId !== vworldLabelRequestId) {
+        return;
+      }
+
+      const labels = getNearbyParcelLabelItems(features, point, vworldParcelRadiusMeters);
+      const labelCount = renderVworldLotNumberLabels(labels);
+
+      if (labelCount) {
+        updateAerialStatus(`${point.title} 기준 반경 ${vworldParcelRadiusMeters}m 이내 지번·지목 ${labelCount}건을 표시했습니다.`);
+        return;
+      }
+
+      syncVworldLotNumberLabel(point);
+      updateAerialStatus(`${point.title} 위치로 이동했습니다. 반경 ${vworldParcelRadiusMeters}m 이내 지번·지목 정보를 찾지 못했습니다.`);
+    } catch (error) {
+      if (requestId !== vworldLabelRequestId) {
+        return;
+      }
+
+      syncVworldLotNumberLabel(point);
+      updateAerialStatus(`${point.title} 위치로 이동했습니다. 반경 ${vworldParcelRadiusMeters}m 지번·지목은 V-World 필지 API 권한 확인이 필요합니다.`);
+    }
   }
 
   function getParcelPopup(properties = {}) {
@@ -1675,7 +2054,8 @@ function initPortalTabs() {
       vworldHybridLayer = null;
       vworldParcelLayer = null;
       vworldRadiusLayer = null;
-      vworldLotNumberMarker = null;
+      vworldLotNumberLayer = null;
+      vworldLabelRequestId += 1;
       vworldMeasureLayer = null;
       vworldMeasurePoints = [];
       vworldMeasureMode = "";
@@ -1749,7 +2129,8 @@ function initPortalTabs() {
       vworldParcelLayer = null;
       vworldRadiusLayer = null;
       vworldCadastralLayer = null;
-      vworldLotNumberMarker = null;
+      vworldLotNumberLayer = null;
+      vworldLabelRequestId += 1;
       vworldMeasureLayer = null;
       vworldMeasurePoints = [];
       vworldMeasureMode = "";
