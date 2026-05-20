@@ -990,11 +990,12 @@ input {
 
 .parcel-search {
   display: grid;
-  grid-template-columns: auto minmax(220px, 1fr) auto;
-  gap: 10px;
+  grid-template-columns: auto minmax(150px, 1fr) auto;
+  gap: 8px;
   align-items: center;
-  margin-bottom: 12px;
-  padding: 12px;
+  min-width: 0;
+  margin: 0;
+  padding: 8px;
   color: var(--ink);
   background: rgba(255, 255, 255, 0.94);
   border: 1px solid rgba(255, 255, 255, 0.62);
@@ -1012,7 +1013,7 @@ input {
 .parcel-search input,
 .aerial-search input {
   width: 100%;
-  min-height: 46px;
+  min-height: 42px;
   padding: 10px 12px;
   color: var(--ink);
   background: #fff;
@@ -1027,18 +1028,20 @@ input {
 }
 
 .parcel-search__status {
-  grid-column: 2 / -1;
-  color: #49645b;
-  font-size: 0.86rem;
-  font-weight: 800;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
 
 .portal-tabs {
   position: relative;
   z-index: 8;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
+  grid-template-columns: minmax(330px, 1.65fr) repeat(4, minmax(130px, 0.75fr));
+  gap: 8px;
   padding: 10px 0 12px;
   background: rgba(17, 70, 54, 0.96);
   backdrop-filter: blur(12px);
@@ -1049,15 +1052,16 @@ input {
   align-items: center;
   justify-content: center;
   gap: 10px;
-  min-height: 56px;
-  padding: 10px 14px;
+  min-height: 58px;
+  padding: 8px 10px;
   color: rgba(255, 255, 255, 0.84);
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.24);
   border-radius: 8px;
   cursor: pointer;
-  font-size: 1.03rem;
+  font-size: 0.93rem;
   font-weight: 900;
+  white-space: nowrap;
 }
 
 .portal-tab:hover,
@@ -1476,6 +1480,24 @@ input {
   color: #fff;
 }
 
+.page-title--compact {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  min-height: 148px;
+  padding: clamp(26px, 4vw, 42px) clamp(20px, 5vw, 72px);
+}
+
+.page-title--compact h1 {
+  flex: 0 0 auto;
+  max-width: 420px;
+}
+
+.page-title--with-search .page-search {
+  flex: 0 1 520px;
+}
+
 .page-title h1 {
   font-size: clamp(2rem, 4.2vw, 4rem);
 }
@@ -1508,6 +1530,14 @@ input {
   border: 1px solid var(--line);
   border-radius: 8px;
   box-shadow: 0 12px 36px rgba(31, 42, 39, 0.06);
+}
+
+.page-search--compact {
+  width: min(520px, 100%);
+  padding: 14px;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 12px 30px rgba(18, 42, 35, 0.18);
 }
 
 .page-search label {
@@ -1543,6 +1573,49 @@ input {
   font-weight: 800;
 }
 
+.content-section {
+  padding-top: 24px;
+}
+
+.content-tabs {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 18px;
+  padding: 8px;
+  background: #edf4ef;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.content-tabs--knowledge {
+  grid-template-columns: repeat(9, minmax(0, 1fr));
+}
+
+.content-tabs button {
+  min-height: 50px;
+  padding: 10px 12px;
+  color: #31463f;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.94rem;
+  font-weight: 950;
+  line-height: 1.2;
+}
+
+.content-tabs button:hover,
+.content-tabs button.is-active {
+  color: #fff;
+  background: var(--green);
+  border-color: var(--green);
+}
+
+.content-panel[hidden] {
+  display: none;
+}
+
 .source-card h2 {
   margin: 22px 0 10px;
   font-size: 1.28rem;
@@ -1569,6 +1642,8 @@ input {
   .source-grid,
   .source-grid--manual,
   .knowledge-grid,
+  .content-tabs,
+  .content-tabs--knowledge,
   .map-panel,
   .process-layout,
   .checklist-layout,
@@ -1646,10 +1721,6 @@ input {
     grid-template-columns: 1fr;
   }
 
-  .parcel-search__status {
-    grid-column: 1;
-  }
-
   .embedded-site__frame {
     height: calc(100vh - 190px);
     min-width: 1040px;
@@ -1671,6 +1742,15 @@ input {
 
   .page-search__row {
     grid-template-columns: 1fr;
+  }
+
+  .page-title--compact {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .page-title--with-search .page-search {
+    flex-basis: auto;
   }
 
   .aerial-search .button {

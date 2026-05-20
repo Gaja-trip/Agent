@@ -29,15 +29,10 @@
       </nav>
     </header>
 
-    <main class="page-main">
-      <section class="page-title" aria-labelledby="page-title">
-        <p class="eyebrow">Manual</p>
+    <main class="page-main content-page" data-content-scope>
+      <section class="page-title page-title--compact page-title--with-search" aria-labelledby="page-title">
         <h1 id="page-title">매뉴얼</h1>
-        <p>토지이음, 토지이음 지도, V-World 항공사진, 법령정보를 같은 지번 기준으로 확인하는 순서입니다.</p>
-      </section>
-
-      <section class="section section--compact section--search">
-        <form class="page-search" data-page-search>
+        <form class="page-search page-search--compact" data-page-search>
           <label for="manual-search-input">매뉴얼 검색</label>
           <div class="page-search__row">
             <input id="manual-search-input" type="search" placeholder="예: 가상계좌, 접수일, 항공사진" data-page-search-input />
@@ -50,66 +45,117 @@
         </form>
       </section>
 
-      <section class="section section--compact manual-workday" aria-labelledby="office-start-title">
-        <article class="manual-step-card" data-search-item>
-          <div class="manual-step-card__header">
-            <span class="manual-step-card__number">1</span>
-            <div>
-              <p class="eyebrow">Office Start</p>
-              <h2 id="office-start-title">사무실 출근 후 먼저 해야 할 일</h2>
-            </div>
-          </div>
-          <p>
-            출근하면 가장 먼저 퇴근한 사이 가상계좌로 수입이 되었는지 확인합니다. 전날 입금 내역을 확인한 뒤,
-            접수창 오른쪽 상단의 접수일을 실제 접수 기준일로 변경해 줍니다. 가상계좌 수입 화면을 누르면 조회 창이 열리며,
-            수입일자를 그 전날로 지정해 검색하면 입금내역을 확인할 수 있습니다.
-          </p>
-          <ul class="manual-checklist">
-            <li>업무처리 화면에서 가상계좌 수입 금일 현황을 확인합니다.</li>
-            <li>가상계좌 수입 창에서 수입일자를 전날로 맞춘 뒤 검색 버튼을 눌러 입금내역을 확인합니다.</li>
-            <li>전날 입금이 확인되면 해당 건을 접수 처리하기 전에 접수일을 변경합니다.</li>
-            <li>전날이 공휴일인데 입금이 되었으면, 그 전날이 아니라 다음날인 평일 일자로 접수합니다.</li>
-          </ul>
-          <figure class="manual-figure">
-            <img src="assets/manual-office-morning.svg" alt="업무처리 화면에서 가상계좌 수입을 확인하는 위치" />
-            <figcaption>업무처리 화면에서 가상계좌 수입을 누른 뒤, 수입일자를 전날로 검색해 입금내역을 확인합니다.</figcaption>
-          </figure>
-        </article>
-      </section>
+      <section class="section section--compact content-section">
+        <div class="content-tabs" role="tablist" aria-label="매뉴얼 분류" data-content-tabs>
+          <button class="is-active" type="button" role="tab" aria-selected="true" data-content-tab="morning">1. 출근 후 할일</button>
+          <button type="button" role="tab" aria-selected="false" data-content-tab="survey-request">2. 측량접수</button>
+          <button type="button" role="tab" aria-selected="false" data-content-tab="owner-check">3. 소유자 확인</button>
+          <button type="button" role="tab" aria-selected="false" data-content-tab="fee-claim">4. 수수료청구</button>
+          <button type="button" role="tab" aria-selected="false" data-content-tab="schedule">5. 일정배정</button>
+        </div>
 
-      <section class="section section--compact">
-        <div class="source-grid source-grid--manual">
-          <article class="source-card" data-search-item>
-            <div class="source-card__icon">
-              <i data-lucide="search"></i>
-            </div>
-            <h2>2. 지번 입력</h2>
-            <p>메인 화면의 토지이음 기준 지번/주소 입력칸에 상담 대상 토지의 주소나 지번을 입력하고 적용합니다.</p>
-          </article>
+        <div class="content-panels">
+          <section class="content-panel is-active" data-content-panel="morning">
+            <article class="manual-step-card" data-search-item>
+              <div class="manual-step-card__header">
+                <span class="manual-step-card__number">1</span>
+                <div>
+                  <p class="eyebrow">Office Start</p>
+                  <h2 id="office-start-title">출근 후 할일</h2>
+                </div>
+              </div>
+              <p>
+                출근하면 가장 먼저 퇴근한 사이 가상계좌로 수입이 되었는지 확인합니다. 전날 입금 내역을 확인한 뒤,
+                접수창 오른쪽 상단의 접수일을 실제 접수 기준일로 변경해 줍니다.
+              </p>
+              <ul class="manual-checklist">
+                <li>업무처리 화면에서 가상계좌 수입 금일 현황을 확인합니다.</li>
+                <li>가상계좌 수입 창에서 수입일자를 전날로 맞춘 뒤 검색 버튼을 눌러 입금내역을 확인합니다.</li>
+                <li>전날 입금이 확인되면 해당 건을 접수 처리하기 전에 접수일을 변경합니다.</li>
+                <li>전날이 공휴일인데 입금이 되었으면, 그 전날이 아니라 다음날인 평일 일자로 접수합니다.</li>
+              </ul>
+              <figure class="manual-figure">
+                <img src="assets/manual-office-morning.svg" alt="업무처리 화면에서 가상계좌 수입을 확인하는 위치" />
+                <figcaption>업무처리 화면에서 가상계좌 수입을 누른 뒤, 수입일자를 전날로 검색해 입금내역을 확인합니다.</figcaption>
+              </figure>
+            </article>
+          </section>
 
-          <article class="source-card" data-search-item>
-            <div class="source-card__icon source-card__icon--amber">
-              <i data-lucide="map-pinned"></i>
-            </div>
-            <h2>3. 지도 대조</h2>
-            <p>토지이음과 토지이음 지도 탭에서 같은 지번이 표시되는지 확인하고, 용도지역과 주변 현황을 대조합니다.</p>
-          </article>
+          <section class="content-panel" data-content-panel="survey-request" hidden>
+            <article class="manual-step-card" data-search-item>
+              <div class="manual-step-card__header">
+                <span class="manual-step-card__number">2</span>
+                <div>
+                  <p class="eyebrow">Survey Request</p>
+                  <h2>측량접수</h2>
+                </div>
+              </div>
+              <p>의뢰 내용과 토지 정보를 확인한 뒤 측량 종목, 소재지, 신청인 정보를 맞춰 접수합니다.</p>
+              <ul class="manual-checklist">
+                <li>토지 소재지, 지번, 지목, 면적을 신청 내용과 대조합니다.</li>
+                <li>경계복원, 분할, 현황, 등록전환 등 측량 종목을 정확히 선택합니다.</li>
+                <li>첨부서류와 위임 여부를 확인한 뒤 접수번호를 생성합니다.</li>
+                <li>접수 후 의뢰인에게 진행 절차와 예상 일정을 안내합니다.</li>
+              </ul>
+            </article>
+          </section>
 
-          <article class="source-card" data-search-item>
-            <div class="source-card__icon source-card__icon--rust">
-              <i data-lucide="satellite"></i>
-            </div>
-            <h2>4. 항공사진 확인</h2>
-            <p>항공사진 탭에서 같은 지번의 실제 현장 형태와 접근 조건을 확인합니다.</p>
-          </article>
+          <section class="content-panel" data-content-panel="owner-check" hidden>
+            <article class="manual-step-card" data-search-item>
+              <div class="manual-step-card__header">
+                <span class="manual-step-card__number">3</span>
+                <div>
+                  <p class="eyebrow">Owner Check</p>
+                  <h2>소유자 확인</h2>
+                </div>
+              </div>
+              <p>측량 접수 전 소유자, 공유자, 대리 신청 권한을 확인해 접수 오류와 민원을 줄입니다.</p>
+              <ul class="manual-checklist">
+                <li>토지대장과 등기사항의 소유자 성명, 주소, 지분을 대조합니다.</li>
+                <li>대리인이 신청하는 경우 위임장, 신분증, 인감 또는 서명 요건을 확인합니다.</li>
+                <li>공유 토지는 공유자 동의 필요 여부와 신청 가능 범위를 확인합니다.</li>
+                <li>소유자 정보가 다르면 정정 또는 추가 확인 후 접수합니다.</li>
+              </ul>
+            </article>
+          </section>
 
-          <article class="source-card" data-search-item>
-            <div class="source-card__icon">
-              <i data-lucide="book-open-check"></i>
-            </div>
-            <h2>5. 법령 근거 정리</h2>
-            <p>국가법령정보센터에서 허가, 행위제한, 지적공부 정리에 필요한 근거 조항을 상담 메모에 남깁니다.</p>
-          </article>
+          <section class="content-panel" data-content-panel="fee-claim" hidden>
+            <article class="manual-step-card" data-search-item>
+              <div class="manual-step-card__header">
+                <span class="manual-step-card__number">4</span>
+                <div>
+                  <p class="eyebrow">Fee Claim</p>
+                  <h2>수수료청구</h2>
+                </div>
+              </div>
+              <p>측량 종목과 필지 조건에 따라 수수료를 산정하고, 감면 또는 반환 가능성을 함께 확인합니다.</p>
+              <ul class="manual-checklist">
+                <li>측량 종목, 필지 수, 면적, 지역 조건에 따라 수수료를 산정합니다.</li>
+                <li>감면 대상 여부와 증빙자료를 확인합니다.</li>
+                <li>가상계좌, 카드, 현금 등 납부 방법을 의뢰인에게 안내합니다.</li>
+                <li>입금 확인 후 접수 상태와 청구 내역을 정리합니다.</li>
+              </ul>
+            </article>
+          </section>
+
+          <section class="content-panel" data-content-panel="schedule" hidden>
+            <article class="manual-step-card" data-search-item>
+              <div class="manual-step-card__header">
+                <span class="manual-step-card__number">5</span>
+                <div>
+                  <p class="eyebrow">Schedule</p>
+                  <h2>일정배정</h2>
+                </div>
+              </div>
+              <p>접수와 수수료 확인이 끝나면 담당자, 현장일, 입회자 연락 사항을 정리해 일정을 배정합니다.</p>
+              <ul class="manual-checklist">
+                <li>담당자 업무량과 현장 위치를 고려해 측량 일정을 배정합니다.</li>
+                <li>의뢰인과 입회자에게 일시, 장소, 준비사항을 안내합니다.</li>
+                <li>현장 접근, 우천, 경계 분쟁 가능성을 미리 기록합니다.</li>
+                <li>일정 변경이 생기면 시스템 상태와 의뢰인 안내 내용을 함께 수정합니다.</li>
+              </ul>
+            </article>
+          </section>
         </div>
       </section>
     </main>

@@ -29,15 +29,10 @@
       </nav>
     </header>
 
-    <main class="page-main">
-      <section class="page-title" aria-labelledby="page-title">
-        <p class="eyebrow">Consulting Knowledge</p>
+    <main class="page-main content-page" data-content-scope>
+      <section class="page-title page-title--compact page-title--with-search" aria-labelledby="page-title">
         <h1 id="page-title">상담지식</h1>
-        <p>토지 상담에서 반복적으로 확인해야 하는 쟁점을 지번, 현황, 허가, 후속 절차 기준으로 정리했습니다.</p>
-      </section>
-
-      <section class="section section--compact section--search">
-        <form class="page-search" data-page-search>
+        <form class="page-search page-search--compact" data-page-search>
           <label for="knowledge-search-input">상담지식 검색</label>
           <div class="page-search__row">
             <input id="knowledge-search-input" type="search" placeholder="예: 진입로, 조례, 지목, 등기" data-page-search-input />
@@ -50,31 +45,154 @@
         </form>
       </section>
 
-      <section class="section section--compact">
-        <div class="knowledge-grid">
-          <article class="knowledge-item" data-search-item>
-            <i data-lucide="land-plot"></i>
-            <h2>공부와 현황은 따로 확인</h2>
-            <p>지목, 면적, 경계는 공부 기준으로 확인하고 실제 이용 상태는 지도와 항공사진으로 별도 대조합니다.</p>
-          </article>
+      <section class="section section--compact content-section">
+        <div class="content-tabs content-tabs--knowledge" role="tablist" aria-label="상담지식 분류" data-content-tabs>
+          <button class="is-active" type="button" role="tab" aria-selected="true" data-content-tab="survey-general">지적측량일반</button>
+          <button type="button" role="tab" aria-selected="false" data-content-tab="request-process">측량의뢰 및 절차</button>
+          <button type="button" role="tab" aria-selected="false" data-content-tab="fee">수수료</button>
+          <button type="button" role="tab" aria-selected="false" data-content-tab="result">결과부</button>
+          <button type="button" role="tab" aria-selected="false" data-content-tab="receipt">영수증</button>
+          <button type="button" role="tab" aria-selected="false" data-content-tab="spatial">공간정보</button>
+          <button type="button" role="tab" aria-selected="false" data-content-tab="law">관련법령</button>
+          <button type="button" role="tab" aria-selected="false" data-content-tab="office">공사업무일반</button>
+          <button type="button" role="tab" aria-selected="false" data-content-tab="etc">기타</button>
+        </div>
 
-          <article class="knowledge-item" data-search-item>
-            <i data-lucide="route"></i>
-            <h2>진입로와 배수 조건</h2>
-            <p>개발행위나 분할 상담에서는 도로 접속, 배수 방향, 경사, 인접 토지 관계가 핵심 확인 항목입니다.</p>
-          </article>
+        <div class="content-panels">
+          <section class="content-panel is-active" data-content-panel="survey-general">
+            <div class="knowledge-grid">
+              <article class="knowledge-item" data-search-item>
+                <i data-lucide="land-plot"></i>
+                <h2>공부와 현황은 따로 확인</h2>
+                <p>지목, 면적, 경계는 공부 기준으로 확인하고 실제 이용 상태는 지도와 항공사진으로 별도 대조합니다.</p>
+              </article>
+              <article class="knowledge-item" data-search-item>
+                <i data-lucide="ruler"></i>
+                <h2>측량 목적 먼저 정리</h2>
+                <p>경계복원, 분할, 현황, 등록전환 등 목적에 따라 필요한 서류와 현장 확인 범위가 달라집니다.</p>
+              </article>
+            </div>
+          </section>
 
-          <article class="knowledge-item" data-search-item>
-            <i data-lucide="scale"></i>
-            <h2>규제는 조례까지 확인</h2>
-            <p>용도지역 행위제한은 법령뿐 아니라 도시계획조례와 지자체 운영 기준에 따라 달라질 수 있습니다.</p>
-          </article>
+          <section class="content-panel" data-content-panel="request-process" hidden>
+            <div class="knowledge-grid">
+              <article class="knowledge-item" data-search-item>
+                <i data-lucide="clipboard-check"></i>
+                <h2>접수 전 기본 확인</h2>
+                <p>의뢰인, 소유자, 대상 토지, 측량 종목, 연락처를 먼저 맞춘 뒤 접수를 진행합니다.</p>
+              </article>
+              <article class="knowledge-item" data-search-item>
+                <i data-lucide="route"></i>
+                <h2>현장 진행 절차</h2>
+                <p>접수, 수수료 납부, 일정 배정, 현장측량, 성과 정리, 결과 교부 순서로 안내합니다.</p>
+              </article>
+            </div>
+          </section>
 
-          <article class="knowledge-item" data-search-item>
-            <i data-lucide="file-check-2"></i>
-            <h2>허가 후 공부 정리</h2>
-            <p>허가가 끝나도 분할, 합병, 지목변경 등 토지이동신청과 등기 반영까지 마쳐야 절차가 정리됩니다.</p>
-          </article>
+          <section class="content-panel" data-content-panel="fee" hidden>
+            <div class="knowledge-grid">
+              <article class="knowledge-item" data-search-item>
+                <i data-lucide="calculator"></i>
+                <h2>수수료 산정 기준</h2>
+                <p>측량 종목, 필지 수, 면적, 지역 여건에 따라 수수료가 달라질 수 있음을 설명합니다.</p>
+              </article>
+              <article class="knowledge-item" data-search-item>
+                <i data-lucide="badge-percent"></i>
+                <h2>감면과 반환</h2>
+                <p>감면 대상, 취소 시 반환 가능 여부, 입금 확인 시점을 구분해 안내합니다.</p>
+              </article>
+            </div>
+          </section>
+
+          <section class="content-panel" data-content-panel="result" hidden>
+            <div class="knowledge-grid">
+              <article class="knowledge-item" data-search-item>
+                <i data-lucide="file-check-2"></i>
+                <h2>결과부 교부</h2>
+                <p>측량성과도와 결과부는 목적에 맞게 교부하며, 허가나 토지이동 신청 자료로 활용됩니다.</p>
+              </article>
+              <article class="knowledge-item" data-search-item>
+                <i data-lucide="archive"></i>
+                <h2>보관과 재발급</h2>
+                <p>성과 자료 보관 위치와 재발급 가능 여부를 확인해 민원 안내에 활용합니다.</p>
+              </article>
+            </div>
+          </section>
+
+          <section class="content-panel" data-content-panel="receipt" hidden>
+            <div class="knowledge-grid">
+              <article class="knowledge-item" data-search-item>
+                <i data-lucide="receipt"></i>
+                <h2>영수증 발행</h2>
+                <p>납부 방식에 따라 영수증 발행 주체와 확인 경로가 달라질 수 있습니다.</p>
+              </article>
+              <article class="knowledge-item" data-search-item>
+                <i data-lucide="search-check"></i>
+                <h2>입금 확인</h2>
+                <p>가상계좌 입금은 수입일자와 접수일자를 구분해 확인하고, 누락 시 수납 내역을 재조회합니다.</p>
+              </article>
+            </div>
+          </section>
+
+          <section class="content-panel" data-content-panel="spatial" hidden>
+            <div class="knowledge-grid">
+              <article class="knowledge-item" data-search-item>
+                <i data-lucide="map"></i>
+                <h2>지도와 항공사진 대조</h2>
+                <p>연속지적도, 항공사진, 토지이음 지도는 같은 지번 기준으로 비교해야 판단 오류를 줄일 수 있습니다.</p>
+              </article>
+              <article class="knowledge-item" data-search-item>
+                <i data-lucide="crosshair"></i>
+                <h2>좌표와 경계</h2>
+                <p>지도상 위치는 참고용이며, 실제 경계 확정은 지적측량 성과를 기준으로 안내합니다.</p>
+              </article>
+            </div>
+          </section>
+
+          <section class="content-panel" data-content-panel="law" hidden>
+            <div class="knowledge-grid">
+              <article class="knowledge-item" data-search-item>
+                <i data-lucide="scale"></i>
+                <h2>법령과 조례 확인</h2>
+                <p>용도지역 행위제한은 법령뿐 아니라 도시계획조례와 지자체 운영 기준까지 확인합니다.</p>
+              </article>
+              <article class="knowledge-item" data-search-item>
+                <i data-lucide="book-open-check"></i>
+                <h2>근거 조항 기록</h2>
+                <p>상담 시 확인한 법령명, 조항, 적용 사유를 기록해 후속 민원에 대비합니다.</p>
+              </article>
+            </div>
+          </section>
+
+          <section class="content-panel" data-content-panel="office" hidden>
+            <div class="knowledge-grid">
+              <article class="knowledge-item" data-search-item>
+                <i data-lucide="monitor-check"></i>
+                <h2>업무처리 시스템</h2>
+                <p>접수, 수납, 일정, 결과 교부 상태를 같은 건 기준으로 확인해 누락을 줄입니다.</p>
+              </article>
+              <article class="knowledge-item" data-search-item>
+                <i data-lucide="phone-call"></i>
+                <h2>민원 안내 기록</h2>
+                <p>전화 안내, 보완 요청, 일정 변경 내용은 상담일자와 담당자를 함께 남깁니다.</p>
+              </article>
+            </div>
+          </section>
+
+          <section class="content-panel" data-content-panel="etc" hidden>
+            <div class="knowledge-grid">
+              <article class="knowledge-item" data-search-item>
+                <i data-lucide="triangle-alert"></i>
+                <h2>분쟁 가능성</h2>
+                <p>인접 토지 경계, 진입로, 현장 출입 문제는 사전에 안내하고 현장 확인 사항으로 기록합니다.</p>
+              </article>
+              <article class="knowledge-item" data-search-item>
+                <i data-lucide="notebook-pen"></i>
+                <h2>상담 메모</h2>
+                <p>확실한 내용과 확인이 필요한 내용을 구분해 메모하면 후속 처리 품질이 좋아집니다.</p>
+              </article>
+            </div>
+          </section>
         </div>
       </section>
     </main>

@@ -2491,13 +2491,73 @@ function initGuidePrintButtons() {
   });
 }
 
+function setScopedContentTab(scope, tabKey) {
+  const buttons = [...scope.querySelectorAll("[data-content-tab]")];
+  const panels = [...scope.querySelectorAll("[data-content-panel]")];
+
+  if (!buttons.length || !panels.length) {
+    return;
+  }
+
+  const nextKey = tabKey || buttons[0].dataset.contentTab;
+  scope.dataset.activeContentTab = nextKey;
+  scope.classList.remove("is-searching");
+
+  buttons.forEach((button) => {
+    const isActive = button.dataset.contentTab === nextKey;
+    button.classList.toggle("is-active", isActive);
+    button.setAttribute("aria-selected", String(isActive));
+  });
+
+  panels.forEach((panel) => {
+    const isActive = panel.dataset.contentPanel === nextKey;
+    panel.classList.toggle("is-active", isActive);
+    panel.hidden = !isActive;
+  });
+}
+
+function initContentTabs() {
+  document.querySelectorAll("[data-content-scope]").forEach((scope) => {
+    const buttons = [...scope.querySelectorAll("[data-content-tab]")];
+
+    if (!buttons.length) {
+      return;
+    }
+
+    buttons.forEach((button) => {
+      button.addEventListener("click", () => {
+        scope.querySelectorAll("[data-search-item]").forEach((item) => {
+          item.hidden = false;
+        });
+        setScopedContentTab(scope, button.dataset.contentTab);
+
+        const status = scope.querySelector("[data-page-search-status]");
+        const input = scope.querySelector("[data-page-search-input]");
+
+        if (input) {
+          input.value = "";
+        }
+
+        if (status) {
+          status.textContent = "검색어를 입력하면 문구를 바로 찾습니다.";
+        }
+      });
+    });
+
+    const initialKey = buttons.find((button) => button.classList.contains("is-active"))?.dataset.contentTab || buttons[0].dataset.contentTab;
+    setScopedContentTab(scope, initialKey);
+  });
+}
+
 function initPageSearch() {
   const forms = document.querySelectorAll("[data-page-search]");
 
   forms.forEach((form) => {
     const input = form.querySelector("[data-page-search-input]");
     const status = form.querySelector("[data-page-search-status]");
-    const items = [...document.querySelectorAll("[data-search-item]")];
+    const scope = form.closest("[data-content-scope]") || document;
+    const items = [...scope.querySelectorAll("[data-search-item]")];
+    const panels = [...scope.querySelectorAll("[data-content-panel]")];
 
     if (!input || !items.length) {
       return;
@@ -2518,6 +2578,26 @@ function initPageSearch() {
         }
       });
 
+      if (panels.length) {
+        if (query) {
+          scope.classList.add("is-searching");
+          panels.forEach((panel) => {
+            const hasMatch = [...panel.querySelectorAll("[data-search-item]")].some((item) => !item.hidden);
+            panel.hidden = !hasMatch;
+            panel.classList.toggle("is-active", hasMatch);
+          });
+          scope.querySelectorAll("[data-content-tab]").forEach((button) => {
+            button.classList.remove("is-active");
+            button.setAttribute("aria-selected", "false");
+          });
+        } else {
+          items.forEach((item) => {
+            item.hidden = false;
+          });
+          setScopedContentTab(scope, scope.dataset.activeContentTab);
+        }
+      }
+
       if (status) {
         status.textContent = query ? `${visibleCount}건을 찾았습니다.` : "검색어를 입력하면 문구를 바로 찾습니다.";
       }
@@ -2537,5 +2617,6 @@ initProcessSteps();
 initReadinessChecklist();
 initGuidePages();
 initGuidePrintButtons();
+initContentTabs();
 initPageSearch();
 refreshIcons();
