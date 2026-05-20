@@ -30,6 +30,8 @@ const vworldParcelDataId = "LP_PA_CBND_BUBUN";
 const vworldParcelWfsDataIds = ["lp_pa_cbnd_bubun", "lt_c_landinfobasemap"];
 const vworldParcelRadiusMeters = 50;
 const vworldLotNumberMinZoom = 18;
+const vworldMapMaxZoom = 21;
+const vworldParcelDetailZoom = 20;
 const landCategoryCodeLabels = {
   "01": "전",
   "02": "답",
@@ -1077,7 +1079,7 @@ function initPortalTabs() {
     const title = result.title || result.query || "선택 위치";
     vworldCurrentPoint = { ...result, title };
     vworldMarkerVisible = true;
-    vworldMap.setView([result.latitude, result.longitude], result.pnu ? 19 : 17);
+    vworldMap.setView([result.latitude, result.longitude], result.pnu ? vworldParcelDetailZoom : 18);
     syncVworldMarker();
     clearVworldParcels();
     syncVworldLotNumberLabel(vworldCurrentPoint);
@@ -1191,7 +1193,8 @@ function initPortalTabs() {
     return window.L.tileLayer(
       `https://api.vworld.kr/req/wmts/1.0.0/${encodeURIComponent(vworldApiKey)}/${layerName}/{z}/{y}/{x}.${extension}`,
       {
-        maxZoom: 19,
+        maxZoom: vworldMapMaxZoom,
+        maxNativeZoom: vworldMapMaxZoom,
         attribution: "V-World",
       }
     );
@@ -1207,7 +1210,7 @@ function initPortalTabs() {
       format: "image/png",
       transparent: true,
       exceptions: "text/xml",
-      maxZoom: 19,
+      maxZoom: vworldMapMaxZoom,
       key: vworldApiKey,
       domain: window.location.origin,
       attribution: "V-World",
@@ -1276,7 +1279,7 @@ function initPortalTabs() {
       return;
     }
 
-    vworldMap.setView([vworldCurrentPoint.latitude, vworldCurrentPoint.longitude], 18);
+    vworldMap.setView([vworldCurrentPoint.latitude, vworldCurrentPoint.longitude], vworldParcelDetailZoom);
     updateAerialStatus(`${vworldCurrentPoint.title} 위치로 이동했습니다.`);
   }
 
@@ -1830,7 +1833,7 @@ function initPortalTabs() {
       const bounds = vworldParcelLayer.getBounds();
 
       if (bounds.isValid()) {
-        vworldMap.fitBounds(bounds.pad(0.28), { maxZoom: 19 });
+        vworldMap.fitBounds(bounds.pad(0.28), { maxZoom: vworldParcelDetailZoom });
       }
     }
   }
@@ -2108,6 +2111,7 @@ function initPortalTabs() {
 
     vworldMap = window.L.map(mapNode, {
       zoomControl: true,
+      maxZoom: vworldMapMaxZoom,
     }).setView(defaultAerialCenter, 16);
     vworldMap.on("click", handleVworldMapClick);
     vworldMap.on("zoomend", syncVworldLotNumberLayerVisibility);
@@ -2127,7 +2131,7 @@ function initPortalTabs() {
 
       const position = [point.latitude, point.longitude];
       vworldCurrentPoint = point;
-      vworldMap.setView(position, 18);
+      vworldMap.setView(position, vworldParcelDetailZoom);
       syncVworldMarker();
       if (vworldMarker) {
         vworldMarker.openPopup();
@@ -2177,6 +2181,7 @@ function initPortalTabs() {
 
     vworldMap = window.L.map(mapNode, {
       zoomControl: true,
+      maxZoom: vworldMapMaxZoom,
     }).setView([36.4, 127.8], 7);
     vworldMap.on("zoomend", syncVworldLotNumberLayerVisibility);
 
