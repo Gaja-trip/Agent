@@ -1,0 +1,147 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1892 900" role="img" aria-labelledby="title desc">
+  <title id="title">지적측량업무시스템 업무처리 화면</title>
+  <desc id="desc">업무처리 메뉴와 가상계좌 수입 확인 영역, 접수일 변경 위치를 강조한 안내 이미지</desc>
+  <defs>
+    <linearGradient id="sky" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#102943" />
+      <stop offset="1" stop-color="#061544" />
+    </linearGradient>
+    <linearGradient id="city" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#173d5a" />
+      <stop offset="0.55" stop-color="#0b1a3d" />
+      <stop offset="1" stop-color="#020819" />
+    </linearGradient>
+  </defs>
+  <rect width="1892" height="900" fill="#f4f6f7" />
+  <rect x="0" y="0" width="1892" height="47" fill="#ffffff" />
+  <text x="51" y="29" fill="#00a896" font-family="Arial, sans-serif" font-size="38" font-weight="800">LX</text>
+  <text x="121" y="21" fill="#6a777b" font-family="Arial, sans-serif" font-size="12" font-weight="700">BizLand</text>
+  <text x="121" y="38" fill="#163856" font-family="Arial, sans-serif" font-size="16" font-weight="800">지적측량업무시스템</text>
+  <rect x="1354" y="13" width="134" height="22" fill="#ffffff" stroke="#222" stroke-width="1" />
+  <text x="1364" y="29" fill="#111" font-family="Arial, sans-serif" font-size="12">서비스이동</text>
+  <circle cx="1504" cy="24" r="9" fill="#1f6baf" />
+  <rect x="1523" y="15" width="120" height="17" fill="#6f1fb2" opacity="0.85" />
+  <rect x="1710" y="11" width="49" height="23" rx="2" fill="#df2a17" />
+  <text x="1718" y="27" fill="#fff" font-family="Arial, sans-serif" font-size="12" font-weight="700">권한변경</text>
+  <rect x="1764" y="12" width="64" height="22" rx="2" fill="#b5b7ba" />
+  <text x="1781" y="27" fill="#fff" font-family="Arial, sans-serif" font-size="12" font-weight="700">로그아웃</text>
+
+  <rect x="0" y="47" width="1892" height="40" fill="#06456f" />
+  <g fill="#fff" font-family="Arial, sans-serif" font-size="16" font-weight="800">
+    <text x="220" y="72">접수</text>
+    <text x="351" y="72">일정</text>
+    <text x="485" y="72">정산</text>
+    <text x="617" y="72">성과</text>
+    <text x="749" y="72">결산</text>
+    <text x="874" y="72">계산서</text>
+    <text x="1006" y="72">목표량</text>
+    <text x="1146" y="72">통계</text>
+    <text x="1246" y="72">기준정보관리</text>
+    <text x="1389" y="72">시스템관리</text>
+    <text x="1539" y="72">상담</text>
+    <text x="1650" y="72">지적재조사</text>
+  </g>
+
+  <rect x="0" y="87" width="82" height="813" fill="#07164f" />
+  <rect x="1" y="80" width="80" height="89" fill="#1d2384" stroke="#ff1831" stroke-width="4" />
+  <g fill="none" stroke="#ccd6ef" stroke-width="2">
+    <rect x="27" y="101" width="27" height="16" />
+    <path d="M41 117v9M30 126h22M34 132h14" />
+  </g>
+  <text x="18" y="154" fill="#fff" font-family="Arial, sans-serif" font-size="14" font-weight="800">업무처리</text>
+  <g fill="#aab6cc" font-family="Arial, sans-serif" font-size="13">
+    <text x="19" y="234">업무현황</text>
+    <text x="19" y="314">즐겨찾기</text>
+    <text x="22" y="393">내정보</text>
+    <text x="7" y="473">상담지식관리</text>
+    <text x="8" y="554">수수료조회</text>
+    <text x="14" y="634">도로명주소</text>
+  </g>
+
+  <rect x="82" y="87" width="340" height="813" fill="#f6f7f8" />
+  <text x="114" y="120" fill="#111" font-family="Arial, sans-serif" font-size="18" font-weight="800">업무처리</text>
+  <line x1="187" y1="114" x2="342" y2="114" stroke="#aab4c1" />
+  <g font-family="Arial, sans-serif">
+    <text x="114" y="165" fill="#111" font-size="13" font-weight="800">가상계좌 수입(금일)</text>
+    <rect x="114" y="176" width="124" height="60" fill="#fff" />
+    <rect x="111" y="174" width="66" height="70" fill="none" stroke="#ff1831" stroke-width="4" />
+    <text x="134" y="204" fill="#f0163a" font-size="22">00</text>
+    <text x="138" y="226" fill="#111" font-size="12">일반</text>
+    <text x="196" y="204" fill="#1640b5" font-size="22">00</text>
+    <text x="197" y="226" fill="#111" font-size="12">특수</text>
+    <text x="266" y="165" fill="#111" font-size="13" font-weight="800">미수수수료</text>
+    <rect x="266" y="176" width="124" height="60" fill="#fff" />
+    <text x="285" y="204" fill="#f0163a" font-size="22">00</text>
+    <text x="345" y="204" fill="#1640b5" font-size="22">28</text>
+  </g>
+  <g fill="#fff">
+    <rect x="114" y="278" width="124" height="61" />
+    <rect x="266" y="278" width="124" height="61" />
+    <rect x="114" y="377" width="124" height="61" />
+    <rect x="266" y="377" width="124" height="61" />
+    <rect x="114" y="479" width="276" height="60" />
+    <rect x="114" y="579" width="276" height="120" />
+    <rect x="114" y="740" width="70" height="60" />
+    <rect x="205" y="740" width="70" height="60" />
+    <rect x="316" y="740" width="70" height="60" />
+  </g>
+  <g font-family="Arial, sans-serif" font-size="13" fill="#111" font-weight="800">
+    <text x="114" y="266">미결업무 현황</text>
+    <text x="266" y="266">미반환금 현황</text>
+    <text x="114" y="366">전일접수</text>
+    <text x="266" y="366">인터넷접수</text>
+    <text x="114" y="468">금일 현황</text>
+    <text x="114" y="568">신용카드</text>
+    <text x="114" y="729">콜센터 이첩</text>
+  </g>
+  <g font-family="Arial, sans-serif" font-size="22">
+    <text x="133" y="306" fill="#f0163a">11</text>
+    <text x="197" y="306" fill="#1640b5">46</text>
+    <text x="285" y="306" fill="#f0163a">00</text>
+    <text x="347" y="306" fill="#1640b5">00</text>
+    <text x="133" y="405" fill="#f0163a">02</text>
+    <text x="197" y="405" fill="#1640b5">00</text>
+    <text x="285" y="405" fill="#f0163a">00</text>
+    <text x="347" y="405" fill="#1640b5">00</text>
+  </g>
+
+  <rect x="422" y="87" width="1470" height="813" fill="url(#sky)" />
+  <rect x="422" y="450" width="1470" height="450" fill="url(#city)" />
+  <g opacity="0.75" stroke-linecap="round">
+    <path d="M460 810 C720 680 825 610 1110 520" stroke="#64d8ff" stroke-width="2" />
+    <path d="M430 856 C740 700 880 625 1180 515" stroke="#f8c764" stroke-width="3" />
+    <path d="M500 900 C820 710 970 640 1270 538" stroke="#22e0e6" stroke-width="2" />
+    <path d="M610 900 C945 715 1145 635 1450 548" stroke="#f78b28" stroke-width="2" />
+  </g>
+  <text x="727" y="260" fill="#2ee7ef" font-family="Arial, sans-serif" font-size="26">국민중심 지적측량 ONE-STOP 서비스를 위한</text>
+  <text x="717" y="325" fill="#fff" font-family="Arial, sans-serif" font-size="58" font-weight="800">지적측량업무시스템</text>
+
+  <rect x="753" y="478" width="1096" height="360" fill="#06134e" opacity="0.94" />
+  <line x1="1117" y1="478" x2="1117" y2="838" stroke="#405080" />
+  <line x1="1484" y1="478" x2="1484" y2="838" stroke="#405080" />
+  <rect x="783" y="517" width="82" height="36" fill="#53608a" />
+  <text x="796" y="541" fill="#fff" font-family="Arial, sans-serif" font-size="16" font-weight="800">공지사항</text>
+  <text x="793" y="604" fill="#d7def3" font-family="Arial, sans-serif" font-size="13" font-weight="700">언이월 이후 입계표 잔액 표시문제 안내</text>
+  <text x="793" y="626" fill="#8090bb" font-family="Arial, sans-serif" font-size="12">2026-01-02</text>
+  <text x="1157" y="541" fill="#fff" font-family="Arial, sans-serif" font-size="16" font-weight="800">질문과 답변</text>
+  <text x="1157" y="604" fill="#d7def3" font-family="Arial, sans-serif" font-size="13" font-weight="700">통폐합지사 권한 요청</text>
+  <text x="1524" y="541" fill="#fff" font-family="Arial, sans-serif" font-size="16" font-weight="800">헬프데스크 운영안내</text>
+
+  <g font-family="Arial, sans-serif">
+    <rect x="112" y="250" width="268" height="74" rx="5" fill="#fff" opacity="0.95" stroke="#ff1831" stroke-width="0" />
+    <rect x="520" y="112" width="360" height="94" rx="8" fill="#fff" opacity="0.96" />
+    <text x="540" y="142" fill="#0f2c45" font-size="20" font-weight="800">출근 후 첫 확인</text>
+    <text x="540" y="171" fill="#344b5d" font-size="15">가상계좌 수입을 먼저 확인하고</text>
+    <text x="540" y="194" fill="#344b5d" font-size="15">접수일을 실제 접수 기준일로 변경합니다.</text>
+    <path d="M520 198 L180 210" fill="none" stroke="#ff1831" stroke-width="4" marker-end="url(#arrow)" />
+    <rect x="1430" y="110" width="310" height="92" rx="8" fill="#fff" opacity="0.96" />
+    <text x="1450" y="141" fill="#0f2c45" font-size="20" font-weight="800">공휴일 입금 주의</text>
+    <text x="1450" y="170" fill="#344b5d" font-size="15">전날이 공휴일이면 그 전날이 아니라</text>
+    <text x="1450" y="193" fill="#344b5d" font-size="15">다음 평일 일자로 접수합니다.</text>
+  </g>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#ff1831" />
+    </marker>
+  </defs>
+</svg>

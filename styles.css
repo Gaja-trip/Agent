@@ -392,6 +392,7 @@ input {
   background: var(--rust);
 }
 
+.source-card h2,
 .source-card h3 {
   margin: 22px 0 10px;
   font-size: 1.28rem;
@@ -480,6 +481,99 @@ input {
 .guide-card img {
   width: 100%;
   background: #f7faf8;
+}
+
+.manual-workday {
+  padding-bottom: 0;
+}
+
+.manual-step-card {
+  display: grid;
+  gap: 22px;
+  padding: clamp(22px, 4vw, 34px);
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 12px 36px rgba(31, 42, 39, 0.06);
+}
+
+.manual-step-card__header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.manual-step-card__number {
+  display: grid;
+  flex: 0 0 54px;
+  width: 54px;
+  height: 54px;
+  place-items: center;
+  color: #fff;
+  background: var(--green);
+  border-radius: 8px;
+  font-size: 1.35rem;
+  font-weight: 950;
+}
+
+.manual-step-card h2 {
+  margin: 0;
+  font-size: clamp(1.45rem, 2.5vw, 2.1rem);
+  line-height: 1.2;
+}
+
+.manual-step-card p {
+  margin: 0;
+  color: #3f514b;
+  font-size: 1.02rem;
+}
+
+.manual-checklist {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.manual-checklist li {
+  position: relative;
+  padding-left: 24px;
+  color: #31463f;
+  font-weight: 750;
+}
+
+.manual-checklist li::before {
+  position: absolute;
+  top: 0.68em;
+  left: 0;
+  width: 8px;
+  height: 8px;
+  background: var(--green);
+  border-radius: 50%;
+  content: "";
+}
+
+.manual-figure {
+  overflow: hidden;
+  margin: 0;
+  background: #f7faf8;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.manual-figure img {
+  width: 100%;
+  background: #eef3f6;
+}
+
+.manual-figure figcaption {
+  padding: 12px 16px;
+  color: var(--muted);
+  background: #fff;
+  border-top: 1px solid var(--line);
+  font-size: 0.92rem;
+  font-weight: 800;
 }
 
 .knowledge-grid {

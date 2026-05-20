@@ -31,6 +31,7 @@ const vworldParcelWfsDataIds = ["lp_pa_cbnd_bubun", "lt_c_landinfobasemap"];
 const vworldParcelRadiusMeters = 50;
 const vworldLotNumberMinZoom = 18;
 const vworldMapMaxZoom = 21;
+const vworldTileNativeMaxZoom = 19;
 const vworldParcelDetailZoom = 20;
 const landCategoryCodeLabels = {
   "01": "전",
@@ -1194,7 +1195,7 @@ function initPortalTabs() {
       `https://api.vworld.kr/req/wmts/1.0.0/${encodeURIComponent(vworldApiKey)}/${layerName}/{z}/{y}/{x}.${extension}`,
       {
         maxZoom: vworldMapMaxZoom,
-        maxNativeZoom: vworldMapMaxZoom,
+        maxNativeZoom: vworldTileNativeMaxZoom,
         attribution: "V-World",
       }
     );
@@ -1211,6 +1212,7 @@ function initPortalTabs() {
       transparent: true,
       exceptions: "text/xml",
       maxZoom: vworldMapMaxZoom,
+      maxNativeZoom: vworldTileNativeMaxZoom,
       key: vworldApiKey,
       domain: window.location.origin,
       attribution: "V-World",
