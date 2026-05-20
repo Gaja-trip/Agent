@@ -1316,6 +1316,29 @@ input {
   font-weight: 900;
 }
 
+.vworld-lot-number-label {
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.vworld-lot-number-label span {
+  display: inline-grid;
+  min-width: 34px;
+  min-height: 24px;
+  place-items: center;
+  padding: 2px 8px;
+  color: #123c30;
+  background: rgba(255, 255, 255, 0.9);
+  border: 2px solid #f2c76b;
+  border-radius: 999px;
+  box-shadow: 0 4px 14px rgba(18, 42, 35, 0.18);
+  font-size: 0.86rem;
+  font-weight: 950;
+  line-height: 1;
+  white-space: nowrap;
+}
+
 .page-main {
   min-height: calc(100vh - 72px);
   background: #f7faf8;

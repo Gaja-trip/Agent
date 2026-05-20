@@ -36,6 +36,7 @@ let vworldHybridLayer = null;
 let vworldParcelLayer = null;
 let vworldRadiusLayer = null;
 let vworldCadastralLayer = null;
+let vworldLotNumberMarker = null;
 let vworldCurrentLayer = "satellite";
 let vworldCurrentPoint = null;
 let vworldSearchResults = [];
@@ -994,6 +995,7 @@ function initPortalTabs() {
     vworldMarkerVisible = true;
     vworldMap.setView([result.latitude, result.longitude], result.pnu ? 19 : 17);
     syncVworldMarker();
+    syncVworldLotNumberLabel(vworldCurrentPoint);
     setVworldCadastralLayer();
 
     if (vworldMarker) {
@@ -1207,6 +1209,57 @@ function initPortalTabs() {
     }
 
     vworldMarker = window.L.marker([vworldCurrentPoint.latitude, vworldCurrentPoint.longitude]).addTo(vworldMap).bindPopup(vworldCurrentPoint.title);
+  }
+
+  function getLotNumberFromPnu(pnu) {
+    const normalized = normalizePnu(pnu);
+
+    if (normalized.length !== 19) {
+      return "";
+    }
+
+    const isMountain = normalized.slice(10, 11) === "2";
+    const mainNumber = Number(normalized.slice(11, 15));
+    const subNumber = Number(normalized.slice(15, 19));
+
+    if (!mainNumber) {
+      return "";
+    }
+
+    return `${isMountain ? "산 " : ""}${mainNumber}${subNumber ? `-${subNumber}` : ""}`;
+  }
+
+  function getLotNumberLabel(point) {
+    return getLotNumberFromPnu(point?.pnu) || String(point?.title || "").match(/산?\s?\d+(?:-\d+)?/)?.[0] || "";
+  }
+
+  function syncVworldLotNumberLabel(point) {
+    if (!vworldMap || !window.L || !point) {
+      return;
+    }
+
+    if (vworldLotNumberMarker) {
+      vworldMap.removeLayer(vworldLotNumberMarker);
+      vworldLotNumberMarker = null;
+    }
+
+    const lotNumber = getLotNumberLabel(point);
+
+    if (!lotNumber) {
+      return;
+    }
+
+    vworldLotNumberMarker = window.L.marker([point.latitude, point.longitude], {
+      interactive: false,
+      keyboard: false,
+      zIndexOffset: 900,
+      icon: window.L.divIcon({
+        className: "vworld-lot-number-label",
+        html: `<span>${escapeHtml(lotNumber)}</span>`,
+        iconSize: [64, 28],
+        iconAnchor: [32, 14],
+      }),
+    }).addTo(vworldMap);
   }
 
   function clearVworldParcels() {
@@ -1622,6 +1675,7 @@ function initPortalTabs() {
       vworldHybridLayer = null;
       vworldParcelLayer = null;
       vworldRadiusLayer = null;
+      vworldLotNumberMarker = null;
       vworldMeasureLayer = null;
       vworldMeasurePoints = [];
       vworldMeasureMode = "";
@@ -1695,6 +1749,7 @@ function initPortalTabs() {
       vworldParcelLayer = null;
       vworldRadiusLayer = null;
       vworldCadastralLayer = null;
+      vworldLotNumberMarker = null;
       vworldMeasureLayer = null;
       vworldMeasurePoints = [];
       vworldMeasureMode = "";
