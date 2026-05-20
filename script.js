@@ -14,6 +14,7 @@ const portalData = {
     title: "항공사진",
     url: "https://map.vworld.kr/map/dtkmap.do?mapmode=raster",
     frameTitle: "브이월드 항공사진 및 주제도",
+    type: "aerial",
   },
   law: {
     title: "법령정보",
@@ -34,8 +35,10 @@ let vworldBaseLayer = null;
 let vworldHybridLayer = null;
 let vworldParcelLayer = null;
 let vworldRadiusLayer = null;
+let vworldCadastralLayer = null;
 let vworldCurrentLayer = "satellite";
 let vworldCurrentPoint = null;
+let vworldSearchResults = [];
 let vworldMarkerVisible = true;
 let vworldMeasureMode = "";
 let vworldMeasurePoints = [];
@@ -357,6 +360,57 @@ function initPortalTabs() {
     `;
   }
 
+  function renderAerialPortalConnected() {
+    const parcelAddress = escapeHtml(getParcelAddress());
+
+    return `
+      <div class="aerial-portal aerial-portal--connected">
+        <aside class="aerial-portal__panel">
+          <form class="aerial-search" data-aerial-parcel-form>
+            <label for="aerial-parcel-address">주소 또는 명칭 검색</label>
+            <div class="aerial-search__row">
+              <input
+                id="aerial-parcel-address"
+                type="search"
+                name="aerialParcel"
+                data-aerial-parcel-input
+                value="${parcelAddress}"
+                placeholder="예: 서울특별시 중구 세종대로 110"
+                autocomplete="street-address"
+              />
+              <button class="button button--primary" type="submit">
+                <i data-lucide="search"></i>
+                검색
+              </button>
+            </div>
+            <div class="aerial-search__modes" role="radiogroup" aria-label="검색 방식">
+              <label>
+                <input type="radio" name="vworldSearchMode" value="address" checked />
+                <span>주소</span>
+              </label>
+              <label>
+                <input type="radio" name="vworldSearchMode" value="place" />
+                <span>명칭</span>
+              </label>
+            </div>
+          </form>
+          <div class="aerial-results" data-aerial-results>
+            <p>검색 결과를 선택하면 항공사진과 연속지적도가 함께 이동합니다.</p>
+          </div>
+        </aside>
+        <div class="vworld-map-shell">
+          <div class="vworld-map" id="vworld-map" aria-label="V-World 항공사진과 연속지적도"></div>
+          <div class="vworld-map__empty" data-vworld-empty>
+            <i data-lucide="satellite"></i>
+            <strong>지도를 준비 중입니다.</strong>
+            <span>주소 또는 명칭을 검색해 주세요.</span>
+          </div>
+          <p class="aerial-status" data-aerial-status>항공사진과 연속지적도를 준비 중입니다.</p>
+        </div>
+      </div>
+    `;
+  }
+
   function requestVworldJsonp(url) {
     return new Promise((resolve, reject) => {
       const callbackName = `vworldCallback_${Date.now()}_${Math.random().toString(36).slice(2)}`;
@@ -438,6 +492,90 @@ function initPortalTabs() {
     }
 
     return null;
+  }
+
+  function toVworldSearchResult(item, searchType, fallbackQuery) {
+    const longitude = Number(item?.point?.x);
+    const latitude = Number(item?.point?.y);
+
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+      return null;
+    }
+
+    const pnu = String(item?.id || "").match(/^\d{19}$/) ? String(item.id) : "";
+    const roadAddress = item?.address?.road || "";
+    const parcelAddress = item?.address?.parcel || "";
+    const title = item?.title || parcelAddress || roadAddress || fallbackQuery;
+    const subtitle = [roadAddress, parcelAddress, item?.category].filter(Boolean).join(" · ");
+
+    return {
+      latitude,
+      longitude,
+      pnu,
+      title,
+      subtitle,
+      searchType,
+    };
+  }
+
+  async function searchVworldIntegrated(query, searchMode) {
+    const requests =
+      searchMode === "place"
+        ? [{ type: "place" }]
+        : [
+            { type: "address", category: "parcel" },
+            { type: "address", category: "road" },
+          ];
+    const results = [];
+    const seen = new Set();
+
+    for (const request of requests) {
+      const url = new URL("https://api.vworld.kr/req/search");
+      url.searchParams.set("service", "search");
+      url.searchParams.set("request", "search");
+      url.searchParams.set("version", "2.0");
+      url.searchParams.set("crs", "EPSG:4326");
+      url.searchParams.set("size", "10");
+      url.searchParams.set("page", "1");
+      url.searchParams.set("type", request.type);
+      url.searchParams.set("format", "json");
+      url.searchParams.set("errorformat", "json");
+      url.searchParams.set("key", vworldApiKey);
+      url.searchParams.set("query", query);
+
+      if (request.category) {
+        url.searchParams.set("category", request.category);
+      }
+
+      let data;
+
+      try {
+        data = await requestVworldJson(url);
+      } catch (error) {
+        continue;
+      }
+
+      const items = data?.response?.result?.items || [];
+
+      for (const item of items) {
+        const result = toVworldSearchResult(item, request.type, query);
+
+        if (!result) {
+          continue;
+        }
+
+        const key = result.pnu || `${result.title}:${result.latitude.toFixed(7)}:${result.longitude.toFixed(7)}`;
+
+        if (seen.has(key)) {
+          continue;
+        }
+
+        seen.add(key);
+        results.push(result);
+      }
+    }
+
+    return results;
   }
 
   function getRadiusBbox(latitude, longitude, radiusMeters) {
@@ -815,6 +953,120 @@ function initPortalTabs() {
     return nextState;
   }
 
+  function renderAerialResults(results, message = "") {
+    const resultsNode = document.querySelector("[data-aerial-results]");
+
+    if (!resultsNode) {
+      return;
+    }
+
+    if (!results.length) {
+      resultsNode.innerHTML = `<p>${escapeHtml(message || "검색 결과가 없습니다.")}</p>`;
+      return;
+    }
+
+    resultsNode.innerHTML = `
+      <strong>검색 결과</strong>
+      <ul>
+        ${results
+          .map(
+            (result, index) => `
+              <li>
+                <button type="button" data-vworld-result="${index}">
+                  <span>${escapeHtml(result.title)}</span>
+                  ${result.subtitle ? `<small>${escapeHtml(result.subtitle)}</small>` : ""}
+                </button>
+              </li>
+            `
+          )
+          .join("")}
+      </ul>
+    `;
+  }
+
+  function moveVworldToResult(result) {
+    if (!vworldMap || !window.L || !result) {
+      return;
+    }
+
+    const title = result.title || result.query || "선택 위치";
+    vworldCurrentPoint = { ...result, title };
+    vworldMarkerVisible = true;
+    vworldMap.setView([result.latitude, result.longitude], result.pnu ? 19 : 17);
+    syncVworldMarker();
+    setVworldCadastralLayer();
+
+    if (vworldMarker) {
+      vworldMarker.openPopup();
+    }
+
+    updateAerialStatus(`${title} 위치로 이동했습니다. 연속지적도만 항공사진 위에 표시합니다.`);
+  }
+
+  function bindAerialSearchFormConnected() {
+    const aerialForm = document.querySelector("[data-aerial-parcel-form]");
+    const aerialInput = document.querySelector("[data-aerial-parcel-input]");
+    const resultsNode = document.querySelector("[data-aerial-results]");
+
+    if (!aerialForm || !aerialInput || !resultsNode) {
+      return;
+    }
+
+    resultsNode.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-vworld-result]");
+
+      if (!button) {
+        return;
+      }
+
+      const result = vworldSearchResults[Number(button.dataset.vworldResult)];
+
+      if (!result) {
+        return;
+      }
+
+      const query = result.subtitle || result.title;
+      aerialInput.value = query;
+      saveParcelAddress(query);
+      writeStoredJson(parcelStateStorageKey, {
+        query,
+        latitude: result.latitude,
+        longitude: result.longitude,
+        pnu: result.pnu,
+        title: result.title,
+      });
+      moveVworldToResult(result);
+    });
+
+    aerialForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const query = aerialInput.value.trim();
+      const searchMode = aerialForm.querySelector("input[name='vworldSearchMode']:checked")?.value || "address";
+
+      if (!query) {
+        vworldSearchResults = [];
+        renderAerialResults([], "검색어를 입력해 주세요.");
+        updateAerialStatus("주소 또는 명칭을 입력해 주세요.");
+        return;
+      }
+
+      saveParcelAddress(query);
+      renderAerialResults([], "검색 중입니다.");
+      updateAerialStatus(`"${query}" 검색 중입니다.`);
+
+      try {
+        vworldSearchResults = await searchVworldIntegrated(query, searchMode);
+        renderAerialResults(vworldSearchResults);
+        updateAerialStatus(vworldSearchResults.length ? "검색 결과를 선택해 주세요." : "검색 결과가 없습니다.");
+      } catch (error) {
+        vworldSearchResults = [];
+        renderAerialResults([], "V-World 검색 API를 불러오지 못했습니다.");
+        updateAerialStatus("V-World 검색 API를 불러오지 못했습니다. API 키와 네트워크 상태를 확인해 주세요.");
+      }
+    });
+  }
+
   function bindAerialSearchForm() {
     const aerialForm = document.querySelector("[data-aerial-parcel-form]");
     const aerialInput = document.querySelector("[data-aerial-parcel-input]");
@@ -855,6 +1107,37 @@ function initPortalTabs() {
         attribution: "V-World",
       }
     );
+  }
+
+  function createVworldCadastralLayer() {
+    return window.L.tileLayer.wms("https://api.vworld.kr/req/wms", {
+      service: "WMS",
+      version: "1.3.0",
+      request: "GetMap",
+      layers: "lp_pa_cbnd_bonbun,lp_pa_cbnd_bubun",
+      styles: "lp_pa_cbnd_bonbun_line,lp_pa_cbnd_bubun_line",
+      format: "image/png",
+      transparent: true,
+      exceptions: "text/xml",
+      maxZoom: 19,
+      key: vworldApiKey,
+      domain: window.location.origin,
+      attribution: "V-World",
+    });
+  }
+
+  function setVworldCadastralLayer() {
+    if (!vworldMap || !window.L) {
+      return;
+    }
+
+    if (vworldCadastralLayer) {
+      vworldMap.removeLayer(vworldCadastralLayer);
+      vworldCadastralLayer = null;
+    }
+
+    vworldCadastralLayer = createVworldCadastralLayer().addTo(vworldMap);
+    vworldCadastralLayer.setZIndex(30);
   }
 
   function setVworldLayer(layerKey) {
@@ -1397,6 +1680,75 @@ function initPortalTabs() {
     }
   }
 
+  async function initAerialMapConnected() {
+    const mapNode = document.querySelector("#vworld-map");
+    const emptyState = document.querySelector("[data-vworld-empty]");
+    const status = document.querySelector("[data-aerial-status]");
+    const parcelAddress = getParcelAddress();
+
+    if (vworldMap) {
+      vworldMap.remove();
+      vworldMap = null;
+      vworldMarker = null;
+      vworldBaseLayer = null;
+      vworldHybridLayer = null;
+      vworldParcelLayer = null;
+      vworldRadiusLayer = null;
+      vworldCadastralLayer = null;
+      vworldMeasureLayer = null;
+      vworldMeasurePoints = [];
+      vworldMeasureMode = "";
+    }
+
+    if (!mapNode || !emptyState || !status) {
+      return;
+    }
+
+    if (!window.L) {
+      mapNode.classList.add("is-hidden");
+      emptyState.hidden = false;
+      status.textContent = "지도 라이브러리를 불러오지 못했습니다. 네트워크 연결을 확인해 주세요.";
+      return;
+    }
+
+    mapNode.classList.remove("is-hidden");
+    emptyState.hidden = true;
+
+    vworldMap = window.L.map(mapNode, {
+      zoomControl: true,
+    }).setView([36.4, 127.8], 7);
+
+    setVworldLayer("satellite");
+    setVworldCadastralLayer();
+
+    const savedState = getParcelState();
+
+    if (Number.isFinite(savedState.latitude) && Number.isFinite(savedState.longitude)) {
+      moveVworldToResult(savedState);
+      return;
+    }
+
+    if (!parcelAddress) {
+      status.textContent = "주소 또는 명칭을 검색한 뒤 결과를 선택해 주세요.";
+      return;
+    }
+
+    status.textContent = `"${parcelAddress}" 위치를 확인하는 중입니다.`;
+
+    try {
+      const point = await resolveParcelAddress();
+
+      if (point) {
+        moveVworldToResult(point);
+        return;
+      }
+
+      status.textContent = `"${parcelAddress}" 검색 결과를 찾지 못했습니다.`;
+    } catch (error) {
+      status.textContent = "V-World 검색 API를 불러오지 못했습니다. API 키와 네트워크 상태를 확인해 주세요.";
+    }
+  }
+
   function setActivePortal(portalKey) {
     const portal = portalData[portalKey];
     activePortalKey = portalKey;
@@ -1411,13 +1763,13 @@ function initPortalTabs() {
       button.setAttribute("aria-selected", String(isActive));
     });
 
-    portalPanel.innerHTML = portal.type === "aerial" ? renderAerialPortal() : renderEmbeddedPortal(portal);
+    portalPanel.innerHTML = portal.type === "aerial" ? renderAerialPortalConnected() : renderEmbeddedPortal(portal);
 
     refreshIcons();
 
     if (portal.type === "aerial") {
-      bindAerialSearchForm();
-      window.requestAnimationFrame(() => initAerialMap());
+      bindAerialSearchFormConnected();
+      window.requestAnimationFrame(() => initAerialMapConnected());
     }
 
     if ((portalKey === "eum" || portalKey === "map") && getParcelAddress() && !getParcelState().pnu) {
