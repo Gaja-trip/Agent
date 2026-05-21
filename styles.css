@@ -733,17 +733,17 @@ input {
 
 .law-link-chips {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(126px, 1fr));
+  gap: 8px;
 }
 
 .law-link-chip {
   display: grid;
-  grid-template-columns: 28px minmax(0, 1fr);
-  gap: 2px 10px;
+  grid-template-columns: 20px minmax(0, 1fr);
+  gap: 1px 7px;
   align-items: center;
-  min-height: 84px;
-  padding: 12px;
+  min-height: 70px;
+  padding: 9px 10px;
   color: #1f2a27;
   background: #fff;
   border: 1px solid rgba(31, 107, 85, 0.24);
@@ -761,8 +761,8 @@ input {
 
 .law-link-chip svg {
   grid-row: span 3;
-  width: 22px;
-  height: 22px;
+  width: 18px;
+  height: 18px;
   color: var(--green);
 }
 
@@ -773,16 +773,17 @@ input {
 }
 
 .law-link-chip span {
-  font-size: 0.82rem;
+  font-size: 0.68rem;
+  line-height: 1.15;
 }
 
 .law-link-chip strong {
-  font-size: 1.02rem;
+  font-size: 0.92rem;
   line-height: 1.2;
 }
 
 .law-link-chip small {
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   line-height: 1.25;
 }
 
