@@ -224,6 +224,8 @@ function initPortalTabs() {
   const parcelStatus = document.querySelector("[data-parcel-status]");
   let activePortalKey = "eum";
   const portalViews = new Map();
+  const initialParams = new URLSearchParams(window.location.search);
+  let selectedLaw = readSelectedLaw(initialParams);
 
   if (!portalTabs.length || !portalPanel) {
     return;
@@ -345,12 +347,56 @@ function initPortalTabs() {
     }
   }
 
-  function renderEmbeddedPortal(portal) {
-    const iframeUrl = portal === portalData.map ? getMapUrl() : portal === portalData.eum ? getEumUrl() : portal.url;
-    const isEumPortal = portal === portalData.eum;
+  function readSelectedLaw(params) {
+    const lawUrl = params.get("lawUrl");
+
+    if (!lawUrl) {
+      return null;
+    }
+
+    try {
+      const parsedUrl = new URL(lawUrl, window.location.href);
+      const isLawCenter = parsedUrl.hostname === "law.go.kr" || parsedUrl.hostname.endsWith(".law.go.kr");
+
+      if (!isLawCenter || !/^https?:$/.test(parsedUrl.protocol)) {
+        return null;
+      }
+
+      return {
+        title: params.get("lawTitle") || "선택한 법령 조항",
+        url: parsedUrl.toString(),
+      };
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function getLawUrl() {
+    return selectedLaw?.url || portalData.law.url;
+  }
+
+  function renderLawContext() {
+    if (!selectedLaw) {
+      return "";
+    }
 
     return `
-      <div class="embedded-site${isEumPortal ? " embedded-site--eum" : ""}">
+      <div class="portal-context portal-context--law">
+        <span>선택한 법령 조항</span>
+        <strong>${escapeHtml(selectedLaw.title)}</strong>
+      </div>
+    `;
+  }
+
+  function renderEmbeddedPortal(portal) {
+    const iframeUrl =
+      portal === portalData.map ? getMapUrl() : portal === portalData.eum ? getEumUrl() : portal === portalData.law ? getLawUrl() : portal.url;
+    const isEumPortal = portal === portalData.eum;
+    const isLawPortal = portal === portalData.law;
+
+    return `
+      <div class="embedded-site${isEumPortal ? " embedded-site--eum" : ""}${isLawPortal ? " embedded-site--law" : ""}">
+        ${isLawPortal ? renderLawContext() : ""}
         <iframe
           class="embedded-site__frame"
           title="${portal.frameTitle}"
@@ -533,6 +579,10 @@ function initPortalTabs() {
 
     if (portal === portalData.eum) {
       return getEumUrl();
+    }
+
+    if (portal === portalData.law) {
+      return getLawUrl();
     }
 
     return portal.url;
@@ -2431,8 +2481,8 @@ function initPortalTabs() {
     button.addEventListener("click", () => setActivePortal(button.dataset.portal));
   });
 
-  const initialPortal = new URLSearchParams(window.location.search).get("portal");
-  setActivePortal(portalData[initialPortal] ? initialPortal : "eum");
+  const initialPortal = initialParams.get("portal");
+  setActivePortal(selectedLaw ? "law" : portalData[initialPortal] ? initialPortal : "eum");
 }
 
 function renderList(target, items) {
