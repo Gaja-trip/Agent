@@ -601,6 +601,10 @@ input {
   box-shadow: 0 12px 36px rgba(31, 42, 39, 0.06);
 }
 
+.knowledge-item--wide {
+  grid-column: 1 / -1;
+}
+
 .knowledge-item svg {
   width: 34px;
   height: 34px;
@@ -616,6 +620,95 @@ input {
 .knowledge-item p {
   margin: 0;
   color: var(--muted);
+}
+
+.knowledge-table {
+  width: 100%;
+  margin-top: 22px;
+  border: 1px solid var(--line);
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  font-size: 0.98rem;
+}
+
+.knowledge-table th,
+.knowledge-table td {
+  padding: 13px 14px;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+
+.knowledge-table th:last-child,
+.knowledge-table td:last-child {
+  border-right: 0;
+}
+
+.knowledge-table tbody tr:last-child th,
+.knowledge-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.knowledge-table thead th {
+  color: #17382f;
+  background: #e7f2ed;
+  font-weight: 950;
+}
+
+.knowledge-table tbody th {
+  width: 22%;
+  color: var(--green-dark);
+  background: #f7faf8;
+  font-weight: 950;
+}
+
+.knowledge-note {
+  margin-top: 22px;
+  padding: 20px;
+  background: var(--soft);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.knowledge-note h3 {
+  margin: 0 0 12px;
+  font-size: 1.02rem;
+}
+
+.knowledge-note ul {
+  display: grid;
+  gap: 9px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.knowledge-note li {
+  position: relative;
+  padding-left: 18px;
+  color: #31463f;
+  font-weight: 760;
+}
+
+.knowledge-note li::before {
+  position: absolute;
+  top: 0.72em;
+  left: 0;
+  width: 7px;
+  height: 7px;
+  background: var(--green);
+  border-radius: 50%;
+  content: "";
+}
+
+.knowledge-source {
+  margin-top: 14px;
+  color: #6a7a75;
+  font-size: 0.9rem;
+  font-weight: 760;
 }
 
 .text-link {
@@ -1804,6 +1897,20 @@ input {
 
   .source-card {
     min-height: auto;
+  }
+
+  .knowledge-item {
+    padding: 22px;
+  }
+
+  .knowledge-table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  .knowledge-note {
+    padding: 16px;
   }
 
   .step-detail__top {
