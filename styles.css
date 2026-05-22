@@ -435,7 +435,7 @@ input {
 
 .guide-page-tabs {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
   margin-bottom: 20px;
   padding: 8px;
@@ -1925,6 +1925,25 @@ input {
 
 .content-tabs--knowledge {
   grid-template-columns: repeat(9, minmax(0, 1fr));
+}
+
+.result-example-workspace {
+  display: grid;
+  gap: 18px;
+}
+
+.result-example-tabs {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.result-example-card {
+  background: #f7faf8;
+}
+
+.result-example-card img {
+  width: min(920px, 100%);
+  margin: 0 auto;
+  background: #fff;
 }
 
 .content-tabs button {

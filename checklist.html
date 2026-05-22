@@ -41,6 +41,9 @@
           <button type="button" role="tab" aria-selected="false" aria-controls="guide-prechecklist" data-guide-page="prechecklist">
             사전체크리스트
           </button>
+          <button type="button" role="tab" aria-selected="false" aria-controls="guide-result-examples" data-guide-page="result-examples">
+            측량성과도(예시)
+          </button>
         </div>
 
         <div class="guide-pages">
@@ -110,6 +113,79 @@
                   지번과 목적이 먼저 정리되면 토지이음, 지도, 법령 검토를 빠르게 연결할 수 있습니다.
                 </p>
               </aside>
+            </div>
+          </section>
+
+          <section class="guide-page" id="guide-result-examples" role="tabpanel" data-guide-panel="result-examples" hidden>
+            <div class="result-example-workspace" data-content-scope>
+              <div class="content-tabs result-example-tabs" role="tablist" aria-label="측량성과도 예시 종류">
+                <button class="is-active" type="button" role="tab" aria-selected="true" data-content-tab="boundary-restoration">
+                  경계복원측량성과도
+                </button>
+                <button type="button" role="tab" aria-selected="false" data-content-tab="status-survey">
+                  지적현황측량성과도
+                </button>
+                <button type="button" role="tab" aria-selected="false" data-content-tab="subdivision-survey">
+                  분할측량성과도
+                </button>
+                <button type="button" role="tab" aria-selected="false" data-content-tab="conversion-survey">
+                  등록전환측량성과도
+                </button>
+              </div>
+
+              <div class="content-panels">
+                <section class="content-panel is-active" data-content-panel="boundary-restoration">
+                  <article class="guide-card result-example-card">
+                    <div class="guide-card__toolbar">
+                      <h2>경계복원측량성과도 예시</h2>
+                      <button class="button button--primary" type="button" data-print-image="assets/survey-result-boundary-restoration.svg" data-print-title="경계복원측량성과도 예시">
+                        <i data-lucide="printer"></i>
+                        출력
+                      </button>
+                    </div>
+                    <img src="assets/survey-result-boundary-restoration.svg" alt="도장과 일부 개인정보를 흐릿하게 처리한 경계복원측량성과도 예시" />
+                  </article>
+                </section>
+
+                <section class="content-panel" data-content-panel="status-survey" hidden>
+                  <article class="guide-card result-example-card">
+                    <div class="guide-card__toolbar">
+                      <h2>지적현황측량성과도 예시</h2>
+                      <button class="button button--primary" type="button" data-print-image="assets/survey-result-status.svg" data-print-title="지적현황측량성과도 예시">
+                        <i data-lucide="printer"></i>
+                        출력
+                      </button>
+                    </div>
+                    <img src="assets/survey-result-status.svg" alt="현황선과 지적선을 함께 표시한 지적현황측량성과도 예시" />
+                  </article>
+                </section>
+
+                <section class="content-panel" data-content-panel="subdivision-survey" hidden>
+                  <article class="guide-card result-example-card">
+                    <div class="guide-card__toolbar">
+                      <h2>분할측량성과도 예시</h2>
+                      <button class="button button--primary" type="button" data-print-image="assets/survey-result-subdivision.svg" data-print-title="분할측량성과도 예시">
+                        <i data-lucide="printer"></i>
+                        출력
+                      </button>
+                    </div>
+                    <img src="assets/survey-result-subdivision.svg" alt="분할 전후 지번과 면적을 표시한 분할측량성과도 예시" />
+                  </article>
+                </section>
+
+                <section class="content-panel" data-content-panel="conversion-survey" hidden>
+                  <article class="guide-card result-example-card">
+                    <div class="guide-card__toolbar">
+                      <h2>등록전환측량성과도 예시</h2>
+                      <button class="button button--primary" type="button" data-print-image="assets/survey-result-conversion.svg" data-print-title="등록전환측량성과도 예시">
+                        <i data-lucide="printer"></i>
+                        출력
+                      </button>
+                    </div>
+                    <img src="assets/survey-result-conversion.svg" alt="임야도에서 지적도로 등록전환하는 등록전환측량성과도 예시" />
+                  </article>
+                </section>
+              </div>
             </div>
           </section>
         </div>

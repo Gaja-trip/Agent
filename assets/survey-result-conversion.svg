@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1180" viewBox="0 0 900 1180" role="img" aria-labelledby="title desc">
+  <title id="title">등록전환측량 성과도 예시</title>
+  <desc id="desc">임야도에서 지적도로 등록전환하는 성과도 예시</desc>
+  <rect width="900" height="1180" fill="#fff"/>
+  <text x="450" y="48" text-anchor="middle" font-family="Malgun Gothic, sans-serif" font-size="34" letter-spacing="4">등록전환측량 성과도</text>
+  <rect x="34" y="78" width="832" height="958" fill="none" stroke="#111" stroke-width="1.2"/>
+  <path d="M34 152H866M34 228H866M134 78V228M626 78V152M718 78V152M410 152V228M515 152V228" fill="none" stroke="#111"/>
+  <g font-family="Malgun Gothic, sans-serif" font-size="14" fill="#111">
+    <text x="84" y="120" text-anchor="middle">토지 소재</text>
+    <text x="226" y="120">전북특별자치도 부안군 ○○면 ○○리 산 42-1</text>
+    <text x="84" y="196" text-anchor="middle">측 량 자</text>
+    <text x="226" y="196">2026년 05월 13일</text>
+    <text x="672" y="120" text-anchor="middle">축 척</text>
+    <text x="788" y="136" text-anchor="middle" font-size="11">1:1200</text>
+    <text x="458" y="196" text-anchor="middle">측량성과도</text>
+    <text x="638" y="196">작성자  지적기사 ○○○</text>
+  </g>
+  <g transform="translate(282 318)">
+    <path d="M78 44 248 18 326 138 282 286 112 318 20 210Z" fill="#fbfbfb" stroke="#111" stroke-width="1.2"/>
+    <path d="M78 44 140 160 20 210M140 160 282 286M140 160 326 138" fill="none" stroke="#111" stroke-width=".9"/>
+    <path d="M104 82 236 66 284 146 252 242 130 264 62 190Z" fill="none" stroke="#0f7f84" stroke-width="3"/>
+    <circle cx="104" cy="82" r="4" fill="#fff" stroke="#0f7f84" stroke-width="2"/>
+    <circle cx="236" cy="66" r="4" fill="#fff" stroke="#0f7f84" stroke-width="2"/>
+    <circle cx="284" cy="146" r="4" fill="#fff" stroke="#0f7f84" stroke-width="2"/>
+    <circle cx="252" cy="242" r="4" fill="#fff" stroke="#0f7f84" stroke-width="2"/>
+    <circle cx="130" cy="264" r="4" fill="#fff" stroke="#0f7f84" stroke-width="2"/>
+    <text x="112" y="140" font-family="Malgun Gothic, sans-serif" font-size="13">산 42-1 임</text>
+    <text x="204" y="212" font-family="Malgun Gothic, sans-serif" font-size="13">42-7 대</text>
+  </g>
+  <g font-family="Malgun Gothic, sans-serif" font-size="13">
+    <text x="88" y="524">등록전환 표시</text>
+    <rect x="34" y="546" width="282" height="156" fill="none" stroke="#111"/>
+    <path d="M34 584H316M34 622H316M34 660H316M134 546V702M225 546V702" stroke="#111"/>
+    <text x="84" y="570" text-anchor="middle">구분</text>
+    <text x="180" y="570" text-anchor="middle">전</text>
+    <text x="270" y="570" text-anchor="middle">후</text>
+    <text x="84" y="608" text-anchor="middle">도면</text>
+    <text x="180" y="608" text-anchor="middle">임야도</text>
+    <text x="270" y="608" text-anchor="middle">지적도</text>
+    <text x="84" y="646" text-anchor="middle">지번</text>
+    <text x="180" y="646" text-anchor="middle">산 42-1</text>
+    <text x="270" y="646" text-anchor="middle">42-7</text>
+  </g>
+  <text x="450" y="880" text-anchor="middle" font-family="Malgun Gothic, sans-serif" font-size="15">등록전환측량 성과도 예시입니다.</text>
+  <text x="610" y="990" text-anchor="middle" font-family="Malgun Gothic, sans-serif" font-size="22">한국국토정보공사 부안지사장</text>
+</svg>
