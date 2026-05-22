@@ -28,7 +28,7 @@ const parcelStateStorageKey = "landInfoPortal.parcelState";
 const vworldApiKey = "39B6F1DE-2D35-3582-9008-A537EF6A6BC4";
 const vworldParcelDataId = "LP_PA_CBND_BUBUN";
 const vworldParcelWfsDataIds = ["lp_pa_cbnd_bubun", "lt_c_landinfobasemap"];
-const vworldParcelRadiusMeters = 50;
+const vworldParcelRadiusMeters = 100;
 const vworldLotNumberMinZoom = 18;
 const vworldMapMaxZoom = 21;
 const vworldTileNativeMaxZoom = 19;
@@ -491,7 +491,7 @@ function initPortalTabs() {
       <div class="aerial-portal aerial-portal--connected">
         <aside class="aerial-portal__panel">
           <form class="aerial-search" data-aerial-parcel-form>
-            <label for="aerial-parcel-address">주소 또는 명칭 검색</label>
+            <label for="aerial-parcel-address">주소·도로명·명칭 검색</label>
             <div class="aerial-search__row">
               <input
                 id="aerial-parcel-address"
@@ -499,7 +499,7 @@ function initPortalTabs() {
                 name="aerialParcel"
                 data-aerial-parcel-input
                 value="${parcelAddress}"
-                placeholder="예: 서울특별시 중구 세종대로 110"
+                placeholder="예: 서울특별시 중구 세종대로 110 또는 지번주소"
                 autocomplete="street-address"
               />
               <button class="button button--primary" type="submit">
@@ -690,12 +690,17 @@ function initPortalTabs() {
         const roadAddress = item?.address?.road || "";
         const parcelAddress = item?.address?.parcel || "";
 
+        const title = parcelAddress || item.title || roadAddress || query;
+
         return {
           latitude,
           longitude,
           pnu,
-          title: item.title || parcelAddress || roadAddress || query,
+          title,
           subtitle: [roadAddress, parcelAddress, item?.category].filter(Boolean).join(" · "),
+          roadAddress,
+          parcelAddress,
+          rawTitle: item.title || "",
         };
       }
     }
@@ -714,7 +719,10 @@ function initPortalTabs() {
     const pnu = String(item?.id || "").match(/^\d{19}$/) ? String(item.id) : "";
     const roadAddress = item?.address?.road || "";
     const parcelAddress = item?.address?.parcel || "";
-    const title = item?.title || parcelAddress || roadAddress || fallbackQuery;
+    const title =
+      searchType === "address"
+        ? parcelAddress || item?.title || roadAddress || fallbackQuery
+        : item?.title || parcelAddress || roadAddress || fallbackQuery;
     const subtitle = [roadAddress, parcelAddress, item?.category].filter(Boolean).join(" · ");
 
     return {
@@ -723,8 +731,85 @@ function initPortalTabs() {
       pnu,
       title,
       subtitle,
+      roadAddress,
+      parcelAddress,
+      rawTitle: item?.title || "",
       searchType,
     };
+  }
+
+  function getPreferredParcelAddress(result, fallbackQuery = "") {
+    return result?.parcelAddress || result?.title || result?.roadAddress || fallbackQuery;
+  }
+
+  function setSharedParcelAddress(address) {
+    const nextAddress = String(address || "").trim();
+
+    if (!nextAddress) {
+      return;
+    }
+
+    if (parcelInput && parcelInput.value !== nextAddress) {
+      parcelInput.value = nextAddress;
+    }
+
+    const aerialInput = document.querySelector("[data-aerial-parcel-input]");
+
+    if (aerialInput && aerialInput.value !== nextAddress) {
+      aerialInput.value = nextAddress;
+    }
+
+    writeStoredValue(parcelStorageKey, nextAddress);
+    syncSharedParcelText();
+  }
+
+  async function reverseGeocodeParcelAddress(latitude, longitude) {
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+      return "";
+    }
+
+    const url = new URL("https://api.vworld.kr/req/address");
+    url.searchParams.set("service", "address");
+    url.searchParams.set("request", "getAddress");
+    url.searchParams.set("version", "2.0");
+    url.searchParams.set("crs", "EPSG:4326");
+    url.searchParams.set("point", `${longitude},${latitude}`);
+    url.searchParams.set("type", "PARCEL");
+    url.searchParams.set("format", "json");
+    url.searchParams.set("errorformat", "json");
+    url.searchParams.set("key", vworldApiKey);
+
+    try {
+      const data = await requestVworldJson(url);
+      const result = data?.response?.result;
+      const items = Array.isArray(result) ? result : result ? [result] : [];
+      const parcelItem = items.find((item) => item?.text || item?.address?.parcel);
+
+      return parcelItem?.text || parcelItem?.address?.parcel || "";
+    } catch (error) {
+      return "";
+    }
+  }
+
+  async function ensureResultParcelAddress(result, fallbackQuery = "") {
+    if (!result) {
+      return String(fallbackQuery || "").trim();
+    }
+
+    let parcelAddress = String(result.parcelAddress || "").trim();
+
+    if (!parcelAddress) {
+      parcelAddress = await reverseGeocodeParcelAddress(Number(result.latitude), Number(result.longitude));
+    }
+
+    if (parcelAddress) {
+      result.parcelAddress = parcelAddress;
+      result.title = parcelAddress;
+      result.subtitle = [result.roadAddress, parcelAddress, result.searchType].filter(Boolean).join(" · ");
+      return parcelAddress;
+    }
+
+    return getPreferredParcelAddress(result, fallbackQuery);
   }
 
   async function searchVworldIntegrated(query, searchMode) {
@@ -1126,7 +1211,7 @@ function initPortalTabs() {
     const url = createVworldParcelDataUrl();
 
     url.searchParams.set("geomFilter", `BOX(${bbox.join(",")})`);
-    url.searchParams.set("size", "200");
+    url.searchParams.set("size", "500");
     url.searchParams.set("page", "1");
 
     try {
@@ -1204,12 +1289,16 @@ function initPortalTabs() {
       return null;
     }
 
+    const resolvedAddress = await ensureResultParcelAddress(point, address);
     const nextState = {
-      query: address,
+      query: resolvedAddress || address,
+      originalQuery: resolvedAddress && resolvedAddress !== address ? address : "",
       ...point,
+      title: resolvedAddress || point.title,
     };
 
     writeStoredJson(parcelStateStorageKey, nextState);
+    setSharedParcelAddress(nextState.query);
     return nextState;
   }
 
@@ -1275,7 +1364,7 @@ function initPortalTabs() {
       return;
     }
 
-    resultsNode.addEventListener("click", (event) => {
+    resultsNode.addEventListener("click", async (event) => {
       const button = event.target.closest("[data-vworld-result]");
 
       if (!button) {
@@ -1288,17 +1377,21 @@ function initPortalTabs() {
         return;
       }
 
-      const query = result.subtitle || result.title;
-      aerialInput.value = query;
-      saveParcelAddress(query);
+      updateAerialStatus("선택한 위치의 지번주소를 확인하는 중입니다.");
+      const query = await ensureResultParcelAddress(result, result.title);
+      setSharedParcelAddress(query);
       writeStoredJson(parcelStateStorageKey, {
         query,
+        originalQuery: result.roadAddress || result.rawTitle || "",
         latitude: result.latitude,
         longitude: result.longitude,
         pnu: result.pnu,
-        title: result.title,
+        title: query,
+        subtitle: result.subtitle,
+        roadAddress: result.roadAddress,
+        parcelAddress: result.parcelAddress,
       });
-      moveVworldToResult(result);
+      moveVworldToResult({ ...result, query, title: query });
     });
 
     aerialForm.addEventListener("submit", async (event) => {
@@ -2037,7 +2130,7 @@ function initPortalTabs() {
       }
 
       if (!selectedFeatures.length) {
-        updateAerialStatus(`${point.title} 번지의 필지 도형을 찾지 못했습니다. 50m도형으로 주변 필지를 확인해 주세요.`);
+        updateAerialStatus(`${point.title} 번지의 필지 도형을 찾지 못했습니다. ${vworldParcelRadiusMeters}m 도형으로 주변 필지를 확인해 주세요.`);
         return;
       }
 
@@ -2368,6 +2461,7 @@ function initPortalTabs() {
 
     setVworldLayer("satellite");
     setVworldCadastralLayer();
+    bindVworldTools();
 
     const savedState = getParcelState();
 
