@@ -1660,6 +1660,14 @@ input {
   z-index: 1;
 }
 
+.vworld-map.is-measuring,
+.vworld-map.is-measuring .leaflet-grab,
+.vworld-map.is-measuring .leaflet-interactive,
+.vworld-map.is-measuring .leaflet-marker-icon,
+.vworld-map.is-measuring .leaflet-tile-container {
+  cursor: crosshair !important;
+}
+
 .vworld-map.is-hidden {
   display: none;
 }

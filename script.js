@@ -28,7 +28,7 @@ const parcelStateStorageKey = "landInfoPortal.parcelState";
 const vworldApiKey = "39B6F1DE-2D35-3582-9008-A537EF6A6BC4";
 const vworldParcelDataId = "LP_PA_CBND_BUBUN";
 const vworldParcelWfsDataIds = ["lp_pa_cbnd_bubun", "lt_c_landinfobasemap"];
-const vworldParcelRadiusMeters = 100;
+const vworldParcelRadiusMeters = 80;
 const vworldLotNumberMinZoom = 18;
 const vworldMapMaxZoom = 21;
 const vworldTileNativeMaxZoom = 19;
@@ -1211,7 +1211,7 @@ function initPortalTabs() {
     const url = createVworldParcelDataUrl();
 
     url.searchParams.set("geomFilter", `BOX(${bbox.join(",")})`);
-    url.searchParams.set("size", "500");
+    url.searchParams.set("size", "300");
     url.searchParams.set("page", "1");
 
     try {
@@ -1537,6 +1537,14 @@ function initPortalTabs() {
 
     if (output) {
       output.textContent = message;
+    }
+  }
+
+  function syncVworldMeasureCursor() {
+    const mapNode = vworldMap?.getContainer?.();
+
+    if (mapNode) {
+      mapNode.classList.toggle("is-measuring", Boolean(vworldMeasureMode));
     }
   }
 
@@ -2225,6 +2233,7 @@ function initPortalTabs() {
     document.querySelectorAll('[data-vworld-action="distance"], [data-vworld-action="area"]').forEach((button) => {
       button.classList.remove("is-active");
     });
+    syncVworldMeasureCursor();
     updateMeasureOutput("지도 도구를 선택하세요.");
   }
 
@@ -2298,6 +2307,7 @@ function initPortalTabs() {
     document.querySelectorAll('[data-vworld-action="distance"], [data-vworld-action="area"]').forEach((button) => {
       button.classList.toggle("is-active", button.dataset.vworldAction === mode);
     });
+    syncVworldMeasureCursor();
     updateMeasureOutput(mode === "distance" ? "거리재기: 지도에서 지점을 클릭하세요." : "면적재기: 지도에서 3개 이상 지점을 클릭하세요.");
   }
 
