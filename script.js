@@ -25,6 +25,24 @@ const portalData = {
 
 const parcelStorageKey = "landInfoPortal.parcelAddress";
 const parcelStateStorageKey = "landInfoPortal.parcelState";
+const parcelProvinceStorageKey = "landInfoPortal.parcelProvince";
+const parcelCityStorageKey = "landInfoPortal.parcelCity";
+const jeonbukCityNames = [
+  "전주시",
+  "군산시",
+  "익산시",
+  "정읍시",
+  "남원시",
+  "김제시",
+  "완주군",
+  "진안군",
+  "무주군",
+  "장수군",
+  "임실군",
+  "순창군",
+  "고창군",
+  "부안군",
+];
 const vworldApiKey = "39B6F1DE-2D35-3582-9008-A537EF6A6BC4";
 const vworldParcelDataId = "LP_PA_CBND_BUBUN";
 const vworldParcelWfsDataIds = ["lp_pa_cbnd_bubun", "lt_c_landinfobasemap"];
@@ -221,6 +239,8 @@ function initPortalTabs() {
   const portalPanel = document.querySelector("[data-portal-panel]");
   const parcelForm = document.querySelector("[data-parcel-form]");
   const parcelInput = document.querySelector("[data-parcel-input]");
+  const parcelProvince = document.querySelector("[data-parcel-province]");
+  const parcelCity = document.querySelector("[data-parcel-city]");
   const parcelStatus = document.querySelector("[data-parcel-status]");
   let activePortalKey = "eum";
   const portalViews = new Map();
@@ -237,8 +257,49 @@ function initPortalTabs() {
     return (parcelInput ? parcelInput.value : readStoredValue(parcelStorageKey)).trim();
   }
 
+  function getParcelProvince() {
+    return (parcelProvince?.value || readStoredValue(parcelProvinceStorageKey) || "전북특별자치도").trim();
+  }
+
+  function getParcelCity() {
+    return (parcelCity?.value || readStoredValue(parcelCityStorageKey)).trim();
+  }
+
+  function saveParcelRegion() {
+    writeStoredValue(parcelProvinceStorageKey, getParcelProvince());
+    writeStoredValue(parcelCityStorageKey, getParcelCity());
+  }
+
+  function hasProvinceToken(address) {
+    return /(특별자치도|특별시|광역시|특별자치시|도)\s/.test(address) || /^(전북|전라북도|전북특별자치도)\b/.test(address);
+  }
+
+  function buildContextualParcelAddress(rawAddress = getParcelAddress()) {
+    const address = String(rawAddress || "").trim().replace(/\s+/g, " ");
+    const province = getParcelProvince();
+    const city = getParcelCity();
+
+    if (!address) {
+      return "";
+    }
+
+    const parts = [];
+
+    if (province && !hasProvinceToken(address)) {
+      parts.push(province);
+    }
+
+    if (city && !address.includes(city) && !jeonbukCityNames.some((cityName) => address.includes(cityName))) {
+      parts.push(city);
+    }
+
+    parts.push(address);
+
+    return parts.join(" ").replace(/\s+/g, " ").trim();
+  }
+
   function saveParcelAddress(nextAddress = getParcelAddress()) {
-    const address = String(nextAddress || "").trim();
+    const address = String(nextAddress || "").trim().replace(/\s+/g, " ");
     const savedState = readStoredJson(parcelStateStorageKey);
 
     if (parcelInput && parcelInput.value !== address) {
@@ -1269,11 +1330,16 @@ function initPortalTabs() {
   }
 
   async function resolveParcelAddress() {
-    const address = getParcelAddress();
+    const rawAddress = getParcelAddress();
+    const address = buildContextualParcelAddress(rawAddress);
 
     if (!address) {
       writeStoredJson(parcelStateStorageKey, { query: "" });
       return null;
+    }
+
+    if (address !== rawAddress) {
+      saveParcelAddress(address);
     }
 
     const state = getParcelState();
@@ -1397,8 +1463,9 @@ function initPortalTabs() {
     aerialForm.addEventListener("submit", async (event) => {
       event.preventDefault();
 
-      const query = aerialInput.value.trim();
+      const rawQuery = aerialInput.value.trim();
       const searchMode = aerialForm.querySelector("input[name='vworldSearchMode']:checked")?.value || "address";
+      const query = searchMode === "address" ? buildContextualParcelAddress(rawQuery) : rawQuery;
 
       if (!query) {
         vworldSearchResults = [];
@@ -1408,8 +1475,11 @@ function initPortalTabs() {
       }
 
       saveParcelAddress(query);
+      if (searchMode === "address" && aerialInput.value !== query) {
+        aerialInput.value = query;
+      }
       renderAerialResults([], "검색 중입니다.");
-      updateAerialStatus(`"${query}" 검색 중입니다.`);
+      updateAerialStatus(rawQuery && rawQuery !== query ? `"${rawQuery}"을 "${query}" 기준으로 검색 중입니다.` : `"${query}" 검색 중입니다.`);
 
       try {
         vworldSearchResults = await searchVworldIntegrated(query, searchMode);
@@ -1441,13 +1511,17 @@ function initPortalTabs() {
 
     aerialForm.addEventListener("submit", async (event) => {
       event.preventDefault();
-      const address = aerialInput.value.trim();
+      const originalAddress = aerialInput.value.trim();
+      const address = buildContextualParcelAddress(originalAddress);
 
       if (parcelInput) {
         parcelInput.value = address;
       }
 
       saveParcelAddress(address);
+      if (aerialInput.value !== address) {
+        aerialInput.value = address;
+      }
       await resolveParcelAddress();
       setActivePortal("aerial");
     });
@@ -2552,18 +2626,38 @@ function initPortalTabs() {
     });
   }
 
+  if (parcelProvince) {
+    parcelProvince.value = readStoredValue(parcelProvinceStorageKey) || "전북특별자치도";
+    parcelProvince.addEventListener("change", () => {
+      saveParcelRegion();
+      updateParcelStatus("선택한 시도 기준으로 다음 주소 검색을 진행합니다.");
+    });
+  }
+
+  if (parcelCity) {
+    parcelCity.value = readStoredValue(parcelCityStorageKey);
+    parcelCity.addEventListener("change", () => {
+      saveParcelRegion();
+      updateParcelStatus(parcelCity.value ? `${getParcelProvince()} ${parcelCity.value} 기준으로 다음 주소 검색을 진행합니다.` : "시군 기준을 해제했습니다.");
+    });
+  }
+
   if (parcelForm) {
     parcelForm.addEventListener("submit", async (event) => {
       event.preventDefault();
-      saveParcelAddress();
-      const address = getParcelAddress();
+      saveParcelRegion();
+      const originalAddress = getParcelAddress();
+      const address = buildContextualParcelAddress(originalAddress);
+      saveParcelAddress(address);
 
       if (!address) {
         updateParcelStatus("주소를 입력해 주세요.");
         return;
       }
 
-      updateParcelStatus(`"${address}" 주소를 확인하는 중입니다.`);
+      updateParcelStatus(
+        originalAddress && originalAddress !== address ? `"${originalAddress}"을 "${address}" 기준으로 확인하는 중입니다.` : `"${address}" 주소를 확인하는 중입니다.`
+      );
 
       try {
         const state = await resolveParcelAddress();
