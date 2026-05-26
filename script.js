@@ -16,6 +16,11 @@ const portalData = {
     frameTitle: "브이월드 항공사진 및 주제도",
     type: "aerial",
   },
+  realestate: {
+    title: "부동산정보",
+    url: "https://kras.jeonbuk.go.kr/land_info/info/baseInfo/baseInfo.do",
+    frameTitle: "전북 부동산정보 통합열람",
+  },
   law: {
     title: "법령정보",
     url: "https://www.law.go.kr/main.html",
@@ -383,13 +388,29 @@ function initPortalTabs() {
     return portalData.eum.url;
   }
 
-  function renderSharedParcel() {
+  function getRealEstateUrl() {
+    const state = getParcelState();
+    const url = new URL(portalData.realestate.url);
+    const pnu = normalizePnu(state.pnu);
+
+    if (pnu) {
+      url.searchParams.set("gblDivName", "baseInfo");
+      url.searchParams.set("gyujae", "0");
+      url.searchParams.set("landcode", pnu);
+      url.searchParams.set("scale", "0");
+      url.searchParams.set("service", "baseInfo");
+    }
+
+    return url.toString();
+  }
+
+  function renderSharedParcel(label = "토지이음 검색 주소") {
     const parcelAddress = escapeHtml(getParcelAddress());
     const displayText = parcelAddress || "아직 입력 전";
 
     return `
       <div class="portal-context">
-        <span>토지이음 검색 주소</span>
+        <span>${escapeHtml(label)}</span>
         <strong data-shared-parcel>${displayText}</strong>
       </div>
     `;
@@ -451,13 +472,23 @@ function initPortalTabs() {
 
   function renderEmbeddedPortal(portal) {
     const iframeUrl =
-      portal === portalData.map ? getMapUrl() : portal === portalData.eum ? getEumUrl() : portal === portalData.law ? getLawUrl() : portal.url;
+      portal === portalData.map
+        ? getMapUrl()
+        : portal === portalData.eum
+          ? getEumUrl()
+          : portal === portalData.realestate
+            ? getRealEstateUrl()
+            : portal === portalData.law
+              ? getLawUrl()
+              : portal.url;
     const isEumPortal = portal === portalData.eum;
+    const isRealEstatePortal = portal === portalData.realestate;
     const isLawPortal = portal === portalData.law;
 
     return `
-      <div class="embedded-site${isEumPortal ? " embedded-site--eum" : ""}${isLawPortal ? " embedded-site--law" : ""}">
+      <div class="embedded-site${isEumPortal ? " embedded-site--eum" : ""}${isRealEstatePortal ? " embedded-site--realestate" : ""}${isLawPortal ? " embedded-site--law" : ""}">
         ${isLawPortal ? renderLawContext() : ""}
+        ${isRealEstatePortal ? renderSharedParcel("부동산정보 검색 주소") : ""}
         <iframe
           class="embedded-site__frame"
           title="${portal.frameTitle}"
@@ -640,6 +671,10 @@ function initPortalTabs() {
 
     if (portal === portalData.eum) {
       return getEumUrl();
+    }
+
+    if (portal === portalData.realestate) {
+      return getRealEstateUrl();
     }
 
     if (portal === portalData.law) {
@@ -2610,7 +2645,7 @@ function initPortalTabs() {
       }
     }
 
-    if ((portalKey === "eum" || portalKey === "map") && getParcelAddress() && !getParcelState().pnu) {
+    if ((portalKey === "eum" || portalKey === "map" || portalKey === "realestate") && getParcelAddress() && !getParcelState().pnu) {
       resolveParcelAddress().then((state) => {
         if (state?.pnu && activePortalKey === portalKey) {
           setActivePortal(portalKey);

@@ -1336,7 +1336,7 @@ input {
   position: relative;
   z-index: 8;
   display: grid;
-  grid-template-columns: minmax(650px, 2.2fr) repeat(4, minmax(118px, 0.58fr));
+  grid-template-columns: minmax(650px, 2.2fr) repeat(5, minmax(104px, 0.5fr));
   gap: 8px;
   padding: 10px 0 12px;
   background: rgba(17, 70, 54, 0.96);
@@ -1375,7 +1375,7 @@ input {
 
 @media (max-width: 1180px) {
   .portal-tabs {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
   }
 
   .parcel-search {
@@ -1468,6 +1468,11 @@ input {
 .embedded-site--eum .embedded-site__frame {
   min-width: 1440px;
   min-height: 1080px;
+}
+
+.embedded-site--realestate .embedded-site__frame {
+  min-width: 1280px;
+  min-height: 900px;
 }
 
 .aerial-portal {
