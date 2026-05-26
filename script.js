@@ -20,6 +20,7 @@ const portalData = {
     title: "부동산정보",
     url: "https://kras.jeonbuk.go.kr/land_info/info/baseInfo/baseInfo.do",
     frameTitle: "전북 부동산정보 통합열람",
+    type: "realestate",
   },
   law: {
     title: "법령정보",
@@ -389,19 +390,7 @@ function initPortalTabs() {
   }
 
   function getRealEstateUrl() {
-    const state = getParcelState();
-    const url = new URL(portalData.realestate.url);
-    const pnu = normalizePnu(state.pnu);
-
-    if (pnu) {
-      url.searchParams.set("gblDivName", "baseInfo");
-      url.searchParams.set("gyujae", "0");
-      url.searchParams.set("landcode", pnu);
-      url.searchParams.set("scale", "0");
-      url.searchParams.set("service", "baseInfo");
-    }
-
-    return url.toString();
+    return portalData.realestate.url;
   }
 
   function renderSharedParcel(label = "토지이음 검색 주소") {
@@ -470,25 +459,59 @@ function initPortalTabs() {
     `;
   }
 
+  function renderRealEstatePortal() {
+    const parcelAddress = escapeHtml(getParcelAddress());
+    const displayText = parcelAddress || "주소검색 후 이곳에 검색 주소가 표시됩니다.";
+
+    return `
+      <div class="realestate-connect">
+        ${renderSharedParcel("부동산정보 검색 주소")}
+        <div class="realestate-connect__body">
+          <div class="realestate-connect__icon" aria-hidden="true">
+            <i data-lucide="shield-alert"></i>
+          </div>
+          <div class="realestate-connect__content">
+            <p class="realestate-connect__eyebrow">KRAS 웹방화벽 안내</p>
+            <h2>부동산정보는 공식 사이트에서 직접 열람합니다.</h2>
+            <p>
+              전북 부동산정보 통합열람은 외부 페이지 내부 호출이나 필지 직접 URL 접근이 웹방화벽에서 차단될 수 있습니다.
+              아래 버튼으로 공식 사이트를 열고, 복사된 주소를 지번 또는 도로명 검색란에 입력해 확인해 주세요.
+            </p>
+            <div class="realestate-connect__address">
+              <span>현재 검색 주소</span>
+              <strong data-shared-parcel>${displayText}</strong>
+            </div>
+            <div class="realestate-connect__actions">
+              <button class="button realestate-connect__copy" type="button" data-realestate-copy>
+                <i data-lucide="copy"></i>
+                주소 복사
+              </button>
+              <button class="button button--primary" type="button" data-realestate-open>
+                <i data-lucide="external-link"></i>
+                KRAS 공식 사이트 열기
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   function renderEmbeddedPortal(portal) {
     const iframeUrl =
       portal === portalData.map
         ? getMapUrl()
         : portal === portalData.eum
           ? getEumUrl()
-          : portal === portalData.realestate
-            ? getRealEstateUrl()
-            : portal === portalData.law
-              ? getLawUrl()
-              : portal.url;
+          : portal === portalData.law
+            ? getLawUrl()
+            : portal.url;
     const isEumPortal = portal === portalData.eum;
-    const isRealEstatePortal = portal === portalData.realestate;
     const isLawPortal = portal === portalData.law;
 
     return `
-      <div class="embedded-site${isEumPortal ? " embedded-site--eum" : ""}${isRealEstatePortal ? " embedded-site--realestate" : ""}${isLawPortal ? " embedded-site--law" : ""}">
+      <div class="embedded-site${isEumPortal ? " embedded-site--eum" : ""}${isLawPortal ? " embedded-site--law" : ""}">
         ${isLawPortal ? renderLawContext() : ""}
-        ${isRealEstatePortal ? renderSharedParcel("부동산정보 검색 주소") : ""}
         <iframe
           class="embedded-site__frame"
           title="${portal.frameTitle}"
@@ -673,10 +696,6 @@ function initPortalTabs() {
       return getEumUrl();
     }
 
-    if (portal === portalData.realestate) {
-      return getRealEstateUrl();
-    }
-
     if (portal === portalData.law) {
       return getLawUrl();
     }
@@ -693,13 +712,20 @@ function initPortalTabs() {
       view.className = "portal-view";
       view.dataset.portalView = portalKey;
       view.hidden = true;
-      view.innerHTML = portal.type === "aerial" ? renderAerialPortalConnected() : renderEmbeddedPortal(portal);
+      view.innerHTML =
+        portal.type === "aerial"
+          ? renderAerialPortalConnected()
+          : portal.type === "realestate"
+            ? renderRealEstatePortal()
+            : renderEmbeddedPortal(portal);
       portalPanel.append(view);
       portalViews.set(portalKey, view);
       return { view, isNew: true };
     }
 
-    if (portal.type !== "aerial") {
+    if (portal.type === "realestate") {
+      view.innerHTML = renderRealEstatePortal();
+    } else if (portal.type !== "aerial") {
       const iframe = view.querySelector(".embedded-site__frame");
       const nextUrl = getEmbeddedPortalUrl(portal);
 
@@ -2645,7 +2671,7 @@ function initPortalTabs() {
       }
     }
 
-    if ((portalKey === "eum" || portalKey === "map" || portalKey === "realestate") && getParcelAddress() && !getParcelState().pnu) {
+    if ((portalKey === "eum" || portalKey === "map") && getParcelAddress() && !getParcelState().pnu) {
       resolveParcelAddress().then((state) => {
         if (state?.pnu && activePortalKey === portalKey) {
           setActivePortal(portalKey);
@@ -2709,6 +2735,58 @@ function initPortalTabs() {
       }
     });
   }
+
+  async function copyParcelAddress() {
+    const address = getParcelAddress();
+
+    if (!address) {
+      updateParcelStatus("복사할 주소가 없습니다. 먼저 주소를 검색해 주세요.");
+      return false;
+    }
+
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(address);
+      } else {
+        const textarea = document.createElement("textarea");
+        textarea.value = address;
+        textarea.setAttribute("readonly", "");
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+        document.body.append(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        textarea.remove();
+      }
+
+      updateParcelStatus(`"${address}" 주소를 복사했습니다.`);
+      return true;
+    } catch (error) {
+      updateParcelStatus("브라우저 보안 설정으로 자동 복사가 제한되었습니다. 화면의 주소를 직접 복사해 주세요.");
+      return false;
+    }
+  }
+
+  portalPanel.addEventListener("click", (event) => {
+    const copyButton = event.target.closest("[data-realestate-copy]");
+    const openButton = event.target.closest("[data-realestate-open]");
+
+    if (copyButton) {
+      copyParcelAddress();
+      return;
+    }
+
+    if (openButton) {
+      const openedWindow = window.open(getRealEstateUrl(), "_blank");
+      copyParcelAddress();
+
+      if (!openedWindow) {
+        updateParcelStatus("팝업 차단으로 KRAS 공식 사이트를 열 수 없습니다. 브라우저의 팝업 허용을 확인해 주세요.");
+      } else {
+        openedWindow.opener = null;
+      }
+    }
+  });
 
   portalTabs.forEach((button) => {
     button.addEventListener("click", () => setActivePortal(button.dataset.portal));
