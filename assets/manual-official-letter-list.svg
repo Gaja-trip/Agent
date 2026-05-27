@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="390" viewBox="0 0 1280 390" role="img" aria-labelledby="title desc">
+  <title id="title">수행계획서 상신 화면</title>
+  <desc id="desc">기준일자와 검색 버튼, 측량 대상 목록을 강조한 수행계획서 상신 화면 예시</desc>
+  <rect width="1280" height="390" fill="#f5f8fa"/>
+  <rect width="1280" height="46" fill="#06446e"/>
+  <text x="22" y="30" fill="#fff" font-family="Arial, sans-serif" font-size="18" font-weight="800">일정 &gt;&gt; 측량수행계획서</text>
+  <rect x="0" y="46" width="1280" height="52" fill="#edf7ff" stroke="#0a5c91"/>
+  <rect x="14" y="58" width="116" height="40" rx="3" fill="#ffffff" stroke="#0a5c91"/>
+  <text x="32" y="84" fill="#06446e" font-family="Arial, sans-serif" font-size="16" font-weight="800">수행계획서 상신</text>
+  <rect x="130" y="58" width="120" height="40" rx="3" fill="#eef2f5" stroke="#b5c5d0"/>
+  <text x="154" y="84" fill="#87939b" font-family="Arial, sans-serif" font-size="16" font-weight="800">수행계획서 조회</text>
+  <rect x="0" y="98" width="1280" height="72" fill="#ffffff" stroke="#b8c5cf"/>
+  <text x="22" y="138" fill="#0f2c45" font-family="Arial, sans-serif" font-size="15" font-weight="800">기관</text>
+  <rect x="64" y="116" width="170" height="35" fill="#f2f5f7" stroke="#cdd5db"/>
+  <text x="260" y="138" fill="#0f2c45" font-family="Arial, sans-serif" font-size="15" font-weight="800">타소관청</text>
+  <rect x="352" y="116" width="154" height="35" fill="#fff" stroke="#cdd5db"/>
+  <text x="680" y="138" fill="#0f2c45" font-family="Arial, sans-serif" font-size="15" font-weight="800">기준일자</text>
+  <rect x="746" y="112" width="122" height="42" fill="#fff" stroke="#cdd5db"/>
+  <text x="768" y="139" fill="#111" font-family="Arial, sans-serif" font-size="15" font-weight="800">2026-05-27</text>
+  <rect x="1138" y="106" width="74" height="48" fill="#0067ad" rx="4"/>
+  <text x="1175" y="136" fill="#fff" font-family="Arial, sans-serif" font-size="16" font-weight="800" text-anchor="middle">검색</text>
+  <rect x="664" y="103" width="220" height="56" fill="none" stroke="#ff2a2a" stroke-width="5"/>
+  <rect x="1128" y="100" width="94" height="60" fill="none" stroke="#ff2a2a" stroke-width="5"/>
+  <rect x="0" y="170" width="1280" height="48" fill="#d8dee4" stroke="#b8c5cf"/>
+  <g font-family="Arial, sans-serif" font-size="14" fill="#111" font-weight="800" text-anchor="middle">
+    <text x="110" y="201">측량의뢰</text>
+    <text x="260" y="201">측량종목</text>
+    <text x="400" y="201">토지소재지</text>
+    <text x="560" y="201">구분</text>
+    <text x="710" y="201">측량수수료</text>
+    <text x="860" y="201">측량예정일</text>
+    <text x="1000" y="201">완료일</text>
+    <text x="1160" y="201">변경사유</text>
+  </g>
+  <g font-family="Arial, sans-serif" font-size="14" fill="#111">
+    <rect x="0" y="218" width="1280" height="42" fill="#fff" stroke="#ccd4da"/>
+    <text x="76" y="245">2026-05-27</text><text x="248" y="245">경계복원</text><text x="328" y="245">위도면 진리 113</text><text x="826" y="245">2026-05-29</text><text x="968" y="245">2026-05-29</text>
+    <rect x="0" y="260" width="1280" height="42" fill="#f8fafb" stroke="#ccd4da"/>
+    <text x="76" y="287">2026-05-27</text><text x="248" y="287">경계복원</text><text x="328" y="287">변산면 대항리 229-2 외 1</text><text x="826" y="287">2026-06-01</text><text x="968" y="287">2026-06-01</text>
+    <rect x="0" y="302" width="1280" height="42" fill="#fff" stroke="#ccd4da"/>
+    <text x="76" y="329">2026-05-27</text><text x="248" y="329">경계복원</text><text x="328" y="329">진서면 운호리 429-2</text><text x="826" y="329">2026-06-02</text><text x="968" y="329">2026-06-02</text>
+  </g>
+</svg>

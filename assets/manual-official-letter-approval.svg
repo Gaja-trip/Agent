@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="760" viewBox="0 0 1280 760" role="img" aria-labelledby="title desc">
+  <title id="title">결재정보 창에서 문서정보를 확인하는 화면</title>
+  <desc id="desc">지적측량 수행계획서 문서 작성 시 제목과 기록물철을 확인하는 결재정보 창 예시</desc>
+  <rect width="1280" height="760" fill="#b8b8b8"/>
+  <rect x="72" y="78" width="1136" height="640" fill="#fff"/>
+  <rect x="182" y="260" width="184" height="138" fill="none" stroke="#ff6565" stroke-width="1.5" stroke-dasharray="3 3"/>
+  <text x="206" y="336" fill="#0bb39d" font-family="Arial, sans-serif" font-size="46" font-weight="800">LX</text>
+  <text x="202" y="364" fill="#0f2c45" font-family="Arial, sans-serif" font-size="17" font-weight="800">한국국토정보공사</text>
+  <text x="642" y="86" fill="#111" font-family="Arial, sans-serif" font-size="18" text-anchor="middle">기간: 지적측량수행(변경)계획서</text>
+  <rect x="316" y="136" width="648" height="532" rx="9" fill="#efecdc" stroke="#9b9b9b" filter="url(#shadow)"/>
+  <text x="334" y="156" fill="#111" font-family="Arial, sans-serif" font-size="15">결재정보</text>
+  <rect x="332" y="184" width="612" height="420" fill="#fff" stroke="#bfc3c5"/>
+  <g font-family="Arial, sans-serif" font-size="14" font-weight="800">
+    <rect x="344" y="196" width="78" height="28" fill="#fbfff8" stroke="#94b58f"/>
+    <text x="366" y="216" fill="#06446e">문서정보</text>
+    <rect x="424" y="196" width="72" height="28" fill="#edf2f5" stroke="#bfc3c5"/>
+    <text x="446" y="216" fill="#333">결재선</text>
+    <rect x="498" y="196" width="72" height="28" fill="#edf2f5" stroke="#bfc3c5"/>
+    <text x="518" y="216" fill="#333">수신자</text>
+    <rect x="572" y="196" width="78" height="28" fill="#edf2f5" stroke="#bfc3c5"/>
+    <text x="592" y="216" fill="#333">발송정보</text>
+  </g>
+  <g font-family="Arial, sans-serif" font-size="15" fill="#111">
+    <text x="356" y="272">발송종류</text>
+    <circle cx="426" cy="267" r="6" fill="#0067c8"/><text x="442" y="272">일반기안</text>
+    <circle cx="528" cy="267" r="6" fill="#fff" stroke="#777"/><text x="544" y="272">협조문</text>
+    <text x="356" y="315">제목</text>
+    <rect x="404" y="292" width="506" height="34" fill="#fff" stroke="#c8c8c8"/>
+    <text x="414" y="315">지적측량수행(변경)계획서</text>
+    <text x="356" y="360">문서번호</text>
+    <text x="404" y="360" fill="#777">부안지사-@N</text>
+    <text x="356" y="402">기록물철</text>
+    <rect x="404" y="380" width="482" height="34" fill="#fff" stroke="#c8c8c8"/>
+    <text x="414" y="402">측량관계/수행계획서</text>
+    <rect x="894" y="380" width="48" height="34" fill="#fff" stroke="#c8c8c8"/>
+    <text x="901" y="402">선택</text>
+    <line x1="344" y1="454" x2="930" y2="454" stroke="#aaa"/>
+    <text x="356" y="502">열람범위</text><circle cx="430" cy="497" r="6" fill="#fff" stroke="#777"/><text x="446" y="502">전체</text><circle cx="510" cy="497" r="6" fill="#0067c8"/><text x="526" y="502">부서</text>
+    <text x="356" y="546">열람제한</text><circle cx="430" cy="541" r="6" fill="#0067c8"/><text x="446" y="546">설정안함</text><circle cx="516" cy="541" r="6" fill="#fff" stroke="#777"/><text x="532" y="546">제한종료일</text>
+  </g>
+  <rect x="394" y="286" width="526" height="48" fill="none" stroke="#ff2a2a" stroke-width="5"/>
+  <rect x="392" y="374" width="554" height="50" fill="none" stroke="#ff2a2a" stroke-width="5"/>
+  <rect x="546" y="628" width="72" height="28" rx="3" fill="#fff" stroke="#0067c8"/>
+  <text x="582" y="647" fill="#0067c8" font-family="Arial, sans-serif" font-size="14" font-weight="800" text-anchor="middle">확인</text>
+  <rect x="642" y="628" width="72" height="28" rx="3" fill="#fff" stroke="#b8b8b8"/>
+  <text x="678" y="647" fill="#333" font-family="Arial, sans-serif" font-size="14" text-anchor="middle">취소</text>
+  <defs>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#000" flood-opacity="0.22"/>
+    </filter>
+  </defs>
+</svg>

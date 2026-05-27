@@ -546,6 +546,10 @@ input {
   font-size: 1.02rem;
 }
 
+.manual-step-card--wide {
+  gap: 26px;
+}
+
 .manual-checklist {
   display: grid;
   gap: 10px;
@@ -592,6 +596,110 @@ input {
   border-top: 1px solid var(--line);
   font-size: 0.92rem;
   font-weight: 800;
+}
+
+.manual-definition-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.manual-definition-card {
+  padding: 20px;
+  background: #f7faf8;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.manual-definition-card h3,
+.manual-law-section h3 {
+  margin: 0 0 10px;
+  color: var(--ink);
+  font-size: 1.08rem;
+}
+
+.manual-definition-card p + p {
+  margin-top: 10px;
+}
+
+.manual-law-section {
+  display: grid;
+  gap: 12px;
+}
+
+.manual-law-boxes {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.manual-law-box {
+  display: grid;
+  gap: 5px;
+  min-height: 118px;
+  padding: 15px;
+  color: #233b34;
+  text-decoration: none;
+  background: #fff;
+  border: 1px solid rgba(31, 107, 85, 0.22);
+  border-radius: 8px;
+  box-shadow: 0 10px 28px rgba(31, 42, 39, 0.05);
+}
+
+.manual-law-box:hover,
+.manual-law-box:focus-visible {
+  border-color: var(--green);
+  outline: 3px solid rgba(31, 107, 85, 0.14);
+}
+
+.manual-law-box span,
+.manual-law-box small {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 850;
+}
+
+.manual-law-box strong {
+  color: var(--ink);
+  font-size: 1rem;
+}
+
+.manual-procedure {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: manual-procedure;
+}
+
+.manual-procedure li {
+  display: grid;
+  grid-template-columns: minmax(160px, 0.35fr) minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  padding: 14px 16px;
+  color: #31463f;
+  background: #eef6f2;
+  border: 1px solid rgba(31, 107, 85, 0.14);
+  border-radius: 8px;
+  counter-increment: manual-procedure;
+}
+
+.manual-procedure strong::before {
+  margin-right: 8px;
+  color: var(--green);
+  content: counter(manual-procedure) ".";
+}
+
+.manual-procedure span {
+  color: #455850;
+}
+
+.manual-figure-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
 }
 
 .knowledge-grid {
@@ -2033,6 +2141,10 @@ input {
   grid-template-columns: repeat(9, minmax(0, 1fr));
 }
 
+.content-tabs--manual {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
 .result-example-workspace {
   display: grid;
   gap: 18px;
@@ -2103,7 +2215,11 @@ input {
   .source-grid--manual,
   .knowledge-grid,
   .content-tabs,
+  .content-tabs--manual,
   .content-tabs--knowledge,
+  .manual-definition-grid,
+  .manual-law-boxes,
+  .manual-figure-grid,
   .map-panel,
   .process-layout,
   .checklist-layout,
@@ -2132,6 +2248,10 @@ input {
 
   .readiness {
     position: static;
+  }
+
+  .manual-procedure li {
+    grid-template-columns: 1fr;
   }
 }
 

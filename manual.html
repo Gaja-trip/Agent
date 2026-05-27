@@ -35,7 +35,7 @@
         <form class="page-search page-search--compact" data-page-search>
           <label class="visually-hidden" for="manual-search-input">매뉴얼 검색</label>
           <div class="page-search__row">
-            <input id="manual-search-input" type="search" placeholder="예: 가상계좌, 접수일, 항공사진" data-page-search-input />
+            <input id="manual-search-input" type="search" placeholder="예: 가상계좌, 공문 발송, 성과검사" data-page-search-input />
             <button class="button button--primary page-search__button" type="submit" aria-label="매뉴얼 찾기">
               <i data-lucide="search"></i>
             </button>
@@ -45,12 +45,13 @@
       </section>
 
       <section class="section section--compact content-section">
-        <div class="content-tabs" role="tablist" aria-label="매뉴얼 분류" data-content-tabs>
+        <div class="content-tabs content-tabs--manual" role="tablist" aria-label="매뉴얼 분류" data-content-tabs>
           <button class="is-active" type="button" role="tab" aria-selected="true" data-content-tab="morning">1. 출근 후 할일</button>
-          <button type="button" role="tab" aria-selected="false" data-content-tab="survey-request">2. 측량접수</button>
-          <button type="button" role="tab" aria-selected="false" data-content-tab="owner-check">3. 소유자 확인</button>
-          <button type="button" role="tab" aria-selected="false" data-content-tab="fee-claim">4. 수수료청구</button>
-          <button type="button" role="tab" aria-selected="false" data-content-tab="schedule">5. 일정배정</button>
+          <button type="button" role="tab" aria-selected="false" data-content-tab="official-letter">2. 공문 발송</button>
+          <button type="button" role="tab" aria-selected="false" data-content-tab="survey-request">3. 측량상담 및 접수</button>
+          <button type="button" role="tab" aria-selected="false" data-content-tab="owner-check">4. 소유자 확인</button>
+          <button type="button" role="tab" aria-selected="false" data-content-tab="fee-claim">5. 수수료청구</button>
+          <button type="button" role="tab" aria-selected="false" data-content-tab="schedule">6. 일정배정</button>
         </div>
 
         <div class="content-panels">
@@ -65,31 +66,129 @@
               </div>
               <p>
                 출근하면 가장 먼저 퇴근한 사이 가상계좌로 수입이 되었는지 확인합니다. 전날 입금 내역을 확인한 뒤,
-                접수창 오른쪽 상단의 접수일을 실제 접수 기준일로 변경해 줍니다.
+                접수창 오른쪽 상단의 접수일을 실제 접수 기준일로 변경합니다.
               </p>
               <ul class="manual-checklist">
                 <li>업무처리 화면에서 가상계좌 수입 금일 현황을 확인합니다.</li>
                 <li>가상계좌 수입 창에서 수입일자를 전날로 맞춘 뒤 검색 버튼을 눌러 입금내역을 확인합니다.</li>
                 <li>전날 입금이 확인되면 해당 건을 접수 처리하기 전에 접수일을 변경합니다.</li>
-                <li>전날이 공휴일인데 입금이 되었으면, 그 전날이 아니라 다음날인 평일 일자로 접수합니다.</li>
+                <li>전날이 공휴일인데 입금이 되었다면, 그 전날이 아니라 다음 평일 일자로 접수합니다.</li>
               </ul>
               <figure class="manual-figure">
                 <img src="assets/manual-office-morning.svg" alt="업무처리 화면에서 가상계좌 수입을 확인하는 위치" />
-                <figcaption>업무처리 화면에서 가상계좌 수입을 누른 뒤, 수입일자를 전날로 검색해 입금내역을 확인합니다.</figcaption>
+                <figcaption>업무처리 화면에서 가상계좌 수입을 누른 뒤 수입일자를 전날로 검색해 입금내역을 확인합니다.</figcaption>
               </figure>
+            </article>
+          </section>
+
+          <section class="content-panel" data-content-panel="official-letter" hidden>
+            <article class="manual-step-card manual-step-card--wide" data-search-item>
+              <div class="manual-step-card__header">
+                <span class="manual-step-card__number">2</span>
+                <div>
+                  <p class="eyebrow">Official Letter</p>
+                  <h2>공문 발송</h2>
+                </div>
+              </div>
+              <p>
+                공문 발송 단계에서는 지적측량 수행(변경)계획서와 성과검사요청서를 문서로 작성하여 지적소관청에 발송합니다.
+                수행계획서는 측량 착수 전 사전 보고 성격이고, 성과검사요청서는 측량 완료 후 성과 검사를 요청하는 문서입니다.
+              </p>
+
+              <div class="manual-definition-grid">
+                <section class="manual-definition-card">
+                  <h3>지적측량 수행(변경)계획서</h3>
+                  <p>
+                    지적측량수행자(한국국토정보공사 또는 지적측량업자)가 토지 소유자 등으로부터 지적측량을 의뢰받았을 때,
+                    측량기간, 측량일자, 측량수수료 등 어떻게 측량을 진행할 것인지에 대한 구체적인 계획을 작성하여
+                    지적소관청(시ㆍ군ㆍ구청)에 제출하는 사전 보고서입니다.
+                  </p>
+                  <p>이미 제출한 계획의 일정, 내용, 수수료 등이 바뀌면 수행(변경)계획서로 다시 발송합니다.</p>
+                </section>
+                <section class="manual-definition-card">
+                  <h3>성과검사요청서</h3>
+                  <p>
+                    “측량이 정확하게 끝났으니, 국가(지자체)에서 검사해서 승인해주세요”라고 요청하는 문서입니다.
+                    지적측량이 완료된 후 측량수행자가 작성한 측량 성과(결과물)가 정확하게 작성되었는지
+                    지적소관청 또는 시ㆍ도지사에게 검사를 요청하는 문서로 정리합니다.
+                  </p>
+                </section>
+              </div>
+
+              <div class="manual-law-section" aria-label="공문 발송 관련 법령 근거">
+                <h3>관련 조항</h3>
+                <div class="manual-law-boxes">
+                  <a
+                    class="manual-law-box"
+                    href="index.html?portal=law&amp;lawTitle=공간정보의 구축 및 관리 등에 관한 법률 제24조 지적측량 의뢰 등&amp;lawUrl=https://www.law.go.kr/법령/공간정보의구축및관리등에관한법률/제24조"
+                  >
+                    <span>공간정보관리법</span>
+                    <strong>제24조 제1항ㆍ제2항</strong>
+                    <small>지적측량 의뢰 및 측량성과 결정</small>
+                  </a>
+                  <a
+                    class="manual-law-box"
+                    href="index.html?portal=law&amp;lawTitle=공간정보의 구축 및 관리 등에 관한 법률 시행규칙 제25조 지적측량 의뢰 등&amp;lawUrl=https://www.law.go.kr/법령/공간정보의구축및관리등에관한법률시행규칙/제25조"
+                  >
+                    <span>공간정보관리법 시행규칙</span>
+                    <strong>제25조 제2항</strong>
+                    <small>지적측량 수행계획서 제출, 변경 시 동일</small>
+                  </a>
+                  <a
+                    class="manual-law-box"
+                    href="index.html?portal=law&amp;lawTitle=공간정보의 구축 및 관리 등에 관한 법률 제25조 지적측량성과의 검사&amp;lawUrl=https://www.law.go.kr/법령/공간정보의구축및관리등에관한법률/제25조"
+                  >
+                    <span>공간정보관리법</span>
+                    <strong>제25조 제1항ㆍ제2항</strong>
+                    <small>지적측량성과 검사 및 검사절차 위임</small>
+                  </a>
+                  <a
+                    class="manual-law-box"
+                    href="index.html?portal=law&amp;lawTitle=지적측량 시행규칙 제28조 지적측량성과의 검사방법 등&amp;lawUrl=https://www.law.go.kr/법령/지적측량시행규칙/제28조"
+                  >
+                    <span>지적측량 시행규칙</span>
+                    <strong>제28조 제2항</strong>
+                    <small>측량성과 자료 제출 및 정확성 검사</small>
+                  </a>
+                </div>
+              </div>
+
+              <ol class="manual-procedure">
+                <li><strong>일정 메뉴 선택</strong><span>상단 메뉴에서 일정으로 이동한 뒤 측량수행계획서를 선택합니다.</span></li>
+                <li><strong>기준일자 조회</strong><span>수행계획서 상신 화면에서 기관, 관할, 기준일자를 맞춘 뒤 검색합니다.</span></li>
+                <li><strong>대상 건 확인</strong><span>측량의뢰 일자, 번호, 토지소재지, 측량예정일, 완료일을 확인하고 상신할 건을 선택합니다.</span></li>
+                <li><strong>문서 작성</strong><span>3번째 그림과 같이 결재정보 창에서 제목과 기록물철을 확인한 뒤 수신자와 발송정보를 정리합니다.</span></li>
+                <li><strong>전자결재 상신</strong><span>긴급결재 여부, 열람범위, 공개여부를 확인하고 확인 버튼으로 문서를 상신합니다.</span></li>
+                <li><strong>성과검사요청서 발송</strong><span>측량 완료 후에는 같은 문서 작성 절차로 성과검사요청서를 작성하여 검사 요청 공문을 발송합니다.</span></li>
+              </ol>
+
+              <div class="manual-figure-grid">
+                <figure class="manual-figure">
+                  <img src="assets/manual-official-letter-menu.svg" alt="일정 메뉴에서 측량수행계획서를 선택하는 화면" />
+                  <figcaption>일정 메뉴에서 측량수행계획서를 선택합니다.</figcaption>
+                </figure>
+                <figure class="manual-figure">
+                  <img src="assets/manual-official-letter-list.svg" alt="수행계획서 상신 화면에서 기준일자와 검색 버튼을 확인하는 화면" />
+                  <figcaption>기준일자를 맞춘 뒤 검색하여 발송 대상 건을 확인합니다.</figcaption>
+                </figure>
+                <figure class="manual-figure">
+                  <img src="assets/manual-official-letter-approval.svg" alt="결재정보 창에서 제목과 기록물철을 확인하는 화면" />
+                  <figcaption>문서 작성은 결재정보 창에서 제목과 기록물철을 확인한 뒤 진행합니다.</figcaption>
+                </figure>
+              </div>
             </article>
           </section>
 
           <section class="content-panel" data-content-panel="survey-request" hidden>
             <article class="manual-step-card" data-search-item>
               <div class="manual-step-card__header">
-                <span class="manual-step-card__number">2</span>
+                <span class="manual-step-card__number">3</span>
                 <div>
-                  <p class="eyebrow">Survey Request</p>
-                  <h2>측량접수</h2>
+                  <p class="eyebrow">Survey Consultation</p>
+                  <h2>측량상담 및 접수</h2>
                 </div>
               </div>
-              <p>의뢰 내용과 토지 정보를 확인한 뒤 측량 종목, 소재지, 신청인 정보를 맞춰 접수합니다.</p>
+              <p>의뢰 내용과 토지 정보를 확인하고 측량 종목, 소재지, 신청자 정보를 맞춰 상담과 접수를 진행합니다.</p>
               <ul class="manual-checklist">
                 <li>토지 소재지, 지번, 지목, 면적을 신청 내용과 대조합니다.</li>
                 <li>경계복원, 분할, 현황, 등록전환 등 측량 종목을 정확히 선택합니다.</li>
@@ -102,7 +201,7 @@
           <section class="content-panel" data-content-panel="owner-check" hidden>
             <article class="manual-step-card" data-search-item>
               <div class="manual-step-card__header">
-                <span class="manual-step-card__number">3</span>
+                <span class="manual-step-card__number">4</span>
                 <div>
                   <p class="eyebrow">Owner Check</p>
                   <h2>소유자 확인</h2>
@@ -121,7 +220,7 @@
           <section class="content-panel" data-content-panel="fee-claim" hidden>
             <article class="manual-step-card" data-search-item>
               <div class="manual-step-card__header">
-                <span class="manual-step-card__number">4</span>
+                <span class="manual-step-card__number">5</span>
                 <div>
                   <p class="eyebrow">Fee Claim</p>
                   <h2>수수료청구</h2>
@@ -140,7 +239,7 @@
           <section class="content-panel" data-content-panel="schedule" hidden>
             <article class="manual-step-card" data-search-item>
               <div class="manual-step-card__header">
-                <span class="manual-step-card__number">5</span>
+                <span class="manual-step-card__number">6</span>
                 <div>
                   <p class="eyebrow">Schedule</p>
                   <h2>일정배정</h2>
