@@ -3014,6 +3014,39 @@ function initContentTabs() {
   });
 }
 
+function initManualDocumentTabs() {
+  document.querySelectorAll("[data-manual-document-tabs]").forEach((tablist) => {
+    const container = tablist.closest(".manual-step-card") || document;
+    const buttons = [...tablist.querySelectorAll("[data-manual-document-tab]")];
+    const panels = [...container.querySelectorAll("[data-manual-document-panel]")];
+
+    if (!buttons.length || !panels.length) {
+      return;
+    }
+
+    function setActiveDocument(documentKey) {
+      buttons.forEach((button) => {
+        const isActive = button.dataset.manualDocumentTab === documentKey;
+        button.classList.toggle("is-active", isActive);
+        button.setAttribute("aria-selected", String(isActive));
+      });
+
+      panels.forEach((panel) => {
+        const isActive = panel.dataset.manualDocumentPanel === documentKey;
+        panel.classList.toggle("is-active", isActive);
+        panel.hidden = !isActive;
+      });
+    }
+
+    buttons.forEach((button) => {
+      button.addEventListener("click", () => setActiveDocument(button.dataset.manualDocumentTab));
+    });
+
+    const initialKey = buttons.find((button) => button.classList.contains("is-active"))?.dataset.manualDocumentTab || buttons[0].dataset.manualDocumentTab;
+    setActiveDocument(initialKey);
+  });
+}
+
 function initPageSearch() {
   const forms = document.querySelectorAll("[data-page-search]");
 
@@ -3083,5 +3116,6 @@ initReadinessChecklist();
 initGuidePages();
 initGuidePrintButtons();
 initContentTabs();
+initManualDocumentTabs();
 initPageSearch();
 refreshIcons();

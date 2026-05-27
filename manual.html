@@ -95,7 +95,18 @@
                 두 문서는 작성 시점과 목적이 다르므로 관련조항, 절차, 첨부 화면을 각각 분리해서 확인합니다.
               </p>
 
-              <section class="manual-document-block" data-search-item>
+              <div class="manual-document-options" role="tablist" aria-label="공문 발송 문서 선택" data-manual-document-tabs>
+                <button class="manual-document-option is-active" type="button" role="tab" aria-selected="true" data-manual-document-tab="plan">
+                  <span>지적측량 수행(변경)계획서</span>
+                  <small>측량 착수 전 지적소관청에 제출하는 사전 보고 문서</small>
+                </button>
+                <button class="manual-document-option" type="button" role="tab" aria-selected="false" data-manual-document-tab="inspection">
+                  <span>성과검사요청서</span>
+                  <small>측량 완료 후 성과의 정확성 검사를 요청하는 문서</small>
+                </button>
+              </div>
+
+              <section class="manual-document-block is-active" role="tabpanel" data-manual-document-panel="plan">
                 <div class="manual-document-block__heading">
                   <span>문서 1</span>
                   <h3>지적측량 수행(변경)계획서</h3>
@@ -153,7 +164,7 @@
                 </div>
               </section>
 
-              <section class="manual-document-block" data-search-item>
+              <section class="manual-document-block" role="tabpanel" data-manual-document-panel="inspection" hidden>
                 <div class="manual-document-block__heading">
                   <span>문서 2</span>
                   <h3>성과검사요청서</h3>
