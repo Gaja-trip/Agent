@@ -550,6 +550,37 @@ input {
   gap: 26px;
 }
 
+.manual-document-block {
+  display: grid;
+  gap: 20px;
+  padding: 22px;
+  background: #f7faf8;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.manual-document-block__heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.manual-document-block__heading span {
+  flex: 0 0 auto;
+  padding: 7px 10px;
+  color: #fff;
+  background: var(--green);
+  border-radius: 8px;
+  font-size: 0.86rem;
+  font-weight: 950;
+}
+
+.manual-document-block__heading h3 {
+  margin: 0;
+  color: var(--ink);
+  font-size: clamp(1.2rem, 1.8vw, 1.48rem);
+}
+
 .manual-checklist {
   display: grid;
   gap: 10px;
@@ -612,7 +643,8 @@ input {
 }
 
 .manual-definition-card h3,
-.manual-law-section h3 {
+.manual-law-section h3,
+.manual-law-section h4 {
   margin: 0 0 10px;
   color: var(--ink);
   font-size: 1.08rem;
@@ -631,6 +663,10 @@ input {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
+}
+
+.manual-law-boxes--document {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .manual-law-box {
@@ -700,6 +736,10 @@ input {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
+}
+
+.manual-figure-grid--single {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .knowledge-grid {
@@ -2219,7 +2259,9 @@ input {
   .content-tabs--knowledge,
   .manual-definition-grid,
   .manual-law-boxes,
+  .manual-law-boxes--document,
   .manual-figure-grid,
+  .manual-figure-grid--single,
   .map-panel,
   .process-layout,
   .checklist-layout,
