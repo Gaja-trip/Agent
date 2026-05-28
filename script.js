@@ -3047,6 +3047,205 @@ function initManualDocumentTabs() {
   });
 }
 
+const buanVillageMap = {
+  "부안읍": ["동중리", "서외리", "선은리", "봉덕리", "연곡리", "신흥리", "내요리", "모산리", "행중리", "신운리"],
+  "주산면": ["갈촌리", "돈계리", "덕림리", "백석리", "사산리", "소산리", "소주리", "주산리"],
+  "동진면": ["당상리", "동전리", "본덕리", "봉황리", "안성리", "장등리", "증산리", "하장리"],
+  "행안면": ["대초리", "삼간리", "신기리", "역리", "진동리"],
+  "계화면": ["계화리", "궁안리", "양산리", "의복리", "창북리"],
+  "보안면": ["남포리", "상림리", "신복리", "영전리", "우동리", "월천리", "유천리", "하입석리"],
+  "변산면": ["격포리", "대항리", "도청리", "마포리", "운산리", "중계리", "지서리"],
+  "진서면": ["곰소리", "석포리", "운호리", "진서리"],
+  "백산면": ["금판리", "대수리", "덕신리", "신평리", "오곡리", "용계리", "원천리", "평교리", "하청리"],
+  "상서면": ["가오리", "감교리", "고잔리", "용서리", "장동리", "청림리", "통정리"],
+  "하서면": ["백련리", "석상리", "언독리", "장신리", "청호리"],
+  "줄포면": ["난산리", "대동리", "신리", "우포리", "장동리", "줄포리", "파산리"],
+  "위도면": ["대리", "식도리", "정금리", "진리", "치도리"],
+};
+
+const landCategoryOptions = ["전", "답", "대", "임야", "도로", "구거", "하천", "잡종지", "과수원", "목장용지", "공장용지", "학교용지", "주차장", "주유소용지", "창고용지", "공원", "체육용지", "종교용지", "묘지"];
+
+function formatNumber(value, digits = 1) {
+  if (!Number.isFinite(value)) {
+    return "";
+  }
+
+  return value.toLocaleString("ko-KR", {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  });
+}
+
+function initJeongdanCalculator() {
+  document.querySelectorAll("[data-jeongdan-calculator]").forEach((calculator) => {
+    const inputs = [...calculator.querySelectorAll("[data-jeongdan-field]")];
+    const pyeongOutput = calculator.querySelector('[data-jeongdan-output="pyeong"]');
+    const sqmOutput = calculator.querySelector('[data-jeongdan-output="sqm"]');
+
+    if (!inputs.length || !pyeongOutput || !sqmOutput) {
+      return;
+    }
+
+    function readField(name) {
+      const input = calculator.querySelector(`[data-jeongdan-field="${name}"]`);
+      return Number(input?.value) || 0;
+    }
+
+    function updateCalculator() {
+      const pyeong = readField("jeong") * 3000 + readField("dan") * 300 + readField("mu") * 30 + readField("bo");
+      const squareMeters = pyeong / 0.3025;
+
+      pyeongOutput.textContent = formatNumber(pyeong, Number.isInteger(pyeong) ? 0 : 1) || "0";
+      sqmOutput.textContent = formatNumber(squareMeters, 1) || "0.0";
+    }
+
+    inputs.forEach((input) => {
+      input.addEventListener("input", updateCalculator);
+    });
+
+    updateCalculator();
+  });
+}
+
+function initAreaChangeBuilders() {
+  document.querySelectorAll("[data-area-change-builder]").forEach((builder) => {
+    const rows = builder.querySelector("[data-area-rows]");
+    const addButton = builder.querySelector("[data-area-row-add]");
+
+    if (!rows) {
+      return;
+    }
+
+    function fillSelect(select, options, placeholder) {
+      const currentValue = select.value;
+      select.replaceChildren(
+        new Option(placeholder, ""),
+        ...options.map((option) => new Option(option, option))
+      );
+
+      if (options.includes(currentValue)) {
+        select.value = currentValue;
+      }
+    }
+
+    function setupVillageSelect(row) {
+      const townSelect = row.querySelector('[data-area-field="town"]');
+      const villageSelect = row.querySelector('[data-area-field="village"]');
+
+      if (!townSelect || !villageSelect) {
+        return;
+      }
+
+      const villages = buanVillageMap[townSelect.value] || [];
+      fillSelect(villageSelect, villages, townSelect.value ? "동리 선택" : "읍면 먼저 선택");
+    }
+
+    function setupRow(row) {
+      const townSelect = row.querySelector('[data-area-field="town"]');
+      const landCategorySelect = row.querySelector('[data-area-field="landCategory"]');
+
+      if (townSelect && townSelect.options.length <= 1) {
+        fillSelect(townSelect, Object.keys(buanVillageMap), "읍면 선택");
+      }
+
+      if (landCategorySelect && landCategorySelect.options.length <= 1) {
+        fillSelect(landCategorySelect, landCategoryOptions, "지목 선택");
+      }
+
+      setupVillageSelect(row);
+      updateAreaRow(row);
+    }
+
+    function updateAreaRow(row) {
+      const ledgerInput = row.querySelector('[data-area-field="ledgerArea"]');
+      const computedInput = row.querySelector('[data-area-field="computedArea"]');
+      const ledgerArea = Number(ledgerInput?.value);
+      const computedArea = Number(computedInput?.value);
+      const toleranceOutput = row.querySelector('[data-area-output="tolerance"]');
+      const errorOutput = row.querySelector('[data-area-output="error"]');
+
+      if (toleranceOutput) {
+        const tolerance = ledgerInput?.value && Number.isFinite(ledgerArea) && ledgerArea > 0 ? 0.026 * 0.026 * 1200 * Math.sqrt(ledgerArea) : 0;
+        toleranceOutput.textContent = formatNumber(tolerance, 1) || "0.0";
+      }
+
+      if (errorOutput) {
+        const error = ledgerInput?.value && computedInput?.value && Number.isFinite(ledgerArea) && Number.isFinite(computedArea) ? computedArea - ledgerArea : 0;
+        errorOutput.textContent = formatNumber(error, 1) || "0.0";
+      }
+    }
+
+    function resetRow(row) {
+      row.querySelectorAll("input, textarea").forEach((field) => {
+        field.value = "";
+      });
+      row.querySelectorAll("select").forEach((field) => {
+        field.value = "";
+      });
+      setupVillageSelect(row);
+      updateAreaRow(row);
+    }
+
+    rows.querySelectorAll("tr").forEach(setupRow);
+
+    rows.addEventListener("input", (event) => {
+      const row = event.target.closest("tr");
+
+      if (row) {
+        updateAreaRow(row);
+      }
+    });
+
+    rows.addEventListener("change", (event) => {
+      const row = event.target.closest("tr");
+
+      if (!row) {
+        return;
+      }
+
+      if (event.target.matches('[data-area-field="town"]')) {
+        setupVillageSelect(row);
+      }
+
+      updateAreaRow(row);
+    });
+
+    rows.addEventListener("click", (event) => {
+      const removeButton = event.target.closest("[data-area-row-remove]");
+
+      if (!removeButton) {
+        return;
+      }
+
+      const row = removeButton.closest("tr");
+
+      if (!row) {
+        return;
+      }
+
+      if (rows.querySelectorAll("tr").length === 1) {
+        resetRow(row);
+      } else {
+        row.remove();
+      }
+    });
+
+    if (addButton) {
+      addButton.addEventListener("click", () => {
+        const sourceRow = rows.querySelector("tr");
+
+        if (!sourceRow) {
+          return;
+        }
+
+        const nextRow = sourceRow.cloneNode(true);
+        rows.append(nextRow);
+        resetRow(nextRow);
+      });
+    }
+  });
+}
+
 function initPageSearch() {
   const forms = document.querySelectorAll("[data-page-search]");
 
@@ -3117,5 +3316,7 @@ initGuidePages();
 initGuidePrintButtons();
 initContentTabs();
 initManualDocumentTabs();
+initJeongdanCalculator();
+initAreaChangeBuilders();
 initPageSearch();
 refreshIcons();

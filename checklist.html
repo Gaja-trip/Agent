@@ -44,6 +44,9 @@
           <button type="button" role="tab" aria-selected="false" aria-controls="guide-result-examples" data-guide-page="result-examples">
             측량성과도(예시)
           </button>
+          <button type="button" role="tab" aria-selected="false" aria-controls="guide-registration-correction" data-guide-page="registration-correction">
+            등록사항정정
+          </button>
         </div>
 
         <div class="guide-pages">
@@ -186,6 +189,131 @@
                   </article>
                 </section>
               </div>
+            </div>
+          </section>
+
+          <section class="guide-page" id="guide-registration-correction" role="tabpanel" data-guide-panel="registration-correction" hidden>
+            <div class="registration-correction" data-content-scope>
+              <div class="registration-correction__header">
+                <div>
+                  <p class="eyebrow">Registration Correction</p>
+                  <h2>등록사항정정</h2>
+                </div>
+                <form class="page-search page-search--compact" data-page-search>
+                  <label class="visually-hidden" for="correction-search-input">등록사항정정 자료 검색</label>
+                  <div class="page-search__row">
+                    <input id="correction-search-input" type="search" placeholder="예: 대정, 소화, 단기" data-page-search-input />
+                    <button class="button button--primary page-search__button" type="submit" aria-label="등록사항정정 자료 찾기">
+                      <i data-lucide="search"></i>
+                    </button>
+                  </div>
+                  <output class="visually-hidden" data-page-search-status></output>
+                </form>
+              </div>
+
+              <section class="correction-knowledge-grid" aria-label="연호 및 단기 계산법">
+                <article class="correction-knowledge-card" data-search-item>
+                  <h3>대정(大正) 연호 계산</h3>
+                  <p>대정은 1912년 7월 30일부터 1926년 12월 24일까지 사용된 일본 연호입니다.</p>
+                  <strong>서기 = 대정 연도 + 1911</strong>
+                  <small>예: 대정 4년 = 1915년</small>
+                </article>
+                <article class="correction-knowledge-card" data-search-item>
+                  <h3>소화(昭和) 연호 계산</h3>
+                  <p>소화는 1926년 12월 25일부터 1989년 1월 7일까지 사용된 일본 연호입니다.</p>
+                  <strong>서기 = 소화 연도 + 1925</strong>
+                  <small>예: 소화 31년 = 1956년</small>
+                </article>
+                <article class="correction-knowledge-card" data-search-item>
+                  <h3>단기 계산법</h3>
+                  <p>단기는 서기에 2333년을 더해 표시하는 방식입니다.</p>
+                  <strong>단기 = 서기 + 2333</strong>
+                  <small>예: 1956년 = 단기 4289년</small>
+                </article>
+              </section>
+
+              <section class="jeongdan-calculator" aria-labelledby="jeongdan-title" data-jeongdan-calculator>
+                <div>
+                  <p class="eyebrow">정ㆍ단ㆍ무ㆍ보 계산기</p>
+                  <h3 id="jeongdan-title">정단무보 면적 계산</h3>
+                  <p>엑셀 계산식과 같이 정(町)은 3,000평, 단(段)은 300평, 무(畝)는 30평, 보(步)는 1평으로 합산합니다.</p>
+                </div>
+                <div class="jeongdan-calculator__inputs">
+                  <label>정(町)<input type="number" min="0" step="1" value="0" data-jeongdan-field="jeong" /></label>
+                  <label>단(段)<input type="number" min="0" step="1" value="0" data-jeongdan-field="dan" /></label>
+                  <label>무(畝)<input type="number" min="0" step="1" value="0" data-jeongdan-field="mu" /></label>
+                  <label>보(步)<input type="number" min="0" step="1" value="0" data-jeongdan-field="bo" /></label>
+                </div>
+                <div class="jeongdan-calculator__result" aria-live="polite">
+                  <span>평</span>
+                  <strong data-jeongdan-output="pyeong">0</strong>
+                  <span>㎡</span>
+                  <strong data-jeongdan-output="sqm">0.0</strong>
+                </div>
+              </section>
+
+              <section class="area-change-builder" aria-labelledby="area-change-title" data-area-change-builder>
+                <div class="area-change-builder__toolbar">
+                  <div>
+                    <p class="eyebrow">면적증감대비표</p>
+                    <h3 id="area-change-title">면적증감대비표 작성</h3>
+                  </div>
+                  <button class="button button--primary" type="button" data-area-row-add>
+                    <i data-lucide="plus"></i>
+                    행 추가
+                  </button>
+                </div>
+                <p class="area-change-builder__note">
+                  공차는 토지 기준으로 <strong>0.026 × 0.026 × 1200 × √대장면적</strong>을 적용하며 소수점 한 자리까지 자동 계산합니다.
+                  오차는 <strong>산출면적 - 대장면적</strong>으로 계산됩니다.
+                </p>
+
+                <div class="area-change-table-wrap">
+                  <table class="area-change-table">
+                    <caption>면적증감대비표</caption>
+                    <thead>
+                      <tr>
+                        <th colspan="2">토지소재</th>
+                        <th rowspan="2">지번</th>
+                        <th rowspan="2">지목</th>
+                        <th rowspan="2">대장면적</th>
+                        <th rowspan="2">공차</th>
+                        <th rowspan="2">산출면적</th>
+                        <th rowspan="2">오차</th>
+                        <th rowspan="2">결정면적</th>
+                        <th rowspan="2">증감</th>
+                        <th rowspan="2">변동사유</th>
+                        <th colspan="2">소유자</th>
+                        <th rowspan="2">관리</th>
+                      </tr>
+                      <tr>
+                        <th>읍면</th>
+                        <th>동리</th>
+                        <th>주소</th>
+                        <th>성명</th>
+                      </tr>
+                    </thead>
+                    <tbody data-area-rows>
+                      <tr>
+                        <td><select data-area-field="town"></select></td>
+                        <td><select data-area-field="village"></select></td>
+                        <td><input type="text" data-area-field="lot" placeholder="산9-1" /></td>
+                        <td><select data-area-field="landCategory"></select></td>
+                        <td><input type="number" min="0" step="0.1" data-area-field="ledgerArea" placeholder="397" /></td>
+                        <td><output data-area-output="tolerance">0.0</output></td>
+                        <td><input type="number" min="0" step="0.1" data-area-field="computedArea" placeholder="422.9" /></td>
+                        <td><output data-area-output="error">0.0</output></td>
+                        <td><input type="number" min="0" step="0.1" data-area-field="fixedArea" /></td>
+                        <td><input type="text" data-area-field="change" placeholder="증25.9" /></td>
+                        <td><textarea data-area-field="reason" rows="2" placeholder="1915년 8월 3일 분할되어 본번에 부합"></textarea></td>
+                        <td><textarea data-area-field="ownerAddress" rows="2" placeholder="전라북도 부안군..."></textarea></td>
+                        <td><input type="text" data-area-field="ownerName" placeholder="노전호" /></td>
+                        <td><button class="area-change-table__remove" type="button" data-area-row-remove aria-label="행 삭제">삭제</button></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
             </div>
           </section>
         </div>

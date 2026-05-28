@@ -435,7 +435,7 @@ input {
 
 .guide-page-tabs {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 10px;
   margin-bottom: 20px;
   padding: 8px;
@@ -2259,6 +2259,220 @@ input {
   background: #fff;
 }
 
+.registration-correction {
+  display: grid;
+  gap: 18px;
+}
+
+.registration-correction__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.registration-correction__header h2 {
+  margin: 0;
+  color: var(--ink);
+  font-size: clamp(1.6rem, 2.8vw, 2.3rem);
+}
+
+.correction-knowledge-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.correction-knowledge-card,
+.jeongdan-calculator,
+.area-change-builder {
+  padding: 22px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 12px 36px rgba(31, 42, 39, 0.06);
+}
+
+.correction-knowledge-card {
+  display: grid;
+  gap: 10px;
+}
+
+.correction-knowledge-card h3,
+.jeongdan-calculator h3,
+.area-change-builder h3 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 1.18rem;
+}
+
+.correction-knowledge-card p,
+.jeongdan-calculator p,
+.area-change-builder__note {
+  margin: 0;
+  color: #455850;
+  line-height: 1.65;
+}
+
+.correction-knowledge-card strong {
+  color: #1f6b55;
+  font-size: 1rem;
+}
+
+.correction-knowledge-card small {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.jeongdan-calculator {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.72fr) minmax(320px, 1fr) minmax(180px, 0.42fr);
+  gap: 18px;
+  align-items: end;
+}
+
+.jeongdan-calculator__inputs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.jeongdan-calculator label,
+.area-change-table label {
+  display: grid;
+  gap: 6px;
+  color: #31463f;
+  font-size: 0.86rem;
+  font-weight: 900;
+}
+
+.jeongdan-calculator input,
+.area-change-table input,
+.area-change-table select,
+.area-change-table textarea {
+  width: 100%;
+  min-height: 38px;
+  padding: 8px 9px;
+  color: var(--ink);
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font: inherit;
+}
+
+.area-change-table textarea {
+  resize: vertical;
+}
+
+.jeongdan-calculator__result {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 6px 12px;
+  align-items: center;
+  padding: 14px;
+  background: #eef6f2;
+  border: 1px solid rgba(31, 107, 85, 0.18);
+  border-radius: 8px;
+}
+
+.jeongdan-calculator__result span {
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 900;
+}
+
+.jeongdan-calculator__result strong {
+  color: var(--green);
+  font-size: 1.25rem;
+  text-align: right;
+}
+
+.area-change-builder {
+  display: grid;
+  gap: 14px;
+}
+
+.area-change-builder__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.area-change-builder__note {
+  padding: 12px 14px;
+  background: #fff7e6;
+  border: 1px solid #efd9a7;
+  border-radius: 8px;
+  font-size: 0.94rem;
+  font-weight: 800;
+}
+
+.area-change-table-wrap {
+  overflow-x: auto;
+  border: 1px solid #8f9690;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.area-change-table {
+  width: 100%;
+  min-width: 1420px;
+  border-collapse: collapse;
+  color: #111;
+  background: #fff;
+}
+
+.area-change-table caption {
+  padding: 12px;
+  caption-side: top;
+  color: #111;
+  font-size: 1.35rem;
+  font-weight: 950;
+  letter-spacing: 0;
+}
+
+.area-change-table th {
+  padding: 8px;
+  background: #a9aaa8;
+  border: 1px solid #111;
+  font-weight: 950;
+  text-align: center;
+}
+
+.area-change-table td {
+  padding: 6px;
+  border: 1px dotted #777;
+  vertical-align: middle;
+}
+
+.area-change-table output {
+  display: block;
+  min-height: 36px;
+  padding: 8px;
+  text-align: right;
+  background: #f7faf8;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font-weight: 900;
+}
+
+.area-change-table__remove {
+  width: 100%;
+  min-height: 36px;
+  color: #8a1c1c;
+  background: #fff2f2;
+  border: 1px solid #efb5b5;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 900;
+}
+
+.area-change-table__remove:hover {
+  color: #fff;
+  background: #b43d3d;
+}
+
 .content-tabs button {
   min-height: 50px;
   padding: 10px 12px;
@@ -2319,6 +2533,8 @@ input {
   .manual-figure-grid,
   .manual-figure-grid--single,
   .manual-figure-grid--inspection,
+  .correction-knowledge-grid,
+  .jeongdan-calculator,
   .map-panel,
   .process-layout,
   .checklist-layout,
@@ -2453,6 +2669,16 @@ input {
   .page-title--compact {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .registration-correction__header,
+  .area-change-builder__toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .jeongdan-calculator__inputs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .page-title--with-search .page-search {
