@@ -793,6 +793,10 @@ input {
   grid-template-columns: minmax(0, 1fr);
 }
 
+.manual-figure-grid--inspection {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .knowledge-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2314,6 +2318,7 @@ input {
   .manual-law-boxes--document,
   .manual-figure-grid,
   .manual-figure-grid--single,
+  .manual-figure-grid--inspection,
   .map-panel,
   .process-layout,
   .checklist-layout,
