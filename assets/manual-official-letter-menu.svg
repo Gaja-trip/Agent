@@ -1,7 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="420" viewBox="0 0 1180 420" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="560" viewBox="0 0 1180 560" role="img" aria-labelledby="title desc">
   <title id="title">일정 메뉴에서 측량수행계획서를 선택하는 화면</title>
-  <desc id="desc">지적측량업무시스템의 상단 일정 메뉴와 하위 측량수행계획서 항목을 강조한 예시 화면</desc>
-  <rect width="1180" height="420" fill="#102943"/>
+  <desc id="desc">지적측량업무시스템의 상단 일정 메뉴와 하위 측량수행계획서 항목을 강조하고 확대 표시한 예시 화면</desc>
+  <rect width="1180" height="560" fill="#102943"/>
   <rect x="0" y="0" width="1180" height="70" fill="#ffffff"/>
   <text x="34" y="43" fill="#0f2c45" font-family="Arial, sans-serif" font-size="25" font-weight="800">LX BizLand 지적측량업무시스템</text>
   <rect x="0" y="70" width="1180" height="50" fill="#05436d"/>
@@ -28,6 +28,14 @@
   </g>
   <rect x="239" y="305" width="118" height="36" fill="none" stroke="#ff2a2a" stroke-width="5"/>
   <text x="590" y="228" fill="#35d5e5" font-family="Arial, sans-serif" font-size="25" text-anchor="middle">일정 메뉴에서 측량수행계획서를 선택합니다.</text>
+  <g transform="translate(705 310)">
+    <rect width="410" height="176" rx="8" fill="#fff" stroke="#ff2a2a" stroke-width="5"/>
+    <text x="24" y="38" fill="#ff2a2a" font-family="Arial, sans-serif" font-size="17" font-weight="900">확대 보기</text>
+    <rect x="30" y="62" width="350" height="48" fill="#06446e"/>
+    <text x="205" y="93" fill="#fff" font-family="Arial, sans-serif" font-size="24" font-weight="900" text-anchor="middle">일정</text>
+    <rect x="112" y="110" width="186" height="42" fill="#fff" stroke="#d8dfe5"/>
+    <text x="205" y="138" fill="#14a6b8" font-family="Arial, sans-serif" font-size="22" font-weight="900" text-anchor="middle">측량수행계획서</text>
+  </g>
   <defs>
     <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
       <feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#000" flood-opacity="0.25"/>
