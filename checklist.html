@@ -232,6 +232,33 @@
                 </article>
               </section>
 
+              <section class="era-converter" aria-labelledby="era-converter-title" data-era-converter data-search-item>
+                <div>
+                  <p class="eyebrow">연호 변환기</p>
+                  <h3 id="era-converter-title">대정ㆍ소화ㆍ단기 → 서기</h3>
+                  <p>연호와 연도를 입력하면 서기 연도로 바로 변환합니다.</p>
+                </div>
+                <div class="era-converter__controls">
+                  <label>
+                    구분
+                    <select data-era-type>
+                      <option value="taisho">대정(大正)</option>
+                      <option value="showa">소화(昭和)</option>
+                      <option value="dangi">단기</option>
+                    </select>
+                  </label>
+                  <label>
+                    연도
+                    <input type="number" min="1" step="1" value="1" data-era-year />
+                  </label>
+                </div>
+                <div class="era-converter__result" aria-live="polite">
+                  <span>서기</span>
+                  <strong data-era-output>1912년</strong>
+                  <small data-era-note>대정 1년은 1912년입니다.</small>
+                </div>
+              </section>
+
               <section class="jeongdan-calculator" aria-labelledby="jeongdan-title" data-jeongdan-calculator>
                 <div>
                   <p class="eyebrow">정ㆍ단ㆍ무ㆍ보 계산기</p>
@@ -249,6 +276,27 @@
                   <strong data-jeongdan-output="pyeong">0</strong>
                   <span>㎡</span>
                   <strong data-jeongdan-output="sqm">0.0</strong>
+                </div>
+              </section>
+
+              <section class="area-unit-converter" aria-labelledby="area-unit-title" data-area-unit-converter data-search-item>
+                <div>
+                  <p class="eyebrow">면적 단위 변환</p>
+                  <h3 id="area-unit-title">제곱미터 ⇄ 평 계산</h3>
+                  <p>제곱미터 또는 평수 중 하나를 입력하면 다른 단위를 자동 계산합니다.</p>
+                </div>
+                <div class="area-unit-converter__inputs">
+                  <label>
+                    제곱미터(㎡)
+                    <input type="number" min="0" step="0.01" data-area-unit-sqm placeholder="예: 397" />
+                  </label>
+                  <label>
+                    평
+                    <input type="number" min="0" step="0.01" data-area-unit-pyeong placeholder="예: 120.09" />
+                  </label>
+                </div>
+                <div class="area-unit-converter__result" aria-live="polite">
+                  <span data-area-unit-note>값을 입력하면 자동 계산됩니다.</span>
                 </div>
               </section>
 

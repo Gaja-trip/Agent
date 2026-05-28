@@ -3076,6 +3076,51 @@ function formatNumber(value, digits = 1) {
   });
 }
 
+function initEraConverters() {
+  document.querySelectorAll("[data-era-converter]").forEach((converter) => {
+    const typeSelect = converter.querySelector("[data-era-type]");
+    const yearInput = converter.querySelector("[data-era-year]");
+    const output = converter.querySelector("[data-era-output]");
+    const note = converter.querySelector("[data-era-note]");
+
+    if (!typeSelect || !yearInput || !output || !note) {
+      return;
+    }
+
+    const eraData = {
+      taisho: { label: "대정", start: 1911, min: 1, max: 15 },
+      showa: { label: "소화", start: 1925, min: 1, max: 64 },
+      dangi: { label: "단기", start: -2333, min: 2334, max: 9999 },
+    };
+
+    function updateConverter() {
+      const era = eraData[typeSelect.value] || eraData.taisho;
+      const inputYear = Number(yearInput.value);
+
+      if (!yearInput.value || !Number.isFinite(inputYear)) {
+        output.textContent = "연도를 입력하세요";
+        note.textContent = `${era.label} 연도를 입력하면 서기 연도를 계산합니다.`;
+        return;
+      }
+
+      const gregorianYear = typeSelect.value === "dangi" ? inputYear - 2333 : inputYear + era.start;
+      output.textContent = `${gregorianYear.toLocaleString("ko-KR")}년`;
+
+      if (inputYear < era.min || inputYear > era.max) {
+        note.textContent = `${era.label} ${inputYear.toLocaleString("ko-KR")}년은 일반적인 사용 범위 밖입니다. 계산값만 참고하세요.`;
+      } else if (typeSelect.value === "dangi") {
+        note.textContent = `단기 ${inputYear.toLocaleString("ko-KR")}년은 서기 ${gregorianYear.toLocaleString("ko-KR")}년입니다.`;
+      } else {
+        note.textContent = `${era.label} ${inputYear.toLocaleString("ko-KR")}년은 서기 ${gregorianYear.toLocaleString("ko-KR")}년입니다.`;
+      }
+    }
+
+    typeSelect.addEventListener("change", updateConverter);
+    yearInput.addEventListener("input", updateConverter);
+    updateConverter();
+  });
+}
+
 function initJeongdanCalculator() {
   document.querySelectorAll("[data-jeongdan-calculator]").forEach((calculator) => {
     const inputs = [...calculator.querySelectorAll("[data-jeongdan-field]")];
@@ -3104,6 +3149,49 @@ function initJeongdanCalculator() {
     });
 
     updateCalculator();
+  });
+}
+
+function initAreaUnitConverters() {
+  document.querySelectorAll("[data-area-unit-converter]").forEach((converter) => {
+    const sqmInput = converter.querySelector("[data-area-unit-sqm]");
+    const pyeongInput = converter.querySelector("[data-area-unit-pyeong]");
+    const note = converter.querySelector("[data-area-unit-note]");
+
+    if (!sqmInput || !pyeongInput || !note) {
+      return;
+    }
+
+    function updateFromSquareMeters() {
+      const squareMeters = Number(sqmInput.value);
+
+      if (!sqmInput.value || !Number.isFinite(squareMeters)) {
+        pyeongInput.value = "";
+        note.textContent = "값을 입력하면 자동 계산됩니다.";
+        return;
+      }
+
+      const pyeong = squareMeters * 0.3025;
+      pyeongInput.value = pyeong.toFixed(2);
+      note.textContent = `${formatNumber(squareMeters, 2)}㎡ = ${formatNumber(pyeong, 2)}평`;
+    }
+
+    function updateFromPyeong() {
+      const pyeong = Number(pyeongInput.value);
+
+      if (!pyeongInput.value || !Number.isFinite(pyeong)) {
+        sqmInput.value = "";
+        note.textContent = "값을 입력하면 자동 계산됩니다.";
+        return;
+      }
+
+      const squareMeters = pyeong / 0.3025;
+      sqmInput.value = squareMeters.toFixed(2);
+      note.textContent = `${formatNumber(pyeong, 2)}평 = ${formatNumber(squareMeters, 2)}㎡`;
+    }
+
+    sqmInput.addEventListener("input", updateFromSquareMeters);
+    pyeongInput.addEventListener("input", updateFromPyeong);
   });
 }
 
@@ -3316,7 +3404,9 @@ initGuidePages();
 initGuidePrintButtons();
 initContentTabs();
 initManualDocumentTabs();
+initEraConverters();
 initJeongdanCalculator();
+initAreaUnitConverters();
 initAreaChangeBuilders();
 initPageSearch();
 refreshIcons();
