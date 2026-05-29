@@ -255,6 +255,7 @@ function initPortalTabs() {
   const portalViews = new Map();
   const initialParams = new URLSearchParams(window.location.search);
   let selectedLaw = readSelectedLaw(initialParams);
+  let eumWarmupTimer = 0;
 
   if (!portalTabs.length || !portalPanel) {
     return;
@@ -367,9 +368,14 @@ function initPortalTabs() {
     const subNumber = Number(normalized.slice(15, 19));
 
     return {
+      selSido: normalized.slice(0, 2),
+      selSgg: normalized.slice(2, 5),
+      selUmd: normalized.slice(5, 8),
+      selRi: normalized.slice(8, 10),
       landGbn: normalized.slice(10, 11),
-      bobn: mainNumber ? String(mainNumber) : "",
-      bubn: subNumber ? normalized.slice(15, 19) : "",
+      bobn: mainNumber ? normalized.slice(11, 15) : "",
+      bubn: subNumber ? String(subNumber) : "",
+      sggcd: normalized.slice(0, 5),
     };
   }
 
@@ -380,12 +386,18 @@ function initPortalTabs() {
       const url = new URL(portalData.eum.landUseUrl);
       const pnuParts = getPnuParts(state.pnu);
 
+      url.searchParams.set("selSido", pnuParts?.selSido || "");
+      url.searchParams.set("selSgg", pnuParts?.selSgg || "");
+      url.searchParams.set("selUmd", pnuParts?.selUmd || "");
+      url.searchParams.set("selRi", pnuParts?.selRi || "");
       url.searchParams.set("pnu", state.pnu);
       url.searchParams.set("bobn", pnuParts?.bobn || "");
       url.searchParams.set("bubn", pnuParts?.bubn || "");
       url.searchParams.set("landGbn", pnuParts?.landGbn || "");
+      url.searchParams.set("sggcd", pnuParts?.sggcd || "");
       url.searchParams.set("chk", "0");
       url.searchParams.set("scale", eumDefaultScale);
+      url.searchParams.set("scaleFlag", "");
       url.searchParams.set("isNoScr", "script");
       url.searchParams.set("mode", "search");
       url.searchParams.set("selGbn", "umd");
@@ -404,6 +416,12 @@ function initPortalTabs() {
     }
 
     return portalData.eum.url;
+  }
+
+  function getEumWarmupUrl() {
+    const url = new URL(portalData.eum.url);
+    url.searchParams.set("_warmup", String(Date.now()));
+    return url.toString();
   }
 
   function getRealEstateUrl() {
@@ -551,19 +569,22 @@ function initPortalTabs() {
             : portal.url;
     const isEumPortal = portal === portalData.eum;
     const isLawPortal = portal === portalData.law;
+    const isEumDetail = isEumPortal && Boolean(getParcelState().pnu);
+    const initialIframeUrl = isEumDetail ? "about:blank" : iframeUrl;
 
     return `
       <div class="embedded-site${isEumPortal ? " embedded-site--eum" : ""}${isLawPortal ? " embedded-site--law" : ""}">
         ${isEumPortal ? renderEumRecoveryTools() : ""}
         ${isLawPortal ? renderLawContext() : ""}
+        ${isEumPortal ? `<iframe class="embedded-site__warmup" title="토지이음 연결 준비" src="${escapeHtml(getEumWarmupUrl())}" aria-hidden="true" tabindex="-1"></iframe>` : ""}
         <iframe
           class="embedded-site__frame"
           title="${portal.frameTitle}"
-          src="${escapeHtml(iframeUrl)}"
-          data-current-src="${escapeHtml(iframeUrl)}"
+          src="${escapeHtml(initialIframeUrl)}"
+          data-current-src="${escapeHtml(initialIframeUrl)}"
           loading="eager"
           allow="geolocation; fullscreen"
-          referrerpolicy="${isEumPortal ? "no-referrer" : "no-referrer-when-downgrade"}"
+          referrerpolicy="strict-origin-when-cross-origin"
         ></iframe>
       </div>
     `;
@@ -751,6 +772,41 @@ function initPortalTabs() {
     return portalViews.get("eum")?.querySelector(".embedded-site__frame") || null;
   }
 
+  function scheduleEumDetailLoad(view, detailUrl, options = {}) {
+    const iframe = view?.querySelector(".embedded-site__frame");
+    const warmupFrame = view?.querySelector(".embedded-site__warmup");
+
+    if (!iframe || !detailUrl || !getParcelState().pnu) {
+      return;
+    }
+
+    window.clearTimeout(eumWarmupTimer);
+
+    let navigated = false;
+    const navigateToDetail = () => {
+      if (navigated || !iframe.isConnected) {
+        return;
+      }
+
+      navigated = true;
+      iframe.src = detailUrl;
+      iframe.dataset.currentSrc = detailUrl;
+    };
+
+    if (warmupFrame) {
+      warmupFrame.addEventListener(
+        "load",
+        () => {
+          window.setTimeout(navigateToDetail, options.afterWarmupDelay ?? 250);
+        },
+        { once: true }
+      );
+      warmupFrame.src = getEumWarmupUrl();
+    }
+
+    eumWarmupTimer = window.setTimeout(navigateToDetail, options.delay ?? 1100);
+  }
+
   function refreshEumIframe(options = {}) {
     const iframe = getEumIframe();
     const state = getParcelState();
@@ -761,27 +817,15 @@ function initPortalTabs() {
     }
 
     const detailUrl = getEumUrl({ refresh: true });
+    const view = portalViews.get("eum");
 
     if (options.resetSession) {
-      const resetUrl = `${portalData.eum.url}?_reset=${Date.now()}`;
-      iframe.src = resetUrl;
-      iframe.dataset.currentSrc = resetUrl;
       updateParcelStatus("토지이음 기본 화면을 다시 연결한 뒤 확인도면을 재요청합니다.");
-
-      window.setTimeout(() => {
-        if (activePortalKey !== "eum") {
-          return;
-        }
-
-        iframe.src = detailUrl;
-        iframe.dataset.currentSrc = detailUrl;
-        updateParcelStatus("토지이음 확인도면과 범례를 다시 불러왔습니다.");
-      }, 750);
+      scheduleEumDetailLoad(view, detailUrl, { delay: 1300, afterWarmupDelay: 420 });
       return;
     }
 
-    iframe.src = detailUrl;
-    iframe.dataset.currentSrc = detailUrl;
+    scheduleEumDetailLoad(view, detailUrl, { delay: 900, afterWarmupDelay: 250 });
     updateParcelStatus("토지이음 확인도면과 범례를 다시 요청했습니다.");
   }
 
@@ -802,6 +846,11 @@ function initPortalTabs() {
             : renderEmbeddedPortal(portal);
       portalPanel.append(view);
       portalViews.set(portalKey, view);
+
+      if (portal === portalData.eum && getParcelState().pnu) {
+        scheduleEumDetailLoad(view, getEumUrl(), { delay: 1100, afterWarmupDelay: 250 });
+      }
+
       return { view, isNew: true };
     }
 
@@ -824,6 +873,14 @@ function initPortalTabs() {
 
       const iframe = view.querySelector(".embedded-site__frame");
       const nextUrl = getEmbeddedPortalUrl(portal);
+
+      if (portal === portalData.eum && getParcelState().pnu) {
+        if (iframe && iframe.dataset.currentSrc !== nextUrl) {
+          scheduleEumDetailLoad(view, nextUrl, { delay: 1100, afterWarmupDelay: 250 });
+        }
+
+        return { view, isNew: false };
+      }
 
       if (iframe && iframe.dataset.currentSrc !== nextUrl) {
         iframe.src = nextUrl;
