@@ -47,6 +47,9 @@
           <button type="button" role="tab" aria-selected="false" aria-controls="guide-registration-correction" data-guide-page="registration-correction">
             등록사항정정
           </button>
+          <button type="button" role="tab" aria-selected="false" aria-controls="guide-survey-fee" data-guide-page="survey-fee">
+            지적측량수수료 계산
+          </button>
         </div>
 
         <div class="guide-pages">
@@ -361,6 +364,167 @@
                     </tbody>
                   </table>
                 </div>
+              </section>
+            </div>
+          </section>
+
+          <section class="guide-page" id="guide-survey-fee" role="tabpanel" data-guide-panel="survey-fee" hidden>
+            <div class="survey-fee-guide">
+              <article class="survey-fee-hero">
+                <div>
+                  <p class="eyebrow">Cadastral Survey Fee</p>
+                  <h2>지적측량수수료 계산 안내</h2>
+                  <p>
+                    지적측량을 신청하기 전 예상 수수료가 궁금한 경우, 일사편리의
+                    <strong>지적측량 수수료 계산</strong> 화면에서 국민이 직접 금액을 확인할 수 있습니다.
+                    실제 접수 금액은 신청 내용, 측량 조건, 감면 여부, 현장 여건에 따라 달라질 수 있으므로
+                    최종 금액은 접수기관의 안내를 함께 확인해야 합니다.
+                  </p>
+                </div>
+                <div class="survey-fee-hero__actions">
+                  <a class="button button--primary" href="https://kras.go.kr/feeAct/selectActView.do" target="_blank" rel="noopener noreferrer">
+                    <i data-lucide="calculator"></i>
+                    수수료 계산 바로가기
+                  </a>
+                  <a class="button" href="https://kras.go.kr/mainView.do" target="_blank" rel="noopener noreferrer">
+                    <i data-lucide="external-link"></i>
+                    일사편리 메인 열기
+                  </a>
+                </div>
+              </article>
+
+              <section class="survey-fee-flow" aria-label="일사편리 지적측량수수료 계산 절차">
+                <article class="survey-fee-step">
+                  <span>01</span>
+                  <h3>일사편리 접속</h3>
+                  <p>일사편리 메인 화면 또는 고객지원의 지적측량 안내 메뉴로 들어갑니다.</p>
+                </article>
+                <article class="survey-fee-step">
+                  <span>02</span>
+                  <h3>수수료 계산 선택</h3>
+                  <p>메인 화면의 지적측량 수수료 간편 계산 또는 지적측량 안내의 수수료 계산을 선택합니다.</p>
+                </article>
+                <article class="survey-fee-step">
+                  <span>03</span>
+                  <h3>측량종목 선택</h3>
+                  <p>경계복원, 지적현황, 분할측량, 등록전환 중 신청하려는 종목을 선택합니다.</p>
+                </article>
+                <article class="survey-fee-step">
+                  <span>04</span>
+                  <h3>토지 정보 입력</h3>
+                  <p>소재지, 산 여부, 지번, 면적, 지목, 토지구분, 축척, 개별공시지가를 입력합니다.</p>
+                </article>
+                <article class="survey-fee-step">
+                  <span>05</span>
+                  <h3>계산하기</h3>
+                  <p>측량수수료 계산하기를 누르면 산정 목록에 수수료와 금액이 표시됩니다.</p>
+                </article>
+              </section>
+
+              <section class="survey-fee-layout">
+                <article class="survey-fee-card survey-fee-card--wide">
+                  <p class="eyebrow">입력 항목</p>
+                  <h3>계산 전에 준비할 정보</h3>
+                  <div class="survey-fee-input-grid">
+                    <div>
+                      <strong>측량종목</strong>
+                      <span>경계복원, 지적현황, 분할측량, 등록전환</span>
+                    </div>
+                    <div>
+                      <strong>측량 소재지</strong>
+                      <span>시도, 시군구, 읍면동, 리, 산 여부, 본번, 부번</span>
+                    </div>
+                    <div>
+                      <strong>기본 토지 정보</strong>
+                      <span>면적, 지목, 토지구분, 축척</span>
+                    </div>
+                    <div>
+                      <strong>가격 정보</strong>
+                      <span>개별공시지가</span>
+                    </div>
+                    <div>
+                      <strong>상세 조건</strong>
+                      <span>지적현황, 분할측량, 등록전환은 적용구분과 필지수 또는 면적을 추가 입력</span>
+                    </div>
+                    <div>
+                      <strong>결과 확인</strong>
+                      <span>업무종목, 소재지, 원면적, 수량, 수수료, 경감액, 금액</span>
+                    </div>
+                  </div>
+                </article>
+
+                <aside class="survey-fee-card">
+                  <p class="eyebrow">상담 설명 문구</p>
+                  <h3>국민에게 이렇게 안내합니다</h3>
+                  <p class="survey-fee-quote">
+                    "일사편리에서 지적측량 예상 수수료를 직접 계산해볼 수 있습니다.
+                    다만 화면의 금액은 사전 확인용이며, 실제 접수 금액은 측량 종류와 현장 조건,
+                    감면 적용 여부에 따라 달라질 수 있습니다."
+                  </p>
+                  <ul>
+                    <li>정확한 지번과 면적을 알고 있을수록 예상 금액이 실제와 가까워집니다.</li>
+                    <li>산 번지는 산 체크 후 본번과 부번을 나누어 입력합니다.</li>
+                    <li>계산 결과는 접수 전 상담자료로 활용하고, 최종 수수료는 접수 단계에서 확인합니다.</li>
+                  </ul>
+                </aside>
+              </section>
+
+              <section class="survey-fee-screen-guide" aria-label="일사편리 화면별 확인 지점">
+                <article class="fee-screen-mock">
+                  <div class="fee-browser-bar">https://kras.go.kr/mainView.do</div>
+                  <div class="fee-menu-list">
+                    <span>지적측량 온택트</span>
+                    <strong>지적측량 수수료 간편 계산</strong>
+                    <span>부동산통합열람 바로가기</span>
+                  </div>
+                  <p>메인 화면에서는 가운데 메뉴의 <strong>지적측량 수수료 간편 계산</strong>을 선택합니다.</p>
+                </article>
+
+                <article class="fee-screen-mock fee-screen-mock--form">
+                  <div class="fee-tabs">
+                    <strong>경계복원</strong>
+                    <span>지적현황</span>
+                    <span>분할측량</span>
+                    <span>등록전환</span>
+                  </div>
+                  <div class="fee-form-grid">
+                    <span>전북특별자치도</span>
+                    <span>부안군</span>
+                    <span>하서면</span>
+                    <span>장신리</span>
+                    <span>산 0225 - 0000</span>
+                    <span>검색</span>
+                    <span>면적 16,264㎡</span>
+                    <span>지목 묘지</span>
+                    <span>축척 1:6000</span>
+                    <span>개별공시지가 10,400원</span>
+                  </div>
+                  <p>소재지와 토지 정보를 입력한 뒤 검색하고, 하단의 <strong>측량수수료 계산하기</strong>를 누릅니다.</p>
+                </article>
+
+                <article class="fee-screen-mock fee-screen-mock--result">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>업무종목</th>
+                        <th>소재지</th>
+                        <th>원면적</th>
+                        <th>수수료</th>
+                        <th>금액</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>경계복원측량</td>
+                        <td>전북특별자치도 부안군 하서면 장신리</td>
+                        <td>16,264㎡</td>
+                        <td>804,000</td>
+                        <td>804,000</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <p>산정 목록에 표시된 금액은 예상 수수료입니다. 출력하거나 상담 시 참고자료로 활용할 수 있습니다.</p>
+                </article>
               </section>
             </div>
           </section>

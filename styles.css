@@ -435,7 +435,7 @@ input {
 
 .guide-page-tabs {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 10px;
   margin-bottom: 20px;
   padding: 8px;
@@ -2648,6 +2648,268 @@ input {
   background: #b43d3d;
 }
 
+.survey-fee-guide {
+  display: grid;
+  gap: 18px;
+}
+
+.survey-fee-hero,
+.survey-fee-card,
+.survey-fee-step,
+.fee-screen-mock {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 12px 36px rgba(31, 42, 39, 0.06);
+}
+
+.survey-fee-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 22px;
+  align-items: center;
+  padding: clamp(24px, 4vw, 34px);
+  background:
+    linear-gradient(135deg, rgba(31, 107, 85, 0.08), rgba(232, 180, 74, 0.12)),
+    #fff;
+}
+
+.survey-fee-hero h2 {
+  margin: 0;
+  color: var(--ink);
+  font-size: clamp(1.7rem, 3vw, 2.4rem);
+}
+
+.survey-fee-hero p:not(.eyebrow) {
+  max-width: 880px;
+  margin: 12px 0 0;
+  color: #455850;
+  line-height: 1.72;
+}
+
+.survey-fee-hero__actions {
+  display: grid;
+  gap: 10px;
+  min-width: 220px;
+}
+
+.survey-fee-hero__actions .button {
+  justify-content: center;
+}
+
+.survey-fee-flow {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.survey-fee-step {
+  display: grid;
+  gap: 8px;
+  padding: 18px;
+}
+
+.survey-fee-step span {
+  display: inline-grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  color: #fff;
+  background: var(--green);
+  border-radius: 999px;
+  font-weight: 950;
+}
+
+.survey-fee-step h3,
+.survey-fee-card h3 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 1.14rem;
+}
+
+.survey-fee-step p,
+.survey-fee-card p,
+.survey-fee-card li,
+.fee-screen-mock p {
+  margin: 0;
+  color: #455850;
+  line-height: 1.65;
+}
+
+.survey-fee-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.75fr);
+  gap: 14px;
+  align-items: stretch;
+}
+
+.survey-fee-card {
+  display: grid;
+  gap: 14px;
+  padding: 22px;
+}
+
+.survey-fee-input-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.survey-fee-input-grid div {
+  display: grid;
+  gap: 6px;
+  min-height: 88px;
+  padding: 14px;
+  background: #f7faf8;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.survey-fee-input-grid strong {
+  color: #1f6b55;
+  font-size: 0.94rem;
+}
+
+.survey-fee-input-grid span {
+  color: #455850;
+  line-height: 1.48;
+}
+
+.survey-fee-quote {
+  padding: 14px 16px;
+  color: #17382f;
+  background: #eef6f2;
+  border: 1px solid rgba(31, 107, 85, 0.16);
+  border-radius: 8px;
+  font-weight: 850;
+}
+
+.survey-fee-card ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.survey-fee-card li + li {
+  margin-top: 8px;
+}
+
+.survey-fee-screen-guide {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.fee-screen-mock {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+}
+
+.fee-browser-bar {
+  padding: 10px 12px;
+  color: #8a1c1c;
+  background: #fff;
+  border: 3px solid #dd2f2f;
+  border-radius: 6px;
+  font-weight: 900;
+}
+
+.fee-menu-list {
+  display: grid;
+  gap: 0;
+  padding: 16px;
+  background: #f7faf8;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.fee-menu-list span,
+.fee-menu-list strong {
+  padding: 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.fee-menu-list strong {
+  color: #1f4fb9;
+  background: #fff;
+  outline: 3px solid #dd2f2f;
+  outline-offset: -3px;
+}
+
+.fee-menu-list span:last-child {
+  border-bottom: 0;
+}
+
+.fee-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border: 2px solid #dd2f2f;
+}
+
+.fee-tabs strong,
+.fee-tabs span {
+  padding: 10px;
+  text-align: center;
+  border-right: 1px solid var(--line);
+  font-weight: 900;
+}
+
+.fee-tabs strong {
+  color: #1f4fb9;
+  background: #edf3ff;
+}
+
+.fee-tabs span:last-child {
+  border-right: 0;
+}
+
+.fee-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding: 12px;
+  background: #f7faf8;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.fee-form-grid span {
+  min-height: 38px;
+  padding: 9px 10px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.fee-form-grid span:nth-child(6) {
+  color: #fff;
+  background: var(--green);
+  border-color: var(--green);
+  text-align: center;
+}
+
+.fee-screen-mock table {
+  width: 100%;
+  border-collapse: collapse;
+  overflow: hidden;
+  border: 3px solid #dd2f2f;
+  border-radius: 8px;
+  font-size: 0.86rem;
+}
+
+.fee-screen-mock th,
+.fee-screen-mock td {
+  padding: 10px 8px;
+  border: 1px solid var(--line);
+  text-align: center;
+}
+
+.fee-screen-mock th {
+  background: #f2f5f3;
+}
+
 .content-tabs button {
   min-height: 50px;
   padding: 10px 12px;
@@ -2712,6 +2974,10 @@ input {
   .era-converter,
   .jeongdan-calculator,
   .area-unit-converter,
+  .survey-fee-hero,
+  .survey-fee-flow,
+  .survey-fee-layout,
+  .survey-fee-screen-guide,
   .map-panel,
   .process-layout,
   .checklist-layout,
@@ -2740,6 +3006,14 @@ input {
 
   .readiness {
     position: static;
+  }
+
+  .survey-fee-hero__actions {
+    min-width: 0;
+  }
+
+  .survey-fee-input-grid {
+    grid-template-columns: 1fr;
   }
 
   .manual-procedure li {
@@ -2785,8 +3059,13 @@ input {
   .checklist,
   .detail-grid,
   .guide-page-tabs,
+  .fee-form-grid,
   .portal-tabs {
     grid-template-columns: 1fr;
+  }
+
+  .fee-tabs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .parcel-search {
