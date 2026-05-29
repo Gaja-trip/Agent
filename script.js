@@ -276,12 +276,22 @@ function initPortalTabs() {
     writeStoredValue(parcelCityStorageKey, getParcelCity());
   }
 
+  function normalizeMountainLotAddress(rawAddress) {
+    return String(rawAddress || "")
+      .trim()
+      .replace(/\s+/g, " ")
+      .replace(/([가-힣]+(?:리|동|가|읍|면))\s*산\s*(\d+(?:-\d+)?)/g, "$1 산 $2")
+      .replace(/(^|\s)산\s*(\d+(?:-\d+)?)/g, "$1산 $2")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
   function hasProvinceToken(address) {
     return /(특별자치도|특별시|광역시|특별자치시|도)\s/.test(address) || /^(전북|전라북도|전북특별자치도)\b/.test(address);
   }
 
   function buildContextualParcelAddress(rawAddress = getParcelAddress()) {
-    const address = String(rawAddress || "").trim().replace(/\s+/g, " ");
+    const address = normalizeMountainLotAddress(rawAddress);
     const province = getParcelProvince();
     const city = getParcelCity();
 
@@ -301,7 +311,7 @@ function initPortalTabs() {
 
     parts.push(address);
 
-    return parts.join(" ").replace(/\s+/g, " ").trim();
+    return normalizeMountainLotAddress(parts.join(" "));
   }
 
   function saveParcelAddress(nextAddress = getParcelAddress()) {
