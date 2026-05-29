@@ -53,6 +53,7 @@ const vworldApiKey = "39B6F1DE-2D35-3582-9008-A537EF6A6BC4";
 const vworldParcelDataId = "LP_PA_CBND_BUBUN";
 const vworldParcelWfsDataIds = ["lp_pa_cbnd_bubun", "lt_c_landinfobasemap"];
 const vworldParcelRadiusMeters = 80;
+const eumDefaultScale = "1200";
 const vworldLotNumberMinZoom = 18;
 const vworldLotNumberMinScale = 0.68;
 const vworldLotNumberMaxScale = 1.18;
@@ -372,7 +373,7 @@ function initPortalTabs() {
     };
   }
 
-  function getEumUrl() {
+  function getEumUrl(options = {}) {
     const state = getParcelState();
 
     if (state.pnu) {
@@ -384,7 +385,7 @@ function initPortalTabs() {
       url.searchParams.set("bubn", pnuParts?.bubn || "");
       url.searchParams.set("landGbn", pnuParts?.landGbn || "");
       url.searchParams.set("chk", "0");
-      url.searchParams.set("scale", "");
+      url.searchParams.set("scale", eumDefaultScale);
       url.searchParams.set("isNoScr", "script");
       url.searchParams.set("mode", "search");
       url.searchParams.set("selGbn", "umd");
@@ -393,6 +394,10 @@ function initPortalTabs() {
 
       if (state.title || state.query || state.subtitle) {
         url.searchParams.set("fullAddress", state.title || state.query || state.subtitle);
+      }
+
+      if (options.refresh) {
+        url.searchParams.set("_refresh", String(Date.now()));
       }
 
       return url.toString();
@@ -471,6 +476,32 @@ function initPortalTabs() {
     `;
   }
 
+  function renderEumRecoveryTools() {
+    const state = getParcelState();
+
+    if (!state.pnu) {
+      return "";
+    }
+
+    return `
+      <div class="embedded-site__tools" aria-label="토지이음 도면 복구 도구">
+        <span>확인도면·범례가 깨지면 도면을 다시 요청하세요.</span>
+        <button type="button" data-eum-action="reload">
+          <i data-lucide="refresh-cw"></i>
+          도면 다시 불러오기
+        </button>
+        <button type="button" data-eum-action="reset">
+          <i data-lucide="rotate-ccw"></i>
+          토지이음 초기화 후 다시 열기
+        </button>
+        <button type="button" data-eum-action="map">
+          <i data-lucide="map-pinned"></i>
+          토지이음지도에서 확인
+        </button>
+      </div>
+    `;
+  }
+
   function renderRealEstatePortal() {
     const parcelAddress = escapeHtml(getParcelAddress());
     const displayText = parcelAddress || "주소검색 후 이곳에 검색 주소가 표시됩니다.";
@@ -523,6 +554,7 @@ function initPortalTabs() {
 
     return `
       <div class="embedded-site${isEumPortal ? " embedded-site--eum" : ""}${isLawPortal ? " embedded-site--law" : ""}">
+        ${isEumPortal ? renderEumRecoveryTools() : ""}
         ${isLawPortal ? renderLawContext() : ""}
         <iframe
           class="embedded-site__frame"
@@ -531,7 +563,7 @@ function initPortalTabs() {
           data-current-src="${escapeHtml(iframeUrl)}"
           loading="eager"
           allow="geolocation; fullscreen"
-          referrerpolicy="no-referrer-when-downgrade"
+          referrerpolicy="${isEumPortal ? "no-referrer" : "no-referrer-when-downgrade"}"
         ></iframe>
       </div>
     `;
@@ -715,6 +747,44 @@ function initPortalTabs() {
     return portal.url;
   }
 
+  function getEumIframe() {
+    return portalViews.get("eum")?.querySelector(".embedded-site__frame") || null;
+  }
+
+  function refreshEumIframe(options = {}) {
+    const iframe = getEumIframe();
+    const state = getParcelState();
+
+    if (!iframe || !state.pnu) {
+      updateParcelStatus("먼저 주소를 검색한 뒤 토지이음 도면을 다시 불러올 수 있습니다.");
+      return;
+    }
+
+    const detailUrl = getEumUrl({ refresh: true });
+
+    if (options.resetSession) {
+      const resetUrl = `${portalData.eum.url}?_reset=${Date.now()}`;
+      iframe.src = resetUrl;
+      iframe.dataset.currentSrc = resetUrl;
+      updateParcelStatus("토지이음 기본 화면을 다시 연결한 뒤 확인도면을 재요청합니다.");
+
+      window.setTimeout(() => {
+        if (activePortalKey !== "eum") {
+          return;
+        }
+
+        iframe.src = detailUrl;
+        iframe.dataset.currentSrc = detailUrl;
+        updateParcelStatus("토지이음 확인도면과 범례를 다시 불러왔습니다.");
+      }, 750);
+      return;
+    }
+
+    iframe.src = detailUrl;
+    iframe.dataset.currentSrc = detailUrl;
+    updateParcelStatus("토지이음 확인도면과 범례를 다시 요청했습니다.");
+  }
+
   function ensurePortalView(portalKey) {
     const portal = portalData[portalKey];
     let view = portalViews.get(portalKey);
@@ -738,6 +808,20 @@ function initPortalTabs() {
     if (portal.type === "realestate") {
       view.innerHTML = renderRealEstatePortal();
     } else if (portal.type !== "aerial") {
+      if (portal === portalData.eum) {
+        const wrapper = view.querySelector(".embedded-site");
+        const tools = view.querySelector(".embedded-site__tools");
+        const nextTools = renderEumRecoveryTools();
+
+        if (tools) {
+          tools.remove();
+        }
+
+        if (wrapper && nextTools) {
+          wrapper.insertAdjacentHTML("afterbegin", nextTools);
+        }
+      }
+
       const iframe = view.querySelector(".embedded-site__frame");
       const nextUrl = getEmbeddedPortalUrl(portal);
 
@@ -2815,8 +2899,24 @@ function initPortalTabs() {
   }
 
   portalPanel.addEventListener("click", (event) => {
+    const eumActionButton = event.target.closest("[data-eum-action]");
     const copyButton = event.target.closest("[data-realestate-copy]");
     const openButton = event.target.closest("[data-realestate-open]");
+
+    if (eumActionButton) {
+      const action = eumActionButton.dataset.eumAction;
+
+      if (action === "reload") {
+        refreshEumIframe();
+      } else if (action === "reset") {
+        refreshEumIframe({ resetSession: true });
+      } else if (action === "map") {
+        setActivePortal("map");
+        updateParcelStatus("토지이음지도에서 같은 필지를 확인합니다.");
+      }
+
+      return;
+    }
 
     if (copyButton) {
       copyParcelAddress();
