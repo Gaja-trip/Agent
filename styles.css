@@ -1993,6 +1993,8 @@ input {
 }
 
 .vworld-map {
+  --vworld-lot-label-scale: 1;
+  --vworld-parcel-label-font-size: 0.74rem;
   position: absolute;
   inset: 0;
   z-index: 1;
@@ -2007,6 +2009,11 @@ input {
 }
 
 .vworld-map.is-hidden {
+  display: none;
+}
+
+.vworld-map.is-lot-labels-hidden .parcel-label,
+.vworld-map.is-lot-labels-hidden .vworld-lot-number-label {
   display: none;
 }
 
@@ -2061,7 +2068,7 @@ input {
   border: 1px solid rgba(31, 107, 85, 0.22);
   border-radius: 6px;
   box-shadow: none;
-  font-size: 0.74rem;
+  font-size: var(--vworld-parcel-label-font-size, 0.74rem);
   font-weight: 900;
 }
 
@@ -2083,6 +2090,8 @@ input {
   border-radius: 6px;
   box-shadow: 0 3px 10px rgba(18, 42, 35, 0.14);
   line-height: 1.05;
+  transform: scale(var(--vworld-lot-label-scale, 1));
+  transform-origin: center;
   white-space: nowrap;
 }
 

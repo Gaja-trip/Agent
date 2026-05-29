@@ -54,6 +54,8 @@ const vworldParcelDataId = "LP_PA_CBND_BUBUN";
 const vworldParcelWfsDataIds = ["lp_pa_cbnd_bubun", "lt_c_landinfobasemap"];
 const vworldParcelRadiusMeters = 80;
 const vworldLotNumberMinZoom = 18;
+const vworldLotNumberMinScale = 0.68;
+const vworldLotNumberMaxScale = 1.18;
 const vworldMapMaxZoom = 21;
 const vworldTileNativeMaxZoom = 19;
 const vworldParcelDetailZoom = 20;
@@ -1766,7 +1768,36 @@ function initPortalTabs() {
     return Boolean(vworldMap && vworldMap.getZoom() >= vworldLotNumberMinZoom);
   }
 
+  function getVworldLotNumberScale() {
+    const zoom = Number(vworldMap?.getZoom?.());
+
+    if (!Number.isFinite(zoom)) {
+      return 1;
+    }
+
+    const zoomRange = Math.max(1, vworldMapMaxZoom - vworldLotNumberMinZoom);
+    const progress = Math.min(1, Math.max(0, (zoom - vworldLotNumberMinZoom) / zoomRange));
+
+    return vworldLotNumberMinScale + (vworldLotNumberMaxScale - vworldLotNumberMinScale) * progress;
+  }
+
+  function syncVworldLotNumberLabelScale() {
+    const mapNode = vworldMap?.getContainer?.();
+
+    if (!mapNode) {
+      return;
+    }
+
+    const scale = getVworldLotNumberScale();
+
+    mapNode.style.setProperty("--vworld-lot-label-scale", scale.toFixed(2));
+    mapNode.style.setProperty("--vworld-parcel-label-font-size", `${(0.74 * scale).toFixed(2)}rem`);
+    mapNode.classList.toggle("is-lot-labels-hidden", !shouldShowVworldLotNumberLabels());
+  }
+
   function syncVworldLotNumberLayerVisibility() {
+    syncVworldLotNumberLabelScale();
+
     if (!vworldMap || !vworldLotNumberLayer) {
       return;
     }
@@ -2249,6 +2280,8 @@ function initPortalTabs() {
       }
     ).addTo(vworldMap);
 
+    syncVworldLotNumberLabelScale();
+
     if (options.fitBounds) {
       const bounds = vworldParcelLayer.getBounds();
 
@@ -2542,7 +2575,9 @@ function initPortalTabs() {
       maxZoom: vworldMapMaxZoom,
     }).setView(defaultAerialCenter, 16);
     vworldMap.on("click", handleVworldMapClick);
+    vworldMap.on("zoom", syncVworldLotNumberLabelScale);
     vworldMap.on("zoomend", syncVworldLotNumberLayerVisibility);
+    syncVworldLotNumberLabelScale();
 
     setVworldLayer(vworldCurrentLayer);
     bindVworldTools();
@@ -2612,7 +2647,9 @@ function initPortalTabs() {
       maxZoom: vworldMapMaxZoom,
     }).setView([36.4, 127.8], 7);
     vworldMap.on("click", handleVworldMapClick);
+    vworldMap.on("zoom", syncVworldLotNumberLabelScale);
     vworldMap.on("zoomend", syncVworldLotNumberLayerVisibility);
+    syncVworldLotNumberLabelScale();
 
     setVworldLayer("satellite");
     setVworldCadastralLayer();
