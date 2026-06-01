@@ -3036,12 +3036,19 @@ input {
 }
 
 .fee-browser-bar {
+  display: block;
   padding: 10px 12px;
   color: #8a1c1c;
   background: #fff;
   border: 3px solid #dd2f2f;
   border-radius: 6px;
+  cursor: pointer;
   font-weight: 900;
+}
+
+.fee-browser-bar:hover {
+  color: #fff;
+  background: #dd2f2f;
 }
 
 .fee-menu-list {
