@@ -79,8 +79,14 @@ input {
 .brand {
   display: inline-flex;
   align-items: center;
-  gap: 14px;
+  flex: 0 0 auto;
   min-width: 0;
+}
+
+.brand__image {
+  width: min(390px, 42vw);
+  height: 58px;
+  object-fit: contain;
 }
 
 .brand__mark {
@@ -2287,6 +2293,66 @@ input {
   line-height: 1.4;
 }
 
+.vworld-poi-marker {
+  display: grid;
+  place-items: center;
+  pointer-events: auto;
+}
+
+.vworld-poi-marker__bubble {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  color: #fff;
+  background: #4f5fd5;
+  border: 2px solid rgba(255, 255, 255, 0.96);
+  border-radius: 999px;
+  box-shadow: 0 3px 12px rgba(18, 42, 35, 0.28);
+}
+
+.vworld-poi-marker__bubble svg {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2.8;
+}
+
+.vworld-poi-marker__bubble--fuel {
+  background: #0b8f71;
+}
+
+.vworld-poi-marker__bubble--repair {
+  background: #c03a9d;
+}
+
+.vworld-poi-marker__bubble--food {
+  background: #4f7fcf;
+}
+
+.vworld-poi-marker__bubble--cafe {
+  background: #9b6135;
+}
+
+.vworld-poi-marker__bubble--bank {
+  background: #5a6a7a;
+}
+
+.vworld-poi-marker__bubble--shop {
+  background: #db7c24;
+}
+
+.vworld-poi-marker__bubble--medical {
+  background: #d34848;
+}
+
+.vworld-poi-marker__bubble--public {
+  background: #6574d9;
+}
+
+.vworld-poi-marker__bubble--lodging {
+  background: #6d55b8;
+}
+
 .parcel-label {
   padding: 2px 5px;
   color: #17382f;
@@ -3191,6 +3257,11 @@ input {
     align-items: flex-start;
     flex-direction: column;
     min-height: 0;
+  }
+
+  .brand__image {
+    width: min(330px, 82vw);
+    height: 52px;
   }
 
   .main-nav {

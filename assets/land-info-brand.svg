@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="390" height="86" viewBox="0 0 390 86" role="img" aria-labelledby="title">
+  <title id="title">토지정보 통합 안내</title>
+  <defs>
+    <linearGradient id="pinGradient" x1="18" y1="8" x2="72" y2="70" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#8fd174"/>
+      <stop offset="0.52" stop-color="#4fc0bb"/>
+      <stop offset="1" stop-color="#2380ba"/>
+    </linearGradient>
+    <linearGradient id="lineGradient" x1="16" y1="66" x2="78" y2="76" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#86ca68"/>
+      <stop offset="1" stop-color="#3daec6"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="4" stdDeviation="5" flood-color="#122a23" flood-opacity="0.16"/>
+    </filter>
+  </defs>
+  <rect width="390" height="86" rx="18" fill="#ffffff"/>
+  <g filter="url(#shadow)">
+    <rect x="7" y="7" width="72" height="72" rx="17" fill="#ffffff"/>
+  </g>
+  <g transform="translate(7 7)">
+    <path d="M36 8c14.6 0 26.5 11.7 26.5 26.2 0 17.3-18.9 30.3-24.7 34a3.3 3.3 0 0 1-3.6 0c-5.8-3.7-24.7-16.7-24.7-34C9.5 19.7 21.4 8 36 8z" fill="url(#pinGradient)"/>
+    <circle cx="36" cy="32" r="17" fill="none" stroke="#fff" stroke-width="4"/>
+    <path d="M19.5 32h33M36 15.5v33M25.5 20.5c5.8 4.8 15.2 4.8 21 0M25.5 43.5c5.8-4.8 15.2-4.8 21 0" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+    <path d="M17 61 31 54l18 9 15-8" fill="none" stroke="url(#lineGradient)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="17" cy="61" r="4" fill="#8fd174"/>
+    <circle cx="31" cy="54" r="4" fill="#61c187"/>
+    <circle cx="49" cy="63" r="4" fill="#52bab4"/>
+    <circle cx="64" cy="55" r="4" fill="#3daec6"/>
+  </g>
+  <text x="96" y="38" fill="#14263a" font-family="Malgun Gothic, Pretendard, Arial, sans-serif" font-size="28" font-weight="900" letter-spacing="-0.2">토지정보 통합 안내</text>
+  <text x="98" y="62" fill="#4a635a" font-family="Malgun Gothic, Pretendard, Arial, sans-serif" font-size="13" font-weight="700">Land information integrated guide</text>
+</svg>

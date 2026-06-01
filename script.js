@@ -103,11 +103,13 @@ let vworldParcelLayer = null;
 let vworldRadiusLayer = null;
 let vworldCadastralLayer = null;
 let vworldLotNumberLayer = null;
+let vworldPoiLayer = null;
 let vworldCurrentLayer = "satellite";
 let vworldCurrentPoint = null;
 let vworldSearchResults = [];
 let vworldLabelRequestId = 0;
 let vworldInfoRequestId = 0;
+let vworldPoiMarkerRequestId = 0;
 let vworldMarkerVisible = true;
 let vworldInfoMarker = null;
 let vworldMeasureMode = "";
@@ -1517,6 +1519,156 @@ function initPortalTabs() {
     `;
   }
 
+  function getVworldPoiKind(poi = {}) {
+    const text = [poi.title, poi.subtitle, poi.keyword, poi.rawTitle].filter(Boolean).join(" ");
+
+    if (/주유|오일|현대오일|GS칼텍스|에쓰오일|S-OIL|SK에너지|LPG|충전소/i.test(text)) {
+      return "fuel";
+    }
+
+    if (/자동차|정비|수리|카센터|카젠|오토큐|블루핸즈|타이어|세차/i.test(text)) {
+      return "repair";
+    }
+
+    if (/식당|음식|한식|분식|중식|일식|치킨|피자|고기|갈비|국밥|식육/i.test(text)) {
+      return "food";
+    }
+
+    if (/카페|커피|다방|제과|빵|베이커리/i.test(text)) {
+      return "cafe";
+    }
+
+    if (/은행|농협|신협|새마을|우체국|금고/i.test(text)) {
+      return "bank";
+    }
+
+    if (/편의점|마트|슈퍼|상회|매장|판매|상가/i.test(text)) {
+      return "shop";
+    }
+
+    if (/병원|의원|약국|보건|치과|한의원/i.test(text)) {
+      return "medical";
+    }
+
+    if (/학교|관공서|주민센터|읍사무소|면사무소|마을회관|경로당|공공/i.test(text)) {
+      return "public";
+    }
+
+    if (/숙박|모텔|호텔|펜션|여관/i.test(text)) {
+      return "lodging";
+    }
+
+    return "place";
+  }
+
+  function getVworldPoiIcon(kind) {
+    return (
+      {
+        fuel: "fuel",
+        repair: "wrench",
+        food: "utensils",
+        cafe: "coffee",
+        bank: "landmark",
+        shop: "shopping-bag",
+        medical: "cross",
+        public: "building-2",
+        lodging: "bed",
+        place: "map-pin",
+      }[kind] || "map-pin"
+    );
+  }
+
+  function getVworldPoiMarkerHtml(poi) {
+    const kind = getVworldPoiKind(poi);
+    const icon = getVworldPoiIcon(kind);
+
+    return `<span class="vworld-poi-marker__bubble vworld-poi-marker__bubble--${kind}"><i data-lucide="${icon}"></i></span>`;
+  }
+
+  function clearVworldPoiMarkers() {
+    vworldPoiMarkerRequestId += 1;
+
+    if (vworldPoiLayer && vworldMap) {
+      vworldMap.removeLayer(vworldPoiLayer);
+    }
+
+    vworldPoiLayer = null;
+  }
+
+  function renderVworldPoiMarkers(pois = []) {
+    if (!vworldMap || !window.L) {
+      return 0;
+    }
+
+    clearVworldPoiMarkers();
+
+    const markers = pois
+      .map((poi) => {
+        if (!Number.isFinite(poi.latitude) || !Number.isFinite(poi.longitude)) {
+          return null;
+        }
+
+        const marker = window.L.marker([poi.latitude, poi.longitude], {
+          title: poi.title || "POI",
+          keyboard: false,
+          zIndexOffset: 760,
+          icon: window.L.divIcon({
+            className: "vworld-poi-marker",
+            html: getVworldPoiMarkerHtml(poi),
+            iconSize: [34, 34],
+            iconAnchor: [17, 17],
+          }),
+        });
+
+        marker.on("click", () => {
+          showVworldInfoPanel();
+          setVworldInfoTab("poi");
+          setVworldInfoContent("poi", renderPoiInfo([poi], poi.latitude, poi.longitude));
+          refreshIcons();
+        });
+
+        return marker;
+      })
+      .filter(Boolean);
+
+    if (!markers.length) {
+      return 0;
+    }
+
+    vworldPoiLayer = window.L.layerGroup(markers).addTo(vworldMap);
+    refreshIcons();
+    return markers.length;
+  }
+
+  async function loadVworldPoiLogoMarkers(point) {
+    if (!vworldMap || !window.L || !point) {
+      return;
+    }
+
+    const latitude = Number(point.latitude);
+    const longitude = Number(point.longitude);
+
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+      return;
+    }
+
+    const requestId = ++vworldPoiMarkerRequestId;
+
+    try {
+      const pois = await searchVworldNearbyPois(latitude, longitude, point.title || point.query || "");
+
+      if (requestId !== vworldPoiMarkerRequestId) {
+        return;
+      }
+
+      renderVworldPoiMarkers(pois);
+    } catch (error) {
+      if (requestId === vworldPoiMarkerRequestId) {
+        clearVworldPoiMarkers();
+      }
+    }
+  }
+
   function renderVworldInfoError(title, latitude, longitude) {
     return `
       <p class="vworld-info-empty">${escapeHtml(title)} 조회 권한 또는 네트워크 상태를 확인해 주세요.</p>
@@ -2001,6 +2153,7 @@ function initPortalTabs() {
     vworldMap.setView([result.latitude, result.longitude], result.pnu ? vworldParcelDetailZoom : 18);
     syncVworldMarker();
     clearVworldParcels();
+    clearVworldPoiMarkers();
     syncVworldLotNumberLabel(vworldCurrentPoint);
     setVworldCadastralLayer();
 
@@ -2010,6 +2163,7 @@ function initPortalTabs() {
 
     updateAerialStatus(`${title} 위치로 이동했습니다. 반경 ${vworldParcelRadiusMeters}m 이내 지번과 지목을 불러오는 중입니다.`);
     loadNearbyParcelNumberLabels(vworldCurrentPoint);
+    loadVworldPoiLogoMarkers(vworldCurrentPoint);
   }
 
   function bindAerialSearchFormConnected() {
@@ -3209,6 +3363,7 @@ function initPortalTabs() {
         if (action === "clear") {
           clearVworldMeasure();
           clearVworldClickInfo();
+          clearVworldPoiMarkers();
           updateAerialStatus("측정 표시를 초기화했습니다.");
         }
       });
@@ -3229,8 +3384,10 @@ function initPortalTabs() {
       vworldHybridLayer = null;
       vworldParcelLayer = null;
       vworldRadiusLayer = null;
+      vworldPoiLayer = null;
       vworldLotNumberLayer = null;
       vworldLabelRequestId += 1;
+      vworldPoiMarkerRequestId += 1;
       vworldInfoMarker = null;
       vworldInfoRequestId += 1;
       vworldMeasureLayer = null;
@@ -3310,8 +3467,10 @@ function initPortalTabs() {
       vworldParcelLayer = null;
       vworldRadiusLayer = null;
       vworldCadastralLayer = null;
+      vworldPoiLayer = null;
       vworldLotNumberLayer = null;
       vworldLabelRequestId += 1;
+      vworldPoiMarkerRequestId += 1;
       vworldInfoMarker = null;
       vworldInfoRequestId += 1;
       vworldMeasureLayer = null;
