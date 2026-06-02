@@ -511,7 +511,7 @@ function initPortalTabs() {
 
     return `
       <div class="embedded-site__tools" aria-label="토지이음 도면 복구 도구">
-        <span>확인도면·범례가 깨지면 도면을 다시 요청하세요.</span>
+        <span>확인도면·범례는 토지이음 내부 이미지라 깨질 수 있습니다. 안정 도면 보기는 항공사진에서 확인하세요.</span>
         <button type="button" data-eum-action="reload">
           <i data-lucide="refresh-cw"></i>
           도면 다시 불러오기
@@ -520,9 +520,9 @@ function initPortalTabs() {
           <i data-lucide="rotate-ccw"></i>
           토지이음 초기화 후 다시 열기
         </button>
-        <button type="button" data-eum-action="map">
-          <i data-lucide="map-pinned"></i>
-          토지이음지도에서 확인
+        <button type="button" data-eum-action="stable-map">
+          <i data-lucide="satellite"></i>
+          안정 도면 보기
         </button>
       </div>
     `;
@@ -3676,6 +3676,9 @@ function initPortalTabs() {
         refreshEumIframe();
       } else if (action === "reset") {
         refreshEumIframe({ resetSession: true });
+      } else if (action === "stable-map") {
+        setActivePortal("aerial");
+        updateParcelStatus("항공사진에서 V-World 연속지적도와 지번 정보를 안정 도면으로 확인합니다.");
       } else if (action === "map") {
         setActivePortal("map");
         updateParcelStatus("토지이음지도에서 같은 필지를 확인합니다.");
