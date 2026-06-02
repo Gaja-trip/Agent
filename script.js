@@ -49,6 +49,11 @@ const jeonbukCityNames = [
   "고창군",
   "부안군",
 ];
+const duplicateParcelVillageCandidates = {
+  "부안군": {
+    "장신리": ["줄포면", "하서면"],
+  },
+};
 const vworldApiKey = "39B6F1DE-2D35-3582-9008-A537EF6A6BC4";
 const vworldParcelDataId = "LP_PA_CBND_BUBUN";
 const vworldParcelWfsDataIds = ["lp_pa_cbnd_bubun", "lt_c_landinfobasemap"];
@@ -259,6 +264,8 @@ function initPortalTabs() {
   const parcelProvince = document.querySelector("[data-parcel-province]");
   const parcelCity = document.querySelector("[data-parcel-city]");
   const parcelStatus = document.querySelector("[data-parcel-status]");
+  const parcelCandidateBox = document.createElement("div");
+  let parcelCandidateResults = [];
   let activePortalKey = "eum";
   const portalViews = new Map();
   const initialParams = new URLSearchParams(window.location.search);
@@ -267,6 +274,15 @@ function initPortalTabs() {
 
   if (!portalTabs.length || !portalPanel) {
     return;
+  }
+
+  parcelCandidateBox.className = "parcel-search__choices";
+  parcelCandidateBox.hidden = true;
+  parcelCandidateBox.setAttribute("data-parcel-candidates", "");
+  parcelCandidateBox.setAttribute("aria-live", "polite");
+
+  if (parcelForm) {
+    parcelForm.appendChild(parcelCandidateBox);
   }
 
   portalPanel.replaceChildren();
@@ -324,6 +340,45 @@ function initPortalTabs() {
     parts.push(address);
 
     return normalizeMountainLotAddress(parts.join(" "));
+  }
+
+  function hasTownToken(address) {
+    return /[가-힣]+(?:읍|면|동)\b/.test(String(address || ""));
+  }
+
+  function getDuplicateVillageSearches(address) {
+    const normalizedAddress = normalizeMountainLotAddress(address);
+    const city = getParcelCity() || Object.keys(duplicateParcelVillageCandidates).find((cityName) => normalizedAddress.includes(cityName));
+    const cityCandidates = duplicateParcelVillageCandidates[city];
+
+    if (!cityCandidates || !normalizedAddress || hasTownToken(normalizedAddress)) {
+      return [];
+    }
+
+    for (const [village, towns] of Object.entries(cityCandidates)) {
+      const villageIndex = normalizedAddress.indexOf(village);
+
+      if (villageIndex === -1) {
+        continue;
+      }
+
+      const suffix = normalizedAddress.slice(villageIndex + village.length).trim();
+
+      return towns.map((town) => ({
+        town,
+        village,
+        query: normalizeMountainLotAddress([getParcelProvince(), city, town, village, suffix].filter(Boolean).join(" ")),
+      }));
+    }
+
+    return [];
+  }
+
+  function resultContainsTownVillage(result, town, village) {
+    const text = [result?.title, result?.subtitle, result?.parcelAddress, result?.roadAddress, result?.rawTitle]
+      .filter(Boolean)
+      .join(" ");
+    return text.includes(town) && text.includes(village);
   }
 
   function saveParcelAddress(nextAddress = getParcelAddress()) {
@@ -1119,6 +1174,103 @@ function initPortalTabs() {
     }
 
     return getPreferredParcelAddress(result, fallbackQuery);
+  }
+
+  async function createParcelStateFromResult(result, address) {
+    const resolvedAddress = await ensureResultParcelAddress(result, address);
+
+    return {
+      query: resolvedAddress || address,
+      originalQuery: resolvedAddress && resolvedAddress !== address ? address : "",
+      ...result,
+      title: resolvedAddress || result.title,
+    };
+  }
+
+  function clearParcelCandidateChoices() {
+    parcelCandidateResults = [];
+    parcelCandidateBox.hidden = true;
+    parcelCandidateBox.innerHTML = "";
+  }
+
+  function renderParcelCandidateChoices(results, originalAddress) {
+    parcelCandidateResults = Array.isArray(results) ? results : [];
+
+    if (!parcelCandidateResults.length) {
+      clearParcelCandidateChoices();
+      return;
+    }
+
+    parcelCandidateBox.hidden = false;
+    parcelCandidateBox.innerHTML = `
+      <strong>${escapeHtml(originalAddress)} 검색 후보를 선택해 주세요.</strong>
+      <div class="parcel-search__choice-list">
+        ${parcelCandidateResults
+          .map((result, index) => {
+            const title = result.parcelAddress || result.title || result.searchQuery || originalAddress;
+            const meta = [result.disambiguationTown, result.roadAddress, result.pnu ? `PNU ${result.pnu}` : ""].filter(Boolean).join(" · ");
+
+            return `
+              <button type="button" data-parcel-candidate="${index}">
+                <span>${escapeHtml(title)}</span>
+                ${meta ? `<small>${escapeHtml(meta)}</small>` : ""}
+              </button>
+            `;
+          })
+          .join("")}
+      </div>
+    `;
+  }
+
+  async function searchDuplicateParcelCandidates(address) {
+    const searches = getDuplicateVillageSearches(address);
+
+    if (!searches.length) {
+      return [];
+    }
+
+    const results = [];
+    const seen = new Set();
+
+    for (const search of searches) {
+      const matches = await searchVworldIntegrated(search.query, "address");
+      const filteredMatches = matches.filter((result) => resultContainsTownVillage(result, search.town, search.village));
+      const townMatches = filteredMatches.slice(0, 3);
+
+      if (!townMatches.length) {
+        const fallbackKey = search.query;
+
+        if (!seen.has(fallbackKey)) {
+          seen.add(fallbackKey);
+          results.push({
+            title: search.query,
+            searchQuery: search.query,
+            disambiguationTown: search.town,
+            disambiguationVillage: search.village,
+          });
+        }
+
+        continue;
+      }
+
+      for (const result of townMatches) {
+        const key = result.pnu || `${result.title}:${result.latitude.toFixed(7)}:${result.longitude.toFixed(7)}`;
+
+        if (seen.has(key)) {
+          continue;
+        }
+
+        seen.add(key);
+        results.push({
+          ...result,
+          disambiguationTown: search.town,
+          disambiguationVillage: search.village,
+          searchQuery: search.query,
+        });
+      }
+    }
+
+    return results;
   }
 
   async function searchVworldIntegrated(query, searchMode) {
@@ -2085,6 +2237,24 @@ function initPortalTabs() {
       saveParcelAddress(address);
     }
 
+    const duplicateCandidates = await searchDuplicateParcelCandidates(address);
+
+    if (duplicateCandidates.length > 1) {
+      writeStoredJson(parcelStateStorageKey, { query: address, ambiguous: true });
+      return {
+        query: address,
+        ambiguous: true,
+        candidates: duplicateCandidates,
+      };
+    }
+
+    if (duplicateCandidates.length === 1) {
+      const nextState = await createParcelStateFromResult(duplicateCandidates[0], address);
+      writeStoredJson(parcelStateStorageKey, nextState);
+      setSharedParcelAddress(nextState.query);
+      return nextState;
+    }
+
     const state = getParcelState();
 
     if (state.query === address && Number.isFinite(state.latitude) && Number.isFinite(state.longitude)) {
@@ -2098,13 +2268,7 @@ function initPortalTabs() {
       return null;
     }
 
-    const resolvedAddress = await ensureResultParcelAddress(point, address);
-    const nextState = {
-      query: resolvedAddress || address,
-      originalQuery: resolvedAddress && resolvedAddress !== address ? address : "",
-      ...point,
-      title: resolvedAddress || point.title,
-    };
+    const nextState = await createParcelStateFromResult(point, address);
 
     writeStoredJson(parcelStateStorageKey, nextState);
     setSharedParcelAddress(nextState.query);
@@ -3581,6 +3745,7 @@ function initPortalTabs() {
     parcelInput.value = readStoredValue(parcelStorageKey);
     parcelInput.addEventListener("input", () => {
       saveParcelAddress();
+      clearParcelCandidateChoices();
     });
   }
 
@@ -3588,6 +3753,7 @@ function initPortalTabs() {
     parcelProvince.value = readStoredValue(parcelProvinceStorageKey) || "전북특별자치도";
     parcelProvince.addEventListener("change", () => {
       saveParcelRegion();
+      clearParcelCandidateChoices();
       updateParcelStatus("선택한 시도 기준으로 다음 주소 검색을 진행합니다.");
     });
   }
@@ -3596,11 +3762,55 @@ function initPortalTabs() {
     parcelCity.value = readStoredValue(parcelCityStorageKey);
     parcelCity.addEventListener("change", () => {
       saveParcelRegion();
+      clearParcelCandidateChoices();
       updateParcelStatus(parcelCity.value ? `${getParcelProvince()} ${parcelCity.value} 기준으로 다음 주소 검색을 진행합니다.` : "시군 기준을 해제했습니다.");
     });
   }
 
   if (parcelForm) {
+    parcelForm.addEventListener("click", async (event) => {
+      const candidateButton = event.target.closest("[data-parcel-candidate]");
+
+      if (!candidateButton) {
+        return;
+      }
+
+      const candidateIndex = Number(candidateButton.dataset.parcelCandidate);
+      const result = parcelCandidateResults[candidateIndex];
+
+      if (!result) {
+        return;
+      }
+
+      updateParcelStatus(`${result.title || result.searchQuery} 주소를 연결하는 중입니다.`);
+
+      try {
+        const selectedQuery = result.searchQuery || result.parcelAddress || result.title || getParcelAddress();
+        let nextState;
+
+        if (Number.isFinite(result.latitude) && Number.isFinite(result.longitude)) {
+          nextState = await createParcelStateFromResult(result, selectedQuery);
+        } else {
+          saveParcelAddress(selectedQuery);
+          nextState = await resolveParcelAddress();
+        }
+
+        if (!nextState || nextState.ambiguous) {
+          updateParcelStatus(`${selectedQuery} 검색 결과를 찾지 못했습니다. 지번을 더 정확히 입력해 주세요.`);
+          return;
+        }
+
+        writeStoredJson(parcelStateStorageKey, nextState);
+        setSharedParcelAddress(nextState.query);
+        saveParcelAddress(nextState.query);
+        clearParcelCandidateChoices();
+        updateParcelStatus(`${nextState.title || nextState.query} 기준으로 토지이음·토지이음지도·항공사진을 연결했습니다.`);
+        setActivePortal(activePortalKey);
+      } catch (error) {
+        updateParcelStatus("선택한 후보 주소를 연결하지 못했습니다. 다시 검색해 주세요.");
+      }
+    });
+
     parcelForm.addEventListener("submit", async (event) => {
       event.preventDefault();
       saveParcelRegion();
@@ -3619,6 +3829,14 @@ function initPortalTabs() {
 
       try {
         const state = await resolveParcelAddress();
+
+        if (state?.ambiguous && state.candidates?.length) {
+          renderParcelCandidateChoices(state.candidates, originalAddress || address);
+          updateParcelStatus(`${originalAddress || address} 후보가 여러 곳에 있습니다. 정확한 읍면을 선택해 주세요.`);
+          return;
+        }
+
+        clearParcelCandidateChoices();
 
         if (state?.pnu || (Number.isFinite(state?.latitude) && Number.isFinite(state?.longitude))) {
           updateParcelStatus(`${state.title || address} 기준으로 토지이음·토지이음지도·항공사진을 연결했습니다.`);

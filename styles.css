@@ -1541,6 +1541,58 @@ input {
   white-space: nowrap;
 }
 
+.parcel-search__choices {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  background: #f8fbf8;
+  border: 1px solid rgba(31, 107, 85, 0.2);
+  border-radius: 8px;
+}
+
+.parcel-search__choices[hidden] {
+  display: none;
+}
+
+.parcel-search__choices strong {
+  color: #18352d;
+  font-size: 0.92rem;
+}
+
+.parcel-search__choice-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 8px;
+}
+
+.parcel-search__choice-list button {
+  display: grid;
+  gap: 3px;
+  min-height: 48px;
+  padding: 9px 11px;
+  color: #17342d;
+  text-align: left;
+  background: #fff;
+  border: 1px solid rgba(31, 107, 85, 0.22);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.parcel-search__choice-list button:hover {
+  border-color: rgba(31, 107, 85, 0.54);
+  box-shadow: 0 8px 20px rgba(18, 42, 35, 0.12);
+}
+
+.parcel-search__choice-list span {
+  font-weight: 900;
+}
+
+.parcel-search__choice-list small {
+  color: #66756f;
+  font-size: 0.78rem;
+}
+
 .portal-tabs {
   position: relative;
   z-index: 8;
