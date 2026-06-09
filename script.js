@@ -1524,7 +1524,7 @@ function initPortalTabs() {
       return Boolean(featurePoint && isPointInParcelFeature(featurePoint, parcelFeature));
     });
 
-    return sortFeaturesByClickPoint(filteredFeatures.length ? filteredFeatures : features, parcelContext.clickPoint || queryPoint).slice(0, 3);
+    return sortFeaturesByClickPoint(filteredFeatures, parcelContext.clickPoint || queryPoint).slice(0, 3);
   }
 
   function getPoiSearchQueries(pointAddress = "") {
