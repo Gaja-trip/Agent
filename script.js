@@ -271,6 +271,8 @@ function initPortalTabs() {
   const initialParams = new URLSearchParams(window.location.search);
   let selectedLaw = readSelectedLaw(initialParams);
   let eumWarmupTimer = 0;
+  const vworldParseResponseQueue = [];
+  let vworldOriginalParseResponse = null;
 
   if (!portalTabs.length || !portalPanel) {
     return;
@@ -985,18 +987,72 @@ function initPortalTabs() {
       const callbackName = `vworldCallback_${Date.now()}_${Math.random().toString(36).slice(2)}`;
       const script = document.createElement("script");
       const jsonpUrl = new URL(url.toString());
+      const expectsParseResponse =
+        jsonpUrl.searchParams.get("output") === "text/javascript" || /\/req\/wfs/i.test(jsonpUrl.pathname);
+      let finished = false;
 
       jsonpUrl.searchParams.set("callback", callbackName);
 
-      window[callbackName] = (data) => {
-        script.remove();
-        delete window[callbackName];
-        resolve(data);
+      const ensureParseResponseHandler = () => {
+        if (window.__landInfoVworldParseResponseHandler) {
+          return;
+        }
+
+        vworldOriginalParseResponse = window.parseResponse;
+        window.__landInfoVworldParseResponseHandler = true;
+        window.parseResponse = (data) => {
+          const handler = vworldParseResponseQueue.shift();
+
+          if (handler) {
+            handler(data);
+            return;
+          }
+
+          if (typeof vworldOriginalParseResponse === "function") {
+            vworldOriginalParseResponse(data);
+          }
+        };
       };
 
-      script.onerror = () => {
+      const removeParseResponseHandler = (handler) => {
+        const handlerIndex = vworldParseResponseQueue.indexOf(handler);
+
+        if (handlerIndex >= 0) {
+          vworldParseResponseQueue.splice(handlerIndex, 1);
+        }
+      };
+
+      const cleanup = () => {
         script.remove();
         delete window[callbackName];
+      };
+
+      const complete = (data) => {
+        if (finished) {
+          return;
+        }
+
+        finished = true;
+        removeParseResponseHandler(complete);
+        resolve(data);
+        window.setTimeout(cleanup, 0);
+      };
+
+      window[callbackName] = complete;
+
+      if (expectsParseResponse) {
+        ensureParseResponseHandler();
+        vworldParseResponseQueue.push(complete);
+      }
+
+      script.onerror = () => {
+        if (finished) {
+          return;
+        }
+
+        finished = true;
+        removeParseResponseHandler(complete);
+        cleanup();
         reject(new Error("V-World address search failed"));
       };
 
@@ -1237,22 +1293,6 @@ function initPortalTabs() {
       const filteredMatches = matches.filter((result) => resultContainsTownVillage(result, search.town, search.village));
       const townMatches = filteredMatches.slice(0, 3);
 
-      if (!townMatches.length) {
-        const fallbackKey = search.query;
-
-        if (!seen.has(fallbackKey)) {
-          seen.add(fallbackKey);
-          results.push({
-            title: search.query,
-            searchQuery: search.query,
-            disambiguationTown: search.town,
-            disambiguationVillage: search.village,
-          });
-        }
-
-        continue;
-      }
-
       for (const result of townMatches) {
         const key = result.pnu || `${result.title}:${result.latitude.toFixed(7)}:${result.longitude.toFixed(7)}`;
 
@@ -1433,16 +1473,58 @@ function initPortalTabs() {
 
   async function searchVworldBuildingInfo(latitude, longitude) {
     const point = { latitude, longitude };
-    const features = await searchVworldFeaturesByLayers(
-      vworldBuildingDataIds,
-      vworldBuildingWfsDataIds,
-      latitude,
-      longitude,
-      vworldBuildingQueryRadiusMeters,
-      12
-    );
+    let features = [];
+
+    try {
+      features = await searchVworldFeaturesByLayers(
+        vworldBuildingDataIds,
+        vworldBuildingWfsDataIds,
+        latitude,
+        longitude,
+        vworldBuildingQueryRadiusMeters,
+        12
+      );
+    } catch (error) {
+      return [];
+    }
 
     return sortFeaturesByClickPoint(features, point).slice(0, 3);
+  }
+
+  async function searchVworldBuildingInfoForParcel(parcelContext, latitude, longitude) {
+    if (!parcelContext?.feature) {
+      return searchVworldBuildingInfo(latitude, longitude);
+    }
+
+    const queryPoint = parcelContext.queryPoint || parcelContext.clickPoint || { latitude, longitude };
+    let features = [];
+
+    try {
+      features = await searchVworldFeaturesByLayers(
+        vworldBuildingDataIds,
+        vworldBuildingWfsDataIds,
+        queryPoint.latitude,
+        queryPoint.longitude,
+        Math.max(vworldBuildingQueryRadiusMeters, 80),
+        24
+      );
+    } catch (error) {
+      return [];
+    }
+    const parcelPnu = normalizePnu(parcelContext.pnu);
+    const parcelFeature = parcelContext.feature;
+    const filteredFeatures = features.filter((feature) => {
+      const featurePnu = getFeaturePnu(feature);
+      const featurePoint = getFeatureLabelPoint(feature);
+
+      if (parcelPnu && featurePnu && featurePnu === parcelPnu) {
+        return true;
+      }
+
+      return Boolean(featurePoint && isPointInParcelFeature(featurePoint, parcelFeature));
+    });
+
+    return sortFeaturesByClickPoint(filteredFeatures.length ? filteredFeatures : features, parcelContext.clickPoint || queryPoint).slice(0, 3);
   }
 
   function getPoiSearchQueries(pointAddress = "") {
@@ -1626,14 +1708,23 @@ function initPortalTabs() {
   }
 
   function renderBuildingInfo(features = [], pointAddress = "", latitude, longitude) {
+    const addressSummary = pointAddress
+      ? `
+        <div class="vworld-info-summary">
+          <span>지번</span>
+          <strong>${escapeHtml(pointAddress)}</strong>
+        </div>
+      `
+      : "";
     if (!features.length) {
       return `
+        ${addressSummary}
         <p class="vworld-info-empty">클릭한 지점 주변에서 건축물정보를 찾지 못했습니다.</p>
         <small class="vworld-info-note">좌표: ${escapeHtml(formatVworldCoordinate(latitude, longitude))}</small>
       `;
     }
 
-    return features
+    return `${addressSummary}${features
       .map((feature, index) => {
         const rows = getBuildingInfoRows(feature, pointAddress);
 
@@ -1644,7 +1735,7 @@ function initPortalTabs() {
           </article>
         `;
       })
-      .join("");
+      .join("")}`;
   }
 
   function renderPoiInfo(pois = [], latitude, longitude) {
@@ -2809,6 +2900,21 @@ function initPortalTabs() {
     return getCleanLotNumber(getFeatureProperty(feature?.properties, ["jibun", "JIBUN", "lotNo", "LOT_NO", "lotno", "addr", "ADDR"]));
   }
 
+  function getParcelFeatureAddress(feature, fallbackAddress = "") {
+    const properties = feature?.properties || {};
+    const location = [
+      getFeatureProperty(properties, ["sido_nm", "SIDO_NM", "sido", "SIDO"]),
+      getFeatureProperty(properties, ["sgg_nm", "SGG_NM", "sigungu", "SIGUNGU", "sgg"]),
+      getFeatureProperty(properties, ["emd_nm", "EMD_NM", "eup_myeon_dong", "EMD", "emd"]),
+      getFeatureProperty(properties, ["ri_nm", "RI_NM", "ri", "RI"]),
+    ]
+      .filter(Boolean)
+      .join(" ");
+    const lotNumber = getFeatureLotNumber(feature);
+
+    return [location, lotNumber].filter(Boolean).join(" ").trim() || fallbackAddress;
+  }
+
   function collectGeometryCoordinates(coordinates, points = []) {
     if (!Array.isArray(coordinates)) {
       return points;
@@ -3071,6 +3177,51 @@ function initPortalTabs() {
     }
 
     return features.filter((feature) => isPointInParcelFeature(point, feature));
+  }
+
+  async function getClickedParcelContext(latitude, longitude) {
+    const clickPoint = { latitude, longitude };
+
+    try {
+      const features = await searchVworldParcels(latitude, longitude, 24);
+      const sortedFeatures = sortFeaturesByClickPoint(features, clickPoint);
+      const feature = sortedFeatures.find((item) => isPointInParcelFeature(clickPoint, item)) || sortedFeatures[0];
+
+      if (!feature) {
+        return {
+          clickPoint,
+          queryPoint: clickPoint,
+          address: "",
+          pnu: "",
+          feature: null,
+        };
+      }
+
+      const queryPoint = getFeatureLabelPoint(feature) || clickPoint;
+      const pnu = getFeaturePnu(feature);
+      const featureAddress = getParcelFeatureAddress(feature);
+      let address = featureAddress;
+
+      if (!address) {
+        address = await reverseGeocodeParcelAddress(clickPoint.latitude, clickPoint.longitude);
+      }
+
+      return {
+        clickPoint,
+        queryPoint,
+        address,
+        pnu,
+        feature,
+      };
+    } catch (error) {
+      return {
+        clickPoint,
+        queryPoint: clickPoint,
+        address: "",
+        pnu: "",
+        feature: null,
+      };
+    }
   }
 
   function renderVworldParcelLayer(features, point, options = {}) {
@@ -3414,17 +3565,25 @@ function initPortalTabs() {
     syncVworldInfoMarker(latlng);
     updateAerialStatus("클릭한 지점의 건축물정보와 POI 정보를 조회하는 중입니다.");
 
-    let pointAddress = "";
+    const parcelContext = await getClickedParcelContext(latitude, longitude);
+    const queryPoint = parcelContext.queryPoint || { latitude, longitude };
+    let pointAddress = parcelContext.address || "";
 
-    try {
-      pointAddress = await reverseGeocodeParcelAddress(latitude, longitude);
-    } catch (error) {
-      pointAddress = "";
+    if (!pointAddress) {
+      try {
+        pointAddress = await reverseGeocodeParcelAddress(latitude, longitude);
+      } catch (error) {
+        pointAddress = "";
+      }
+    }
+
+    if (!pointAddress) {
+      pointAddress = getParcelAddress() || getParcelState().title || "";
     }
 
     const [buildingResult, poiResult] = await Promise.allSettled([
-      searchVworldBuildingInfo(latitude, longitude),
-      searchVworldNearbyPois(latitude, longitude, pointAddress),
+      searchVworldBuildingInfoForParcel(parcelContext, queryPoint.latitude, queryPoint.longitude),
+      searchVworldNearbyPois(queryPoint.latitude, queryPoint.longitude, pointAddress),
     ]);
 
     if (requestId !== vworldInfoRequestId) {
@@ -3437,12 +3596,12 @@ function initPortalTabs() {
     setVworldInfoContent(
       "building",
       buildingResult.status === "fulfilled"
-        ? renderBuildingInfo(buildingFeatures, pointAddress, latitude, longitude)
-        : renderVworldInfoError("건축물정보", latitude, longitude)
+        ? renderBuildingInfo(buildingFeatures, pointAddress, queryPoint.latitude, queryPoint.longitude)
+        : renderBuildingInfo([], pointAddress, queryPoint.latitude, queryPoint.longitude)
     );
     setVworldInfoContent(
       "poi",
-      poiResult.status === "fulfilled" ? renderPoiInfo(pois, latitude, longitude) : renderVworldInfoError("POI정보", latitude, longitude)
+      poiResult.status === "fulfilled" ? renderPoiInfo(pois, queryPoint.latitude, queryPoint.longitude) : renderVworldInfoError("POI정보", latitude, longitude)
     );
 
     if (!buildingFeatures.length && !pois.length) {
