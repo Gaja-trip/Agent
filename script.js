@@ -1838,6 +1838,59 @@ function initPortalTabs() {
     vworldPoiLayer = null;
   }
 
+  async function loadVworldPoiMarkerInfo(poi) {
+    const latitude = Number(poi?.latitude);
+    const longitude = Number(poi?.longitude);
+
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+      return;
+    }
+
+    const requestId = ++vworldInfoRequestId;
+    const loadingHtml = `
+      <p class="vworld-info-empty">마커 위치의 POI정보와 건축물정보를 조회하는 중입니다.</p>
+      <small class="vworld-info-note">좌표: ${escapeHtml(formatVworldCoordinate(latitude, longitude))}</small>
+    `;
+
+    showVworldInfoPanel();
+    setVworldInfoTab("poi");
+    setVworldInfoContent("poi", renderPoiInfo([poi], latitude, longitude));
+    setVworldInfoContent("building", loadingHtml);
+    syncVworldInfoMarker({ lat: latitude, lng: longitude });
+    updateAerialStatus(`${poi.title || "선택한 마커"} 기준으로 POI정보와 건축물정보를 조회하는 중입니다.`);
+
+    const parcelContext = await getClickedParcelContext(latitude, longitude);
+    const queryPoint = parcelContext.queryPoint || { latitude, longitude };
+    let pointAddress = parcelContext.address || poi.parcelAddress || poi.subtitle || "";
+
+    if (!pointAddress) {
+      try {
+        pointAddress = await reverseGeocodeParcelAddress(latitude, longitude);
+      } catch (error) {
+        pointAddress = "";
+      }
+    }
+
+    if (requestId !== vworldInfoRequestId) {
+      return;
+    }
+
+    const buildingFeatures = await searchVworldBuildingInfoForParcel(parcelContext, queryPoint.latitude, queryPoint.longitude);
+
+    if (requestId !== vworldInfoRequestId) {
+      return;
+    }
+
+    setVworldInfoContent("poi", renderPoiInfo([poi], latitude, longitude));
+    setVworldInfoContent("building", renderBuildingInfo(buildingFeatures, pointAddress, queryPoint.latitude, queryPoint.longitude));
+    updateAerialStatus(
+      buildingFeatures.length
+        ? `${poi.title || "선택한 마커"} POI정보와 해당 필지 건축물정보 ${buildingFeatures.length}건을 표시했습니다.`
+        : `${poi.title || "선택한 마커"} POI정보를 표시했습니다. 해당 필지의 건축물정보는 찾지 못했습니다.`
+    );
+    refreshIcons();
+  }
+
   function renderVworldPoiMarkers(pois = []) {
     if (!vworldMap || !window.L) {
       return 0;
@@ -1863,11 +1916,12 @@ function initPortalTabs() {
           }),
         });
 
-        marker.on("click", () => {
-          showVworldInfoPanel();
-          setVworldInfoTab("poi");
-          setVworldInfoContent("poi", renderPoiInfo([poi], poi.latitude, poi.longitude));
-          refreshIcons();
+        marker.on("click", (event) => {
+          if (event?.originalEvent && window.L?.DomEvent) {
+            window.L.DomEvent.stopPropagation(event.originalEvent);
+          }
+
+          loadVworldPoiMarkerInfo(poi);
         });
 
         return marker;
@@ -3619,7 +3673,7 @@ function initPortalTabs() {
       return;
     }
 
-    loadVworldClickInfo(event.latlng);
+    updateAerialStatus("POI 마커를 클릭하면 POI정보와 해당 필지의 건축물정보를 확인할 수 있습니다.");
   }
 
   function setVworldMeasureMode(mode) {
