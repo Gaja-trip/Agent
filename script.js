@@ -1609,7 +1609,7 @@ function initPortalTabs() {
   function formatVworldInfoValue(label, value) {
     const text = String(value ?? "").trim();
 
-    if (!text || text === "0" || text === "-") {
+    if (!text || text === "-") {
       return text || "-";
     }
 
@@ -1636,52 +1636,67 @@ function initPortalTabs() {
     return text;
   }
 
-  function getBuildingInfoRows(feature, pointAddress = "") {
+  function getBuildingDisplayValue(properties = {}, keys = [], label = "") {
+    const foundKey = keys.find((key) => properties[key] !== undefined && properties[key] !== null && properties[key] !== "");
+    const value = foundKey ? properties[foundKey] : "";
+
+    if (value === undefined || value === null || String(value).trim() === "") {
+      return "-";
+    }
+
+    return formatVworldInfoValue(label, value);
+  }
+
+  function getBuildingAddressItems(feature, pointAddress = "") {
     const properties = feature?.properties || {};
-    const fieldGroups = [
-      ["도로명", ["road_addr", "rn_addr", "rds_man_no", "rn", "road_nm", "rd_nm"]],
-      ["지번", ["jibun_addr", "jibun", "lot_no", "addr", "pnu"]],
-      ["건물명칭", ["buld_nm", "bld_nm", "bd_nm", "pos_bul_nm", "building_nm", "name"]],
-      ["건물동명칭", ["buld_nm_dc", "dong_nm", "bld_dong_nm", "동명칭"]],
-      ["건물용도", ["main_purps_cd_nm", "use_nm", "bdtyp_cd_nm", "buld_use", "용도"]],
-      ["구조", ["strct_cd_nm", "strct_nm", "structure", "구조"]],
-      ["지상층수", ["gro_flo_co", "grnd_flr_cnt", "ground_flr", "지상층수"]],
-      ["지하층수", ["und_flo_co", "ugrnd_flr_cnt", "underground_flr", "지하층수"]],
-      ["건물면적", ["archarea", "arch_area", "bd_ar", "building_area", "건물면적"]],
-      ["건물높이", ["heit", "hgt", "height", "건물높이"]],
-      ["용적률", ["vl_rat", "vlrat", "far", "용적률"]],
-      ["건폐율", ["bc_rat", "bcrat", "bld_coverage", "건폐율"]],
-      ["연면적", ["totarea", "tot_ar", "gfa", "연면적"]],
-      ["대지면적", ["plot_ar", "plat_area", "platarea", "대지면적"]],
-      ["사용승인일자", ["use_apr_day", "use_confm_de", "apprv_de", "사용승인일자"]],
+    const roadAddress = getBuildingDisplayValue(properties, [
+      "road_addr",
+      "rn_addr",
+      "roadAddr",
+      "road_address",
+      "rds_man_no",
+      "rn",
+      "road_nm",
+      "rd_nm",
+      "newPlatPlc",
+      "NEW_PLAT_PLC",
+    ]);
+    const parcelAddress =
+      pointAddress ||
+      getBuildingDisplayValue(properties, [
+        "jibun_addr",
+        "jibun",
+        "lot_no",
+        "addr",
+        "platPlc",
+        "PLAT_PLC",
+        "pnu",
+      ]);
+
+    return [
+      roadAddress && roadAddress !== "-" ? ["도로명", roadAddress] : null,
+      parcelAddress && parcelAddress !== "-" ? ["지번", parcelAddress] : null,
+    ].filter(Boolean);
+  }
+
+  function getBuildingInfoRows(feature) {
+    const properties = feature?.properties || {};
+
+    return [
+      ["건물명칭", getBuildingDisplayValue(properties, ["buld_nm", "bld_nm", "bd_nm", "pos_bul_nm", "building_nm", "name", "bldNm", "BLD_NM"], "건물명칭")],
+      ["건물용도", getBuildingDisplayValue(properties, ["main_purps_cd_nm", "mainPurpsCdNm", "use_nm", "bdtyp_cd_nm", "buld_use", "용도"], "건물용도")],
+      ["건물동명칭", getBuildingDisplayValue(properties, ["buld_nm_dc", "dong_nm", "bld_dong_nm", "dongNm", "동명칭"], "건물동명칭")],
+      ["구조", getBuildingDisplayValue(properties, ["strct_cd_nm", "strctCdNm", "strct_nm", "structure", "구조"], "구조")],
+      ["지상층수", getBuildingDisplayValue(properties, ["gro_flo_co", "grnd_flr_cnt", "grndFlrCnt", "ground_flr", "지상층수"], "지상층수")],
+      ["지하층수", getBuildingDisplayValue(properties, ["und_flo_co", "ugrnd_flr_cnt", "ugrndFlrCnt", "underground_flr", "지하층수"], "지하층수")],
+      ["건물면적", getBuildingDisplayValue(properties, ["archarea", "arch_area", "archArea", "bd_ar", "building_area", "건물면적"], "건물면적")],
+      ["건물높이", getBuildingDisplayValue(properties, ["heit", "hgt", "height", "건물높이"], "건물높이")],
+      ["용적률", getBuildingDisplayValue(properties, ["vl_rat", "vlRat", "vlrat", "far", "용적률"], "용적률")],
+      ["건폐율", getBuildingDisplayValue(properties, ["bc_rat", "bcRat", "bcrat", "bld_coverage", "건폐율"], "건폐율")],
+      ["연면적", getBuildingDisplayValue(properties, ["totarea", "tot_ar", "totArea", "gfa", "연면적"], "연면적")],
+      ["대지면적", getBuildingDisplayValue(properties, ["plot_ar", "plat_area", "platArea", "platarea", "site_area", "대지면적"], "대지면적")],
+      ["사용승인일자", getBuildingDisplayValue(properties, ["use_apr_day", "useAprDay", "use_confm_de", "apprv_de", "사용승인일자"], "사용승인일자")],
     ];
-    const usedKeys = new Set();
-    const rows = [];
-
-    if (pointAddress) {
-      rows.push(["지번", pointAddress]);
-    }
-
-    fieldGroups.forEach(([label, keys]) => {
-      const foundKey = keys.find((key) => properties[key] !== undefined && properties[key] !== null && properties[key] !== "");
-      const value = foundKey ? properties[foundKey] : "";
-
-      if (!value || (label === "지번" && pointAddress)) {
-        return;
-      }
-
-      usedKeys.add(foundKey);
-      rows.push([label, formatVworldInfoValue(label, value)]);
-    });
-
-    if (rows.length < 5) {
-      Object.entries(properties)
-        .filter(([key, value]) => !usedKeys.has(key) && value !== undefined && value !== null && String(value).trim() !== "")
-        .slice(0, 8)
-        .forEach(([key, value]) => rows.push([key, formatVworldInfoValue(key, value)]));
-    }
-
-    return rows;
   }
 
   function renderVworldInfoTable(rows = []) {
@@ -1689,15 +1704,34 @@ function initPortalTabs() {
       return `<p class="vworld-info-empty">표시할 속성 정보가 없습니다.</p>`;
     }
 
+    const rowPairs = [
+      [rows[0], rows[1]],
+      [rows[2], rows[3]],
+      [rows[4], rows[5]],
+      [rows[6], rows[7]],
+      [rows[8], rows[9]],
+      [rows[10], null],
+      [rows[11], null],
+      [rows[12], null],
+    ];
+
     return `
-      <table class="vworld-info-table">
+      <table class="vworld-info-table vworld-info-table--building">
         <tbody>
-          ${rows
+          ${rowPairs
             .map(
-              ([label, value]) => `
+              ([first, second]) => `
                 <tr>
-                  <th>${escapeHtml(label)}</th>
-                  <td>${escapeHtml(value)}</td>
+                  <th>${escapeHtml(first?.[0] || "")}</th>
+                  <td${second ? "" : ' colspan="3"'}>${escapeHtml(first?.[1] || "-")}</td>
+                  ${
+                    second
+                      ? `
+                        <th>${escapeHtml(second[0])}</th>
+                        <td>${escapeHtml(second[1] || "-")}</td>
+                      `
+                      : ""
+                  }
                 </tr>
               `
             )
@@ -1707,35 +1741,55 @@ function initPortalTabs() {
     `;
   }
 
+  function renderBuildingAddressList(items = []) {
+    if (!items.length) {
+      return "";
+    }
+
+    return `
+      <div class="vworld-building-addresses">
+        ${items
+          .map(
+            ([label, value]) => `
+              <div class="vworld-building-address">
+                <span>${escapeHtml(label)}</span>
+                <strong>${escapeHtml(value)}</strong>
+              </div>
+            `
+          )
+          .join("")}
+      </div>
+    `;
+  }
+
   function renderBuildingInfo(features = [], pointAddress = "", latitude, longitude) {
-    const addressSummary = pointAddress
-      ? `
-        <div class="vworld-info-summary">
-          <span>지번</span>
-          <strong>${escapeHtml(pointAddress)}</strong>
-        </div>
-      `
-      : "";
     if (!features.length) {
+      const fallbackAddresses = pointAddress ? [["지번", pointAddress]] : [];
+
       return `
-        ${addressSummary}
-        <p class="vworld-info-empty">클릭한 지점 주변에서 건축물정보를 찾지 못했습니다.</p>
+        ${renderBuildingAddressList(fallbackAddresses)}
+        <p class="vworld-info-empty">해당 필지에서 등재된 건축물정보를 찾지 못했습니다.</p>
         <small class="vworld-info-note">좌표: ${escapeHtml(formatVworldCoordinate(latitude, longitude))}</small>
       `;
     }
 
-    return `${addressSummary}${features
+    return features
       .map((feature, index) => {
-        const rows = getBuildingInfoRows(feature, pointAddress);
+        const addressItems = getBuildingAddressItems(feature, pointAddress);
+        const rows = getBuildingInfoRows(feature);
 
         return `
           <article class="vworld-info-card">
-            <h4>${index === 0 ? "선택 지점 건축물" : `주변 건축물 ${index + 1}`}</h4>
+            <h4>${index === 0 ? "건축물정보" : `건축물정보 ${index + 1}`}</h4>
+            ${renderBuildingAddressList(addressItems)}
             ${renderVworldInfoTable(rows)}
+            <p class="vworld-info-note vworld-info-note--building">
+              건축물 대장 조회 시 일부 건축물은 여러건이 조회될 수 있습니다. 일부 건축물 대장 조회가 안될 경우, 건축물 상담(속성) 공지사항을 확인하시기 바랍니다.
+            </p>
           </article>
         `;
       })
-      .join("")}`;
+      .join("");
   }
 
   function renderPoiInfo(pois = [], latitude, longitude) {
