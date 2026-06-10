@@ -2137,12 +2137,6 @@ input {
   display: none;
 }
 
-.vworld-tile-layer--satellite .leaflet-tile,
-.leaflet-tile.vworld-tile-layer--satellite {
-  image-rendering: auto;
-  filter: saturate(1.04) contrast(1.035);
-}
-
 .vworld-map__empty {
   position: absolute;
   inset: 0;
@@ -2550,6 +2544,19 @@ input {
   color: #fff;
 }
 
+.page-title.page-title--process {
+  padding-top: clamp(28px, 4vw, 44px);
+  padding-bottom: clamp(20px, 3vw, 30px);
+}
+
+.page-title.page-title--process h1 {
+  font-size: clamp(1.9rem, 3.4vw, 3.2rem);
+}
+
+.page-title.page-title--process p:not(.eyebrow) {
+  margin-top: 10px;
+}
+
 .page-title--compact {
   display: flex;
   align-items: center;
@@ -2670,6 +2677,51 @@ input {
 
 .content-tabs--manual {
   grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.knowledge-subnav-layout {
+  display: grid;
+  grid-template-columns: minmax(150px, 190px) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.knowledge-subnav {
+  position: sticky;
+  top: 92px;
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  background: #edf4ef;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.knowledge-subnav button {
+  min-height: 44px;
+  padding: 10px 12px;
+  color: #31463f;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 950;
+  text-align: left;
+}
+
+.knowledge-subnav button:hover,
+.knowledge-subnav button.is-active {
+  color: #fff;
+  background: var(--green);
+  border-color: var(--green);
+}
+
+.knowledge-subpanels {
+  min-width: 0;
+}
+
+.knowledge-subpanel[hidden] {
+  display: none;
 }
 
 .result-example-workspace {
@@ -3346,6 +3398,7 @@ input {
   .survey-fee-flow,
   .survey-fee-layout,
   .survey-fee-screen-guide,
+  .knowledge-subnav-layout,
   .map-panel,
   .process-layout,
   .checklist-layout,
@@ -3386,6 +3439,15 @@ input {
 
   .manual-procedure li {
     grid-template-columns: 1fr;
+  }
+
+  .knowledge-subnav {
+    position: static;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .knowledge-subnav button {
+    text-align: center;
   }
 }
 
@@ -3433,6 +3495,7 @@ input {
   .detail-grid,
   .guide-page-tabs,
   .fee-form-grid,
+  .knowledge-subnav,
   .portal-tabs {
     grid-template-columns: 1fr;
   }

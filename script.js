@@ -66,8 +66,8 @@ const eumDefaultScale = "1200";
 const vworldLotNumberMinZoom = 18;
 const vworldLotNumberMinScale = 0.68;
 const vworldLotNumberMaxScale = 1.18;
-const vworldMapMaxZoom = 22;
-const vworldTileNativeMaxZoom = 20;
+const vworldMapMaxZoom = 21;
+const vworldTileNativeMaxZoom = 19;
 const vworldParcelDetailZoom = 20;
 const landCategoryCodeLabels = {
   "01": "전",
@@ -2644,11 +2644,6 @@ function initPortalTabs() {
       {
         maxZoom: vworldMapMaxZoom,
         maxNativeZoom: vworldTileNativeMaxZoom,
-        detectRetina: true,
-        keepBuffer: 4,
-        updateWhenZooming: false,
-        updateWhenIdle: false,
-        className: layerName === "Satellite" ? "vworld-tile-layer vworld-tile-layer--satellite" : "vworld-tile-layer",
         attribution: "V-World",
       }
     );
@@ -4674,6 +4669,64 @@ function initContentTabs() {
   });
 }
 
+function setKnowledgeSubtab(container, tabKey) {
+  const buttons = [...container.querySelectorAll("[data-knowledge-subtab]")];
+  const panels = [...container.querySelectorAll("[data-knowledge-subpanel]")];
+
+  if (!buttons.length || !panels.length) {
+    return;
+  }
+
+  const nextKey = tabKey || buttons[0].dataset.knowledgeSubtab;
+  container.dataset.activeKnowledgeSubtab = nextKey;
+
+  buttons.forEach((button) => {
+    const isActive = button.dataset.knowledgeSubtab === nextKey;
+    button.classList.toggle("is-active", isActive);
+    button.setAttribute("aria-selected", String(isActive));
+  });
+
+  panels.forEach((panel) => {
+    const isActive = panel.dataset.knowledgeSubpanel === nextKey;
+    panel.classList.toggle("is-active", isActive);
+    panel.hidden = !isActive;
+  });
+}
+
+function initKnowledgeSubtabs() {
+  document.querySelectorAll("[data-knowledge-subtabs]").forEach((container) => {
+    const buttons = [...container.querySelectorAll("[data-knowledge-subtab]")];
+
+    if (!buttons.length) {
+      return;
+    }
+
+    buttons.forEach((button) => {
+      button.addEventListener("click", () => {
+        const scope = button.closest("[data-content-scope]");
+        const searchInput = scope?.querySelector("[data-page-search-input]");
+        const searchStatus = scope?.querySelector("[data-page-search-status]");
+
+        if (searchInput) {
+          searchInput.value = "";
+        }
+
+        if (searchStatus) {
+          searchStatus.textContent = "검색어를 입력하면 문구를 바로 찾습니다.";
+        }
+
+        container.querySelectorAll("[data-search-item]").forEach((item) => {
+          item.hidden = false;
+        });
+        setKnowledgeSubtab(container, button.dataset.knowledgeSubtab);
+      });
+    });
+
+    const initialKey = buttons.find((button) => button.classList.contains("is-active"))?.dataset.knowledgeSubtab || buttons[0].dataset.knowledgeSubtab;
+    setKnowledgeSubtab(container, initialKey);
+  });
+}
+
 function initManualDocumentTabs() {
   document.querySelectorAll("[data-manual-document-tabs]").forEach((tablist) => {
     const container = tablist.closest(".manual-step-card") || document;
@@ -5003,6 +5056,7 @@ function initPageSearch() {
     const scope = form.closest("[data-content-scope]") || document;
     const items = [...scope.querySelectorAll("[data-search-item]")];
     const panels = [...scope.querySelectorAll("[data-content-panel]")];
+    const subtabGroups = [...scope.querySelectorAll("[data-knowledge-subtabs]")];
 
     if (!input || !items.length) {
       return;
@@ -5031,6 +5085,18 @@ function initPageSearch() {
             panel.hidden = !hasMatch;
             panel.classList.toggle("is-active", hasMatch);
           });
+          subtabGroups.forEach((group) => {
+            group.querySelectorAll("[data-knowledge-subpanel]").forEach((panel) => {
+              const hasMatch = [...panel.querySelectorAll("[data-search-item]")].some((item) => !item.hidden);
+
+              panel.hidden = !hasMatch;
+              panel.classList.toggle("is-active", hasMatch);
+            });
+            group.querySelectorAll("[data-knowledge-subtab]").forEach((button) => {
+              button.classList.remove("is-active");
+              button.setAttribute("aria-selected", "false");
+            });
+          });
           scope.querySelectorAll("[data-content-tab]").forEach((button) => {
             button.classList.remove("is-active");
             button.setAttribute("aria-selected", "false");
@@ -5040,6 +5106,9 @@ function initPageSearch() {
             item.hidden = false;
           });
           setScopedContentTab(scope, scope.dataset.activeContentTab);
+          subtabGroups.forEach((group) => {
+            setKnowledgeSubtab(group, group.dataset.activeKnowledgeSubtab);
+          });
         }
       }
 
@@ -5063,6 +5132,7 @@ initReadinessChecklist();
 initGuidePages();
 initGuidePrintButtons();
 initContentTabs();
+initKnowledgeSubtabs();
 initManualDocumentTabs();
 initEraConverters();
 initJeongdanCalculator();

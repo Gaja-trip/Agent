@@ -56,54 +56,137 @@
 
         <div class="content-panels">
           <section class="content-panel is-active" data-content-panel="survey-general">
-            <div class="knowledge-grid">
-              <article class="knowledge-item" data-search-item>
-                <i data-lucide="land-plot"></i>
-                <h2>공부와 현황은 따로 확인</h2>
-                <p>지목, 면적, 경계는 공부 기준으로 확인하고 실제 이용 상태는 지도와 항공사진으로 별도 대조합니다.</p>
-              </article>
-              <article class="knowledge-item" data-search-item>
-                <i data-lucide="ruler"></i>
-                <h2>측량 목적 먼저 정리</h2>
-                <p>경계복원, 분할, 현황, 등록전환 등 목적에 따라 필요한 서류와 현장 확인 범위가 달라집니다.</p>
-              </article>
-              <article class="knowledge-item knowledge-item--wide" data-search-item>
-                <i data-lucide="split"></i>
-                <h2>분할측량 시 알아두어야 할 사항</h2>
-                <p>
-                  분할측량은 하나의 필지를 둘 이상으로 나누기 위한 지적측량입니다. 측량만으로 공부가 바로 정리되는 것이 아니므로,
-                  분할 목적, 허가 필요 여부, 현장 경계, 성과검사, 토지이동신청까지 순서대로 안내해야 합니다.
-                </p>
-                <div class="knowledge-law-grid">
-                  <section class="knowledge-law-block">
-                    <h3>접수 전 확인</h3>
-                    <ul>
-                      <li>토지소유자, 공유자, 대리인 위임 여부와 의뢰 대상 지번을 먼저 확인합니다.</li>
-                      <li>분할 목적이 매매, 건축, 도로 확보, 인허가, 상속·정리 중 무엇인지 구분합니다.</li>
-                      <li>분할선, 예정 면적, 진입로, 맹지 발생 여부, 기존 건축물·담장·도로와의 관계를 확인합니다.</li>
-                      <li>개발행위허가, 농지·산지 전용, 건축법상 분할제한면적, 도시계획선 등 사전 협의가 필요한지 검토합니다.</li>
-                    </ul>
-                  </section>
-                  <section class="knowledge-law-block">
-                    <h3>현장 측량 시 확인</h3>
-                    <ul>
-                      <li>입회자에게 기존 경계점, 분할 예정선, 인접 토지와 도로 경계를 현장에서 설명합니다.</li>
-                      <li>공부상 경계와 실제 이용 현황이 다를 수 있으므로 항공사진, 연속지적도, 현장 구조물을 함께 대조합니다.</li>
-                      <li>분할 후 잔여지와 신설 필지의 이용 가능성, 도로 접합, 면적 차이 가능성을 기록합니다.</li>
-                      <li>이해관계가 있는 인접 토지나 공유자가 있으면 현장 안내 내용과 보완 필요사항을 남깁니다.</li>
-                    </ul>
-                  </section>
-                  <section class="knowledge-law-block">
-                    <h3>성과 후 안내</h3>
-                    <ul>
-                      <li>분할측량은 토지이동이 있는 측량이므로 지적소관청의 성과검사 절차를 거쳐야 합니다.</li>
-                      <li>성과검사 완료 후 결과부와 성과도를 교부하고, 토지소유자가 관할 지적소관청에 토지이동신청을 해야 합니다.</li>
-                      <li>허가 조건, 분할 면적, 지목, 지번 부여 내용이 성과도와 맞는지 확인한 뒤 공부 정리와 등기촉탁 단계로 안내합니다.</li>
-                      <li>분할 결과가 인허가 도면과 다르거나 보완 조건이 있으면 허가부서와 다시 맞춘 뒤 접수하도록 설명합니다.</li>
-                    </ul>
-                  </section>
-                </div>
-              </article>
+            <div class="knowledge-subnav-layout" data-knowledge-subtabs>
+              <aside class="knowledge-subnav" aria-label="지적측량일반 세부 메뉴">
+                <button class="is-active" type="button" aria-selected="true" data-knowledge-subtab="boundary">경계</button>
+                <button type="button" aria-selected="false" data-knowledge-subtab="division">분할</button>
+                <button type="button" aria-selected="false" data-knowledge-subtab="status">지적현황</button>
+                <button type="button" aria-selected="false" data-knowledge-subtab="conversion">등록전환</button>
+              </aside>
+
+              <div class="knowledge-subpanels">
+                <section class="knowledge-subpanel is-active" data-knowledge-subpanel="boundary">
+                  <div class="knowledge-grid">
+                    <article class="knowledge-item" data-search-item>
+                      <i data-lucide="land-plot"></i>
+                      <h2>경계는 공부 기준으로 안내</h2>
+                      <p>경계복원측량은 지적공부에 등록된 경계점을 현장에 복원하는 측량입니다. 현장 이용선, 담장, 배수로, 도로 경계가 공부상 경계와 다를 수 있음을 먼저 설명합니다.</p>
+                    </article>
+                    <article class="knowledge-item" data-search-item>
+                      <i data-lucide="map-pinned"></i>
+                      <h2>현장 확인 포인트</h2>
+                      <p>입회자, 인접 토지 이용 현황, 기존 말뚝·담장·옹벽 위치를 확인하고, 항공사진과 연속지적도를 참고자료로 함께 대조합니다.</p>
+                    </article>
+                    <article class="knowledge-item knowledge-item--wide" data-search-item>
+                      <i data-lucide="ruler"></i>
+                      <h2>경계 상담 시 설명할 내용</h2>
+                      <div class="knowledge-law-grid">
+                        <section class="knowledge-law-block">
+                          <h3>접수 전</h3>
+                          <ul>
+                            <li>측량 대상 지번, 소유자 또는 대리인 여부, 현장 출입 가능 여부를 확인합니다.</li>
+                            <li>경계분쟁, 담장 설치, 건축 계획 등 의뢰 목적을 확인하여 설명 범위를 정합니다.</li>
+                          </ul>
+                        </section>
+                        <section class="knowledge-law-block">
+                          <h3>성과 안내</h3>
+                          <ul>
+                            <li>측량 결과는 공부상 경계를 현장에 표시하는 것이며, 소유권 분쟁 자체를 판단하는 절차는 아님을 안내합니다.</li>
+                            <li>성과도와 현장 표지를 함께 확인하고, 필요한 경우 인접 소유자 협의 또는 후속 행정절차를 안내합니다.</li>
+                          </ul>
+                        </section>
+                      </div>
+                    </article>
+                  </div>
+                </section>
+
+                <section class="knowledge-subpanel" data-knowledge-subpanel="division" hidden>
+                  <div class="knowledge-grid">
+                    <article class="knowledge-item" data-search-item>
+                      <i data-lucide="ruler"></i>
+                      <h2>측량 목적 먼저 정리</h2>
+                      <p>분할 목적이 매매, 건축, 도로 확보, 인허가, 상속·정리 중 무엇인지에 따라 필요한 서류와 현장 확인 범위가 달라집니다.</p>
+                    </article>
+                    <article class="knowledge-item knowledge-item--wide" data-search-item>
+                      <i data-lucide="split"></i>
+                      <h2>분할측량 시 알아두어야 할 사항</h2>
+                      <p>
+                        분할측량은 하나의 필지를 둘 이상으로 나누기 위한 지적측량입니다. 측량만으로 공부가 바로 정리되는 것이 아니므로,
+                        분할 목적, 허가 필요 여부, 현장 경계, 성과검사, 토지이동신청까지 순서대로 안내해야 합니다.
+                      </p>
+                      <div class="knowledge-law-grid">
+                        <section class="knowledge-law-block">
+                          <h3>접수 전 확인</h3>
+                          <ul>
+                            <li>토지소유자, 공유자, 대리인 위임 여부와 의뢰 대상 지번을 먼저 확인합니다.</li>
+                            <li>분할 목적이 매매, 건축, 도로 확보, 인허가, 상속·정리 중 무엇인지 구분합니다.</li>
+                            <li>분할선, 예정 면적, 진입로, 맹지 발생 여부, 기존 건축물·담장·도로와의 관계를 확인합니다.</li>
+                            <li>개발행위허가, 농지·산지 전용, 건축법상 분할제한면적, 도시계획선 등 사전 협의가 필요한지 검토합니다.</li>
+                          </ul>
+                        </section>
+                        <section class="knowledge-law-block">
+                          <h3>현장 측량 시 확인</h3>
+                          <ul>
+                            <li>입회자에게 기존 경계점, 분할 예정선, 인접 토지와 도로 경계를 현장에서 설명합니다.</li>
+                            <li>공부상 경계와 실제 이용 현황이 다를 수 있으므로 항공사진, 연속지적도, 현장 구조물을 함께 대조합니다.</li>
+                            <li>분할 후 잔여지와 신설 필지의 이용 가능성, 도로 접합, 면적 차이 가능성을 기록합니다.</li>
+                            <li>이해관계가 있는 인접 토지나 공유자가 있으면 현장 안내 내용과 보완 필요사항을 남깁니다.</li>
+                          </ul>
+                        </section>
+                        <section class="knowledge-law-block">
+                          <h3>성과 후 안내</h3>
+                          <ul>
+                            <li>분할측량은 토지이동이 있는 측량이므로 지적소관청의 성과검사 절차를 거쳐야 합니다.</li>
+                            <li>성과검사 완료 후 결과부와 성과도를 교부하고, 토지소유자가 관할 지적소관청에 토지이동신청을 해야 합니다.</li>
+                            <li>허가 조건, 분할 면적, 지목, 지번 부여 내용이 성과도와 맞는지 확인한 뒤 공부 정리와 등기촉탁 단계로 안내합니다.</li>
+                            <li>분할 결과가 인허가 도면과 다르거나 보완 조건이 있으면 허가부서와 다시 맞춘 뒤 접수하도록 설명합니다.</li>
+                          </ul>
+                        </section>
+                      </div>
+                    </article>
+                  </div>
+                </section>
+
+                <section class="knowledge-subpanel" data-knowledge-subpanel="status" hidden>
+                  <div class="knowledge-grid">
+                    <article class="knowledge-item" data-search-item>
+                      <i data-lucide="scan-line"></i>
+                      <h2>지적현황측량의 목적</h2>
+                      <p>지적현황측량은 지상 구조물, 점유 현황, 이용 경계 등을 지적도와 비교하여 현황을 파악하기 위한 측량입니다. 경계 확정이나 분할 자체를 목적으로 하는 측량과 구분해 안내합니다.</p>
+                    </article>
+                    <article class="knowledge-item" data-search-item>
+                      <i data-lucide="clipboard-list"></i>
+                      <h2>상담 시 확인할 자료</h2>
+                      <p>건축물, 담장, 도로, 배수로, 묘지, 농지 이용선 등 확인하려는 대상물을 구체적으로 정하고, 현장 사진과 토지이용계획을 함께 검토합니다.</p>
+                    </article>
+                    <article class="knowledge-item knowledge-item--wide" data-search-item>
+                      <i data-lucide="map"></i>
+                      <h2>결과 활용 안내</h2>
+                      <p>현황측량 성과는 인허가 협의, 점유 현황 확인, 민원 상담의 참고자료로 활용되며, 공부 정리를 위해서는 별도의 토지이동 또는 인허가 절차가 필요할 수 있습니다.</p>
+                    </article>
+                  </div>
+                </section>
+
+                <section class="knowledge-subpanel" data-knowledge-subpanel="conversion" hidden>
+                  <div class="knowledge-grid">
+                    <article class="knowledge-item" data-search-item>
+                      <i data-lucide="replace"></i>
+                      <h2>등록전환의 기본 개념</h2>
+                      <p>등록전환은 임야대장과 임야도에 등록된 토지를 토지대장과 지적도에 등록하기 위한 절차입니다. 개발, 건축, 산지전용 등 후속 행정절차와 연결되는 경우가 많습니다.</p>
+                    </article>
+                    <article class="knowledge-item" data-search-item>
+                      <i data-lucide="file-search"></i>
+                      <h2>사전 확인 사항</h2>
+                      <p>토지 소재, 지목, 면적, 임야도 위치, 인허가 조건, 산지전용 또는 개발행위허가 여부를 확인하고, 등록전환 후 지번·면적·도면 정리 방향을 설명합니다.</p>
+                    </article>
+                    <article class="knowledge-item knowledge-item--wide" data-search-item>
+                      <i data-lucide="check-check"></i>
+                      <h2>성과 후 진행</h2>
+                      <p>측량 성과가 정리되면 지적소관청의 검사와 토지이동 정리를 거쳐 공부가 변경됩니다. 인허가 면적과 성과 면적이 다르면 보완 협의가 필요할 수 있음을 안내합니다.</p>
+                    </article>
+                  </div>
+                </section>
+              </div>
             </div>
           </section>
 
