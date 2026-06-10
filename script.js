@@ -66,8 +66,8 @@ const eumDefaultScale = "1200";
 const vworldLotNumberMinZoom = 18;
 const vworldLotNumberMinScale = 0.68;
 const vworldLotNumberMaxScale = 1.18;
-const vworldMapMaxZoom = 21;
-const vworldTileNativeMaxZoom = 19;
+const vworldMapMaxZoom = 22;
+const vworldTileNativeMaxZoom = 20;
 const vworldParcelDetailZoom = 20;
 const landCategoryCodeLabels = {
   "01": "전",
@@ -108,6 +108,7 @@ let vworldParcelLayer = null;
 let vworldRadiusLayer = null;
 let vworldCadastralLayer = null;
 let vworldLotNumberLayer = null;
+let vworldLotNumberLabels = [];
 let vworldPoiLayer = null;
 let vworldCurrentLayer = "satellite";
 let vworldCurrentPoint = null;
@@ -2643,6 +2644,11 @@ function initPortalTabs() {
       {
         maxZoom: vworldMapMaxZoom,
         maxNativeZoom: vworldTileNativeMaxZoom,
+        detectRetina: true,
+        keepBuffer: 4,
+        updateWhenZooming: false,
+        updateWhenIdle: false,
+        className: layerName === "Satellite" ? "vworld-tile-layer vworld-tile-layer--satellite" : "vworld-tile-layer",
         attribution: "V-World",
       }
     );
@@ -2797,6 +2803,7 @@ function initPortalTabs() {
     }
 
     vworldLotNumberLayer = null;
+    vworldLotNumberLabels = [];
   }
 
   function shouldShowVworldLotNumberLabels() {
@@ -2883,14 +2890,77 @@ function initPortalTabs() {
     });
   }
 
+  function getVworldLotNumberLabelBox(label) {
+    if (!vworldMap) {
+      return null;
+    }
+
+    const latitude = Number(label?.latitude);
+    const longitude = Number(label?.longitude);
+
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+      return null;
+    }
+
+    const point = vworldMap.latLngToLayerPoint([latitude, longitude]);
+    const scale = getVworldLotNumberScale();
+    const lotLength = String(label?.lotNumber || "").length;
+    const jimokLength = String(label?.jimok || "").length;
+    const width = Math.max(46, lotLength * 8 + jimokLength * 4 + 20) * scale;
+    const height = (label?.jimok ? 32 : 24) * scale;
+
+    return {
+      left: point.x - width / 2,
+      right: point.x + width / 2,
+      top: point.y - height / 2,
+      bottom: point.y + height / 2,
+    };
+  }
+
+  function doLabelBoxesOverlap(first, second, padding = 4) {
+    return !(
+      first.right + padding < second.left ||
+      second.right + padding < first.left ||
+      first.bottom + padding < second.top ||
+      second.bottom + padding < first.top
+    );
+  }
+
+  function getCollisionSafeLotNumberLabels(labels = []) {
+    const boxes = [];
+    const safeLabels = [];
+
+    labels.forEach((label) => {
+      const box = getVworldLotNumberLabelBox(label);
+
+      if (!box) {
+        return;
+      }
+
+      if (boxes.some((existingBox) => doLabelBoxesOverlap(existingBox, box))) {
+        return;
+      }
+
+      boxes.push(box);
+      safeLabels.push(label);
+    });
+
+    return safeLabels;
+  }
+
   function renderVworldLotNumberLabels(labels = []) {
     if (!vworldMap || !window.L) {
       return 0;
     }
 
-    clearVworldLotNumberLabels();
+    if (vworldLotNumberLayer) {
+      vworldMap.removeLayer(vworldLotNumberLayer);
+      vworldLotNumberLayer = null;
+    }
 
-    const markers = labels.map(createVworldLotNumberMarker).filter(Boolean);
+    vworldLotNumberLabels = labels;
+
+    const markers = getCollisionSafeLotNumberLabels(labels).map(createVworldLotNumberMarker).filter(Boolean);
 
     if (!markers.length) {
       return 0;
@@ -2899,6 +2969,15 @@ function initPortalTabs() {
     vworldLotNumberLayer = window.L.layerGroup(markers);
     syncVworldLotNumberLayerVisibility();
     return markers.length;
+  }
+
+  function rerenderVworldLotNumberLabels() {
+    if (!vworldLotNumberLabels.length || !vworldMap) {
+      syncVworldLotNumberLayerVisibility();
+      return;
+    }
+
+    renderVworldLotNumberLabels(vworldLotNumberLabels);
   }
 
   function syncVworldLotNumberLabel(point) {
@@ -3040,14 +3119,12 @@ function initPortalTabs() {
     return points;
   }
 
-  function getFeatureLabelPoint(feature) {
-    const points = collectGeometryCoordinates(feature?.geometry?.coordinates);
-
+  function getCoordinateBounds(points = []) {
     if (!points.length) {
       return null;
     }
 
-    const bounds = points.reduce(
+    return points.reduce(
       (nextBounds, [longitude, latitude]) => ({
         minLatitude: Math.min(nextBounds.minLatitude, latitude),
         maxLatitude: Math.max(nextBounds.maxLatitude, latitude),
@@ -3061,11 +3138,203 @@ function initPortalTabs() {
         maxLongitude: -Infinity,
       }
     );
+  }
+
+  function getBoundsCenterPoint(bounds) {
+    if (!bounds) {
+      return null;
+    }
 
     return {
       latitude: (bounds.minLatitude + bounds.maxLatitude) / 2,
       longitude: (bounds.minLongitude + bounds.maxLongitude) / 2,
     };
+  }
+
+  function getRingSignedArea(ring = []) {
+    let area = 0;
+
+    for (let index = 0; index < ring.length - 1; index += 1) {
+      const [currentLongitude, currentLatitude] = ring[index];
+      const [nextLongitude, nextLatitude] = ring[index + 1];
+
+      area += currentLongitude * nextLatitude - nextLongitude * currentLatitude;
+    }
+
+    return area / 2;
+  }
+
+  function getRingCentroidPoint(ring = []) {
+    const signedArea = getRingSignedArea(ring);
+
+    if (!Number.isFinite(signedArea) || Math.abs(signedArea) < 1e-14) {
+      return null;
+    }
+
+    let longitudeSum = 0;
+    let latitudeSum = 0;
+
+    for (let index = 0; index < ring.length - 1; index += 1) {
+      const [currentLongitude, currentLatitude] = ring[index];
+      const [nextLongitude, nextLatitude] = ring[index + 1];
+      const factor = currentLongitude * nextLatitude - nextLongitude * currentLatitude;
+
+      longitudeSum += (currentLongitude + nextLongitude) * factor;
+      latitudeSum += (currentLatitude + nextLatitude) * factor;
+    }
+
+    return {
+      latitude: latitudeSum / (6 * signedArea),
+      longitude: longitudeSum / (6 * signedArea),
+    };
+  }
+
+  function getRingAveragePoint(ring = []) {
+    const points = ring
+      .slice(0, -1)
+      .map(([longitude, latitude]) => ({ latitude, longitude }))
+      .filter((point) => Number.isFinite(point.latitude) && Number.isFinite(point.longitude));
+
+    if (!points.length) {
+      return null;
+    }
+
+    return {
+      latitude: points.reduce((sum, point) => sum + point.latitude, 0) / points.length,
+      longitude: points.reduce((sum, point) => sum + point.longitude, 0) / points.length,
+    };
+  }
+
+  function getPointToSegmentDistanceSquared(point, start, end) {
+    const pointLongitude = Number(point?.longitude);
+    const pointLatitude = Number(point?.latitude);
+    const startLongitude = Number(start?.[0]);
+    const startLatitude = Number(start?.[1]);
+    const endLongitude = Number(end?.[0]);
+    const endLatitude = Number(end?.[1]);
+
+    if (![pointLongitude, pointLatitude, startLongitude, startLatitude, endLongitude, endLatitude].every(Number.isFinite)) {
+      return 0;
+    }
+
+    const deltaLongitude = endLongitude - startLongitude;
+    const deltaLatitude = endLatitude - startLatitude;
+    const lengthSquared = deltaLongitude * deltaLongitude + deltaLatitude * deltaLatitude;
+    const ratio = lengthSquared
+      ? Math.max(0, Math.min(1, ((pointLongitude - startLongitude) * deltaLongitude + (pointLatitude - startLatitude) * deltaLatitude) / lengthSquared))
+      : 0;
+    const closestLongitude = startLongitude + ratio * deltaLongitude;
+    const closestLatitude = startLatitude + ratio * deltaLatitude;
+    const distanceLongitude = pointLongitude - closestLongitude;
+    const distanceLatitude = pointLatitude - closestLatitude;
+
+    return distanceLongitude * distanceLongitude + distanceLatitude * distanceLatitude;
+  }
+
+  function getPointToRingDistanceSquared(point, ring = []) {
+    if (ring.length < 2) {
+      return 0;
+    }
+
+    return ring.slice(1).reduce((minimumDistance, coordinate, index) => {
+      const distance = getPointToSegmentDistanceSquared(point, ring[index], coordinate);
+
+      return Math.min(minimumDistance, distance);
+    }, Infinity);
+  }
+
+  function getPolygonPointScore(point, polygon = []) {
+    if (!polygon.length) {
+      return 0;
+    }
+
+    return polygon.reduce((minimumDistance, ring) => Math.min(minimumDistance, getPointToRingDistanceSquared(point, ring)), Infinity);
+  }
+
+  function getPolygonArea(polygon = []) {
+    return Math.abs(getRingSignedArea(polygon?.[0] || []));
+  }
+
+  function getPolygonInteriorLabelPoint(polygon = []) {
+    const outerRing = polygon?.[0] || [];
+    const bounds = getCoordinateBounds(outerRing);
+    const boundsCenter = getBoundsCenterPoint(bounds);
+    const candidates = [getRingCentroidPoint(outerRing), boundsCenter, getRingAveragePoint(outerRing)].filter(Boolean);
+
+    for (const candidate of candidates) {
+      if (isPointInPolygonCoordinates(candidate, polygon)) {
+        return candidate;
+      }
+    }
+
+    if (!bounds || !boundsCenter) {
+      return null;
+    }
+
+    let bestPoint = null;
+    let bestScore = -Infinity;
+    const gridSizes = [5, 9, 13, 17];
+
+    for (const gridSize of gridSizes) {
+      for (let row = 0; row < gridSize; row += 1) {
+        for (let column = 0; column < gridSize; column += 1) {
+          const candidate = {
+            latitude: bounds.minLatitude + ((row + 0.5) / gridSize) * (bounds.maxLatitude - bounds.minLatitude),
+            longitude: bounds.minLongitude + ((column + 0.5) / gridSize) * (bounds.maxLongitude - bounds.minLongitude),
+          };
+
+          if (!isPointInPolygonCoordinates(candidate, polygon)) {
+            continue;
+          }
+
+          const boundaryDistance = getPolygonPointScore(candidate, polygon);
+          const centerDistance =
+            (candidate.latitude - boundsCenter.latitude) ** 2 + (candidate.longitude - boundsCenter.longitude) ** 2;
+          const score = boundaryDistance - centerDistance * 0.08;
+
+          if (score > bestScore) {
+            bestScore = score;
+            bestPoint = candidate;
+          }
+        }
+      }
+
+      if (bestPoint) {
+        return bestPoint;
+      }
+    }
+
+    return null;
+  }
+
+  function getFeaturePolygons(feature) {
+    const geometry = feature?.geometry;
+
+    if (geometry?.type === "Polygon") {
+      return [geometry.coordinates];
+    }
+
+    if (geometry?.type === "MultiPolygon") {
+      return geometry.coordinates || [];
+    }
+
+    return [];
+  }
+
+  function getFeatureLabelPoint(feature) {
+    const polygons = getFeaturePolygons(feature)
+      .filter((polygon) => polygon?.[0]?.length)
+      .sort((first, second) => getPolygonArea(second) - getPolygonArea(first));
+
+    for (const polygon of polygons) {
+      const labelPoint = getPolygonInteriorLabelPoint(polygon);
+
+      if (labelPoint) {
+        return labelPoint;
+      }
+    }
+
+    return null;
   }
 
   function getPointDistanceMeters(first, second) {
@@ -3361,16 +3630,6 @@ function initPortalTabs() {
         },
         onEachFeature(feature, layer) {
           layer.bindPopup(getParcelPopup(feature.properties));
-
-          const jibun = getFeatureProperty(feature.properties, ["jibun", "JIBUN", "addr", "ADDR"]);
-
-          if (jibun) {
-            layer.bindTooltip(jibun, {
-              direction: "center",
-              permanent: true,
-              className: "parcel-label",
-            });
-          }
         },
       }
     ).addTo(vworldMap);
@@ -3853,7 +4112,7 @@ function initPortalTabs() {
     }).setView(defaultAerialCenter, 16);
     vworldMap.on("click", handleVworldMapClick);
     vworldMap.on("zoom", syncVworldLotNumberLabelScale);
-    vworldMap.on("zoomend", syncVworldLotNumberLayerVisibility);
+    vworldMap.on("zoomend", rerenderVworldLotNumberLabels);
     syncVworldLotNumberLabelScale();
 
     setVworldLayer(vworldCurrentLayer);
@@ -3929,7 +4188,7 @@ function initPortalTabs() {
     }).setView([36.4, 127.8], 7);
     vworldMap.on("click", handleVworldMapClick);
     vworldMap.on("zoom", syncVworldLotNumberLabelScale);
-    vworldMap.on("zoomend", syncVworldLotNumberLayerVisibility);
+    vworldMap.on("zoomend", rerenderVworldLotNumberLabels);
     syncVworldLotNumberLabelScale();
 
     setVworldLayer("satellite");

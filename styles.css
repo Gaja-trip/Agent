@@ -2137,6 +2137,12 @@ input {
   display: none;
 }
 
+.vworld-tile-layer--satellite .leaflet-tile,
+.leaflet-tile.vworld-tile-layer--satellite {
+  image-rendering: auto;
+  filter: saturate(1.04) contrast(1.035);
+}
+
 .vworld-map__empty {
   position: absolute;
   inset: 0;
