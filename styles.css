@@ -2752,6 +2752,10 @@ input {
   align-items: start;
 }
 
+.knowledge-subnav-layout--fee {
+  grid-template-columns: minmax(180px, 220px) minmax(0, 1fr);
+}
+
 .knowledge-subnav {
   position: sticky;
   top: 92px;
@@ -2780,6 +2784,12 @@ input {
   color: #fff;
   background: var(--green);
   border-color: var(--green);
+}
+
+.knowledge-subnav--fee button {
+  min-height: 42px;
+  font-size: 0.94rem;
+  line-height: 1.25;
 }
 
 .knowledge-subpanels {
