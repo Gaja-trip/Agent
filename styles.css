@@ -809,6 +809,10 @@ input {
   gap: 18px;
 }
 
+.knowledge-grid--fee {
+  align-items: stretch;
+}
+
 .knowledge-item {
   min-height: 220px;
   padding: 28px;
@@ -837,6 +841,68 @@ input {
 .knowledge-item p {
   margin: 0;
   color: var(--muted);
+}
+
+.fee-rule-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.fee-rule-badges span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 7px 11px;
+  color: var(--green-dark);
+  background: #eaf5ef;
+  border: 1px solid rgba(31, 107, 85, 0.18);
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.fee-rule-badges--compact {
+  gap: 6px;
+  margin-top: 14px;
+}
+
+.fee-rule-badges--compact span {
+  min-height: 30px;
+  padding: 6px 9px;
+  font-size: 0.8rem;
+}
+
+.fee-check-list {
+  display: grid;
+  gap: 9px;
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fee-check-list li {
+  position: relative;
+  padding-left: 20px;
+  color: #31463f;
+  font-weight: 750;
+}
+
+.fee-check-list li::before {
+  position: absolute;
+  top: 0.72em;
+  left: 0;
+  width: 8px;
+  height: 8px;
+  background: var(--amber);
+  border-radius: 50%;
+  content: "";
+}
+
+.fee-table tbody th {
+  width: 18%;
 }
 
 .knowledge-table {

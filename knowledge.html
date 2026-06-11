@@ -207,16 +207,247 @@
           </section>
 
           <section class="content-panel" data-content-panel="fee" hidden>
-            <div class="knowledge-grid">
-              <article class="knowledge-item" data-search-item>
-                <i data-lucide="calculator"></i>
-                <h2>수수료 산정 기준</h2>
-                <p>측량 종목, 필지 수, 면적, 지역 여건에 따라 수수료가 달라질 수 있음을 설명합니다.</p>
-              </article>
-              <article class="knowledge-item" data-search-item>
+            <div class="knowledge-grid knowledge-grid--fee">
+              <article class="knowledge-item knowledge-item--wide" data-search-item>
                 <i data-lucide="badge-percent"></i>
-                <h2>감면과 반환</h2>
-                <p>감면 대상, 취소 시 반환 가능 여부, 입금 확인 시점을 구분해 안내합니다.</p>
+                <h2>수수료 감면 상담 기준</h2>
+                <p>
+                  지적측량 수수료 감면은 동일지번 패키지, 필지체감, 자연재해지역, 소면적 경감, 차인,
+                  대면적 분할, 도곽내 면적, 연속지·집단지 체감계수처럼 적용 조건이 서로 다릅니다.
+                  접수 전에는 의뢰인, 소유자, 종목, 필지 수, 측량방법, 도해·수치지역 구분을 먼저 확인합니다.
+                </p>
+                <div class="fee-rule-badges" aria-label="수수료 감면 핵심 구분">
+                  <span>동일지번 패키지</span>
+                  <span>필지체감</span>
+                  <span>자연재해 감면</span>
+                  <span>소면적 경감</span>
+                  <span>차인 적용</span>
+                  <span>대면적 분할</span>
+                  <span>도곽내 면적</span>
+                  <span>연속지·집단지</span>
+                </div>
+                <div class="knowledge-note">
+                  <h3>상담 시 공통 확인</h3>
+                  <ul>
+                    <li>감면은 접수 조건과 수수료 산정 시점에 따라 달라질 수 있으므로 소급 적용 가능 여부를 별도로 안내합니다.</li>
+                    <li>동일 업무처럼 보여도 일반업무·특수업무, 무료처리, 재의뢰, 도해·수치지역 구분에 따라 적용 여부가 달라집니다.</li>
+                    <li>신청인 기준, 수익자 부담 원칙, 영수증 발행 명의는 소면적 경감 판단에서 특히 중요합니다.</li>
+                  </ul>
+                </div>
+              </article>
+
+              <article class="knowledge-item knowledge-item--wide" data-search-item>
+                <i data-lucide="layers-3"></i>
+                <h2>동일지번 2종목 이상 지적측량(패키지)</h2>
+                <p>
+                  소유자가 같은 동일 지번 또는 연접 필지에 대해 2종목 이상의 지적측량을 신청하고,
+                  한 번의 현장 측량으로 완료되는 경우에 적용합니다.
+                </p>
+                <div class="fee-rule-badges fee-rule-badges--compact">
+                  <span>규정 제24조제1항</span>
+                  <span>원필지 기준 1:1 대응</span>
+                  <span>동일소유자 의뢰</span>
+                </div>
+                <div class="knowledge-law-grid">
+                  <section class="knowledge-law-block">
+                    <h3>적용 순서</h3>
+                    <ul>
+                      <li>경계복원, 도시계획선명시, 지적현황측량, 분할, 등록전환측량을 순차적으로 검토합니다.</li>
+                      <li>일반업무와 특수업무 구분 없이 동일 기준으로 적용하되 동일소유자가 의뢰한 경우에만 봅니다.</li>
+                      <li>등록전환예정지(유료)와 토지 내 분할 현황(유료)이 함께 있는 경우에는 예외적으로 감면 적용이 가능합니다.</li>
+                    </ul>
+                  </section>
+                  <section class="knowledge-law-block">
+                    <h3>적용 불가</h3>
+                    <ul>
+                      <li>연속지 또는 집단지인 경우에는 패키지 감면을 적용하지 않습니다.</li>
+                      <li>등록전환을 무료처리하고 분할측량을 수반하는 경우에는 적용하지 않습니다.</li>
+                      <li>측량재의뢰 건은 패키지 감면 대상이 아닙니다. 예: 측량재의뢰 + 신규분할.</li>
+                      <li>연접지가 도해지역과 수치지역처럼 측량방법을 달리하는 경우에는 적용하지 않습니다.</li>
+                    </ul>
+                  </section>
+                  <section class="knowledge-law-block">
+                    <h3>주의 사례</h3>
+                    <ul>
+                      <li>차액분할(종목변경) 때 건물현황측량이 수반되면 현황측량 1종목만 측량하는 것으로 보아 감면하지 않습니다.</li>
+                      <li>면적현황과 구조물현황이 동시에 처리되는 경우에도 패키지 감면 대상에서 제외합니다.</li>
+                    </ul>
+                  </section>
+                  <section class="knowledge-law-block">
+                    <h3>취소·반환</h3>
+                    <ul>
+                      <li>경계복원과 분할을 함께 접수한 뒤 분할을 취소하면, 경계복원에서 감면된 금액을 수입 처리하고 분할 차액분을 반환합니다.</li>
+                    </ul>
+                  </section>
+                </div>
+              </article>
+
+              <article class="knowledge-item" data-search-item>
+                <i data-lucide="list-minus"></i>
+                <h2>필지체감 적용</h2>
+                <p>
+                  지적소관청별로 지적측량 전체 필지수가 3필 이상 50필지 이하이면 기본단가의 5% 체감을 적용합니다.
+                </p>
+                <div class="fee-rule-badges fee-rule-badges--compact">
+                  <span>규정 제12조</span>
+                  <span>3필 이상 50필 이하</span>
+                  <span>기본단가 5%</span>
+                </div>
+                <ul class="fee-check-list">
+                  <li>분할 후 필지를 기준으로 판단합니다.</li>
+                  <li>51필지 이상이어도 필지체감 적용 수수료가 더 저렴하면 적용 가능합니다.</li>
+                  <li>점·선 현황 등 50% 적용 대상과 무료분은 제외합니다.</li>
+                  <li>분할, 경계복원, 지적현황, 도시계획선명시측량에 적용합니다.</li>
+                  <li>수치·도해 등 측량방법별, 동일 종목별로 각각 적용합니다.</li>
+                </ul>
+              </article>
+
+              <article class="knowledge-item" data-search-item>
+                <i data-lucide="cloud-rain"></i>
+                <h2>자연재해지역 감면</h2>
+                <p>
+                  자연재해로 피해를 입은 토지의 피해복구 측량은 피해 정도에 따라 수수료 50% 또는 100% 감면을 검토합니다.
+                </p>
+                <div class="fee-rule-badges fee-rule-badges--compact">
+                  <span>규정 제23조제2항</span>
+                  <span>제3항</span>
+                  <span>제4항</span>
+                </div>
+                <ul class="fee-check-list">
+                  <li>피해사실 확인서가 발급된 토지여야 합니다.</li>
+                  <li>피해복구를 위한 지적측량이어야 하며 재난발생일로부터 2년 이내여야 합니다.</li>
+                  <li>전파, 유실, 전소 등이 확인된 토지는 100%, 그 외 토지는 50% 감면 기준으로 봅니다.</li>
+                  <li>국가·지자체·공공기관 의뢰 건은 감면 적용 대상에서 제외합니다.</li>
+                  <li>2025년 8월 6일 이후 기준은 주택·창고·공장·농축산상업시설 100%, 비닐하우스·농경지 등 50% 감면으로 안내합니다.</li>
+                  <li>2025년 8월 6일 이후에는 횟수 1회를 기준으로 하며, 재난피해 필지에 신축할 수 없는 경우 이전 필지에 적용합니다.</li>
+                </ul>
+              </article>
+
+              <article class="knowledge-item knowledge-item--wide" data-search-item>
+                <i data-lucide="minimize-2"></i>
+                <h2>소면적 경감 적용</h2>
+                <p>
+                  개인이 신청하는 소면적인 필지는 종목별 기본단가의 10% 감면을 적용합니다. 신청인 기준과 영수증 발행 명의를 함께 확인해야 합니다.
+                </p>
+                <div class="fee-rule-badges fee-rule-badges--compact">
+                  <span>규정 제8조제2항</span>
+                  <span>기본단가 10%</span>
+                  <span>소급 적용 불가</span>
+                </div>
+                <table class="knowledge-table fee-table" aria-label="소면적 경감 적용 기준">
+                  <thead>
+                    <tr>
+                      <th>구분</th>
+                      <th>조건</th>
+                      <th>적용 종목</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <th>토지·수치</th>
+                      <td>분할 후 면적이 토지대장등록지 60㎡ 이하</td>
+                      <td>신규등록, 등록전환, 분할, 지적현황(분할식)</td>
+                    </tr>
+                    <tr>
+                      <th>임야</th>
+                      <td>분할 후 면적이 임야대장등록지 200㎡ 이하</td>
+                      <td>신규등록, 등록전환, 분할, 지적현황(분할식)</td>
+                    </tr>
+                    <tr>
+                      <th>등록전환</th>
+                      <td>등록전환 면적이 200㎡ 이하</td>
+                      <td>등록전환</td>
+                    </tr>
+                  </tbody>
+                </table>
+                <div class="knowledge-law-grid">
+                  <section class="knowledge-law-block">
+                    <h3>적용 판단 사례</h3>
+                    <ul>
+                      <li>개인토지를 법인이 대리 신청하는 경우: 감면하지 않습니다.</li>
+                      <li>다만 영수증을 개인 명의로 발행하는 경우: 감면 가능합니다.</li>
+                      <li>법인소유 필지를 개인이 신청하는 경우: 감면 가능합니다.</li>
+                      <li>개인사업자 영수증 발행: 감면 가능, 법인사업자 영수증 발행: 감면 불가.</li>
+                    </ul>
+                  </section>
+                  <section class="knowledge-law-block">
+                    <h3>신청인 기준</h3>
+                    <ul>
+                      <li>소유자가 국공유지·법인·개인인 경우 모두 개인(사업자) 신청은 감면 가능으로 봅니다.</li>
+                      <li>국가·지자체 또는 법인사업자가 신청하는 경우에는 감면하지 않습니다.</li>
+                      <li>상담 때 신청인 기준과 수익자 부담 원칙을 함께 안내합니다.</li>
+                    </ul>
+                  </section>
+                </div>
+              </article>
+
+              <article class="knowledge-item" data-search-item>
+                <i data-lucide="split"></i>
+                <h2>차인 적용</h2>
+                <p>
+                  면적이 5,000㎡ 이상인 필지를 분할하면서 분할 후 면적이 분할 전 면적의 80% 이상이 되는 경우에는 차인 방식을 검토합니다.
+                </p>
+                <div class="fee-rule-badges fee-rule-badges--compact">
+                  <span>규정 제8조제1항제1호</span>
+                  <span>기본단가 적용</span>
+                </div>
+                <ul class="fee-check-list">
+                  <li>20% 미만이 되는 필지의 면적을 먼저 측정한 뒤 분할 전 면적에서 측정 면적을 빼는 방식입니다.</li>
+                  <li>동일한 측량 결과도에서 측정할 수 있는 경우에 한해 검토합니다.</li>
+                  <li>좌표면적계산법으로 면적을 측정하는 경우, 해당 필지 주위 전체 측량이 수반되는 경우에는 제한됩니다.</li>
+                </ul>
+              </article>
+
+              <article class="knowledge-item" data-search-item>
+                <i data-lucide="maximize-2"></i>
+                <h2>규모가 큰 필지의 분할</h2>
+                <p>
+                  분할 후 필지의 면적이 토지 3만㎡, 임야 10만㎡ 이상이면 각각 해당 면적에 해당하는 수수료를 적용합니다.
+                </p>
+                <div class="fee-rule-badges fee-rule-badges--compact">
+                  <span>규정 제8조제1항제2호</span>
+                  <span>토지 3만㎡</span>
+                  <span>임야 10만㎡</span>
+                </div>
+                <ul class="fee-check-list">
+                  <li>토지는 3만㎡, 임야는 10만㎡에 해당하는 수수료 기준으로 안내합니다.</li>
+                  <li>해당 필지 주위 전체에 대한 측량이 수반되는 경우에는 예외적으로 면적가산계수를 적용합니다.</li>
+                </ul>
+              </article>
+
+              <article class="knowledge-item" data-search-item>
+                <i data-lucide="scan"></i>
+                <h2>도곽내 면적 적용</h2>
+                <p>
+                  여러 도곽에 걸쳐 있는 1필지의 일부만 측량하는 경우에는 해당 도곽 내 면적만 가산계수에 반영합니다.
+                </p>
+                <div class="fee-rule-badges fee-rule-badges--compact">
+                  <span>규정 제8조제1항제3호</span>
+                  <span>도곽 내 면적</span>
+                </div>
+                <ul class="fee-check-list">
+                  <li>도로, 하천, 구거, 제방, 철도용지, 수도용지가 대상입니다.</li>
+                  <li>분할, 분할식 지적현황, 경계복원 업무에서 검토합니다.</li>
+                  <li>2도곽에 걸쳐 측량하면 2도곽 내 면적을 합산해 적용합니다.</li>
+                </ul>
+              </article>
+
+              <article class="knowledge-item" data-search-item>
+                <i data-lucide="rows-3"></i>
+                <h2>연속지·집단지 체감계수</h2>
+                <p>
+                  지적소관청별로 각각 51필지 이상인 경우에는 기본단가에 체감계수를 적용합니다.
+                </p>
+                <div class="fee-rule-badges fee-rule-badges--compact">
+                  <span>규정 제11조</span>
+                  <span>51필지 이상</span>
+                  <span>도해·수치 각각 적용</span>
+                </div>
+                <ul class="fee-check-list">
+                  <li>신규등록, 등록전환, 분할, 경계복원, 지적현황, 도시계획선명시, 축척변경, 지적불부합지조사에 적용합니다.</li>
+                  <li>동일 소관청의 연속지는 적용할 수 있습니다.</li>
+                  <li>군지역 연속지 단가가 낮으면 군지역 41필지는 1~50구간으로 보고, 시지역 32필 중 9필은 1~50구간, 23필은 51~100구간처럼 구분해 안내합니다.</li>
+                </ul>
               </article>
             </div>
           </section>
