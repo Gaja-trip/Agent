@@ -2756,6 +2756,10 @@ input {
   grid-template-columns: minmax(180px, 220px) minmax(0, 1fr);
 }
 
+.knowledge-subnav-layout--law {
+  grid-template-columns: minmax(170px, 220px) minmax(0, 1fr);
+}
+
 .knowledge-subnav {
   position: sticky;
   top: 92px;
@@ -2789,6 +2793,12 @@ input {
 .knowledge-subnav--fee button {
   min-height: 42px;
   font-size: 0.94rem;
+  line-height: 1.25;
+}
+
+.knowledge-subnav--law button {
+  min-height: 42px;
+  font-size: 0.95rem;
   line-height: 1.25;
 }
 
