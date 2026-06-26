@@ -210,6 +210,7 @@
             <div class="knowledge-subnav-layout knowledge-subnav-layout--fee" data-knowledge-subtabs>
               <aside class="knowledge-subnav knowledge-subnav--fee" aria-label="수수료 감면 세부 메뉴">
                 <button class="is-active" type="button" aria-selected="true" data-knowledge-subtab="fee-current-rule">최신 규정</button>
+                <button type="button" aria-selected="false" data-knowledge-subtab="fee-calculation">산출 구조</button>
                 <button type="button" aria-selected="false" data-knowledge-subtab="fee-package">동일지번 패키지</button>
                 <button type="button" aria-selected="false" data-knowledge-subtab="fee-parcel-discount">필지체감</button>
                 <button type="button" aria-selected="false" data-knowledge-subtab="fee-disaster">자연재해지역</button>
@@ -218,6 +219,8 @@
                 <button type="button" aria-selected="false" data-knowledge-subtab="fee-large-parcel">대면적 분할</button>
                 <button type="button" aria-selected="false" data-knowledge-subtab="fee-map-sheet">도곽내 면적</button>
                 <button type="button" aria-selected="false" data-knowledge-subtab="fee-continuous">연속지·집단지</button>
+                <button type="button" aria-selected="false" data-knowledge-subtab="fee-by-type">종목별 적용</button>
+                <button type="button" aria-selected="false" data-knowledge-subtab="fee-cautions">감면 유의사항</button>
               </aside>
 
               <div class="knowledge-subpanels knowledge-subpanels--fee">
@@ -229,13 +232,15 @@
                       <p>
                         2026년 현재 국가법령정보센터에서 확인되는 현행 행정규칙은
                         「지적측량수수료 산정기준 등에 관한 규정」이며,
-                        최신 시행 정보는 2025년 12월 24일 시행, 국토교통부예규 제450호, 일부개정입니다.
+                        교육자료 기준 2026년 수수료는 대부분 종목 2.3% 인상, 경계복원측량은 2.0% 인상으로 안내합니다.
                       </p>
                       <div class="fee-rule-badges fee-rule-badges--compact">
                         <span>2026년 현재 현행</span>
                         <span>시행 2025. 12. 24.</span>
                         <span>국토교통부예규 제450호</span>
                         <span>2025. 12. 24. 일부개정</span>
+                        <span>대부분 종목 2.3%</span>
+                        <span>경계복원 2.0%</span>
                       </div>
                       <div class="knowledge-law-grid">
                         <section class="knowledge-law-block">
@@ -254,6 +259,20 @@
                             <li>시스템 산출 금액과 상담 판단이 다를 때에는 국가법령정보센터 원문과 내부 수수료 산정 화면을 함께 대조합니다.</li>
                           </ul>
                         </section>
+                        <section class="knowledge-law-block">
+                          <h3>2026년 상담 포인트</h3>
+                          <ul>
+                            <li>수수료 조정 민원에는 “생산원가 변동과 구성비를 반영한 고시”라는 기준으로 설명합니다.</li>
+                            <li>접수 화면에서 개인사업자·법인사업자 구분과 소면적 경감 대상 여부가 정확히 표시되는지 확인합니다.</li>
+                            <li>감면은 전년과 동일하게 적용하되, 중복감면 가능 여부와 증빙서류 확인을 먼저 합니다.</li>
+                          </ul>
+                        </section>
+                      </div>
+                      <div class="fee-education-gallery fee-education-gallery--single" aria-label="2026년 수수료 교육자료 캡처">
+                        <figure class="fee-education-figure">
+                          <img src="assets/fee-education/fee-page-04-04.jpg" alt="2026년 수수료 고시 교육자료" loading="lazy" />
+                          <figcaption>2026년 수수료 고시: 대부분 종목 2.3%, 경계복원측량 2.0% 인상</figcaption>
+                        </figure>
                       </div>
                       <div class="knowledge-law-links" aria-label="지적측량수수료 산정기준 등에 관한 규정 바로 열기">
                         <h3>공식 원문 바로보기</h3>
@@ -269,6 +288,57 @@
                       <p class="knowledge-source">
                         확인 기준: 국가법령정보센터, 행정규칙 상세 페이지(확인일 2026. 6. 11.)
                       </p>
+                    </article>
+                  </div>
+                </section>
+
+                <section class="knowledge-subpanel" data-knowledge-subpanel="fee-calculation" hidden>
+                  <div class="knowledge-grid knowledge-grid--fee">
+                    <article class="knowledge-item knowledge-item--wide" data-search-item>
+                      <i data-lucide="calculator"></i>
+                      <h2>수수료 구성 및 산출 구조</h2>
+                      <p>
+                        지적측량수수료는 직접측량비와 간접측량비를 기초로 산출하고, 토지구분·지역계수·면적가산·필지수·개별공시지가 구간 등을 반영해 최종 금액을 결정합니다.
+                      </p>
+                      <div class="fee-rule-badges fee-rule-badges--compact">
+                        <span>직접측량비</span>
+                        <span>간접측량비</span>
+                        <span>토지·임야·수치 계수</span>
+                        <span>기준면적·가산횟수</span>
+                        <span>지역·공시지가 계수</span>
+                      </div>
+                      <div class="knowledge-law-grid">
+                        <section class="knowledge-law-block">
+                          <h3>기본 구성</h3>
+                          <ul>
+                            <li>직접인건비, 현장여비, 기계경비, 재료소모품비가 직접측량비를 구성합니다.</li>
+                            <li>제경비와 기술료는 직접인건비를 기준으로 산정되는 간접측량비 항목입니다.</li>
+                            <li>최종수수료는 항목별 합계에 적용률을 반영한 뒤 필요한 감면·경감 여부를 검토합니다.</li>
+                          </ul>
+                        </section>
+                        <section class="knowledge-law-block">
+                          <h3>면적 기준</h3>
+                          <ul>
+                            <li>신규등록, 등록전환, 분할, 지적현황은 토지·수치 1,500㎡, 임야 5,000㎡를 기준면적으로 봅니다.</li>
+                            <li>경계복원, 도시계획선명시는 토지·수치 300㎡, 임야 3,000㎡를 기준면적으로 봅니다.</li>
+                            <li>대상면적이 기준면적을 초과하면 가산횟수에 따라 계수를 적용하며, 소수점 이하는 절상합니다.</li>
+                          </ul>
+                        </section>
+                      </div>
+                      <div class="fee-education-gallery" aria-label="수수료 산출 구조 교육자료 캡처">
+                        <figure class="fee-education-figure">
+                          <img src="assets/fee-education/fee-page-12-12.jpg" alt="지적측량수수료 구성 교육자료" loading="lazy" />
+                          <figcaption>수수료 구성: 직접측량비와 간접측량비의 항목</figcaption>
+                        </figure>
+                        <figure class="fee-education-figure">
+                          <img src="assets/fee-education/fee-page-14-14.jpg" alt="지적측량수수료 산출 공식 교육자료" loading="lazy" />
+                          <figcaption>산출 공식: 직접측량비와 간접측량비에 적용률 반영</figcaption>
+                        </figure>
+                        <figure class="fee-education-figure">
+                          <img src="assets/fee-education/fee-page-15-15.jpg" alt="기준면적과 가산횟수 교육자료" loading="lazy" />
+                          <figcaption>기준면적과 가산횟수: 종목별 면적 기준 확인</figcaption>
+                        </figure>
+                      </div>
                     </article>
                   </div>
                 </section>
@@ -319,6 +389,12 @@
                           </ul>
                         </section>
                       </div>
+                      <div class="fee-education-gallery fee-education-gallery--single" aria-label="동일지번 패키지 교육자료 캡처">
+                        <figure class="fee-education-figure">
+                          <img src="assets/fee-education/fee-page-22-22.jpg" alt="동일지번 2종목 이상 지적측량 패키지 예시" loading="lazy" />
+                          <figcaption>패키지 감면 적용·제외 사례와 원필지 기준 1:1 대응 예시</figcaption>
+                        </figure>
+                      </div>
                     </article>
                   </div>
                 </section>
@@ -343,6 +419,12 @@
                         <li>분할, 경계복원, 지적현황, 도시계획선명시측량에 적용합니다.</li>
                         <li>수치·도해 등 측량방법별, 동일 종목별로 각각 적용합니다.</li>
                       </ul>
+                      <div class="fee-education-gallery fee-education-gallery--single" aria-label="필지체감 교육자료 캡처">
+                        <figure class="fee-education-figure">
+                          <img src="assets/fee-education/fee-page-23-23.jpg" alt="필지체감 적용 기준 교육자료" loading="lazy" />
+                          <figcaption>필지체감: 3필 이상 50필 이하 기본단가 5% 체감 기준</figcaption>
+                        </figure>
+                      </div>
                     </article>
                   </div>
                 </section>
@@ -368,6 +450,12 @@
                         <li>2025년 8월 6일 이후 기준은 주택·창고·공장·농축산상업시설 100%, 비닐하우스·농경지 등 50% 감면으로 안내합니다.</li>
                         <li>2025년 8월 6일 이후에는 횟수 1회를 기준으로 하며, 재난피해 필지에 신축할 수 없는 경우 이전 필지에 적용합니다.</li>
                       </ul>
+                      <div class="fee-education-gallery fee-education-gallery--single" aria-label="자연재해지역 감면 교육자료 캡처">
+                        <figure class="fee-education-figure">
+                          <img src="assets/fee-education/fee-page-24-24.jpg" alt="자연재해지역 감면 기준 교육자료" loading="lazy" />
+                          <figcaption>자연재해지역 감면: 피해복구 측량, 피해 정도, 적용 기간 확인</figcaption>
+                        </figure>
+                      </div>
                     </article>
                   </div>
                 </section>
@@ -430,6 +518,12 @@
                           </ul>
                         </section>
                       </div>
+                      <div class="fee-education-gallery fee-education-gallery--single" aria-label="소면적 경감 교육자료 캡처">
+                        <figure class="fee-education-figure">
+                          <img src="assets/fee-education/fee-page-25-25.jpg" alt="소면적 경감 적용 기준 교육자료" loading="lazy" />
+                          <figcaption>소면적 경감: 신청인·영수증 기준에 따른 감면 여부</figcaption>
+                        </figure>
+                      </div>
                     </article>
                   </div>
                 </section>
@@ -451,6 +545,12 @@
                         <li>동일한 측량 결과도에서 측정할 수 있는 경우에 한해 검토합니다.</li>
                         <li>좌표면적계산법으로 면적을 측정하는 경우, 해당 필지 주위 전체 측량이 수반되는 경우에는 제한됩니다.</li>
                       </ul>
+                      <div class="fee-education-gallery fee-education-gallery--single" aria-label="차인 적용 교육자료 캡처">
+                        <figure class="fee-education-figure">
+                          <img src="assets/fee-education/fee-page-26-26.jpg" alt="차인 적용 교육자료" loading="lazy" />
+                          <figcaption>차인 적용: 80% 이상 잔여 필지와 일부 면적 측정 방식</figcaption>
+                        </figure>
+                      </div>
                     </article>
                   </div>
                 </section>
@@ -472,6 +572,12 @@
                         <li>토지는 3만㎡, 임야는 10만㎡에 해당하는 수수료 기준으로 안내합니다.</li>
                         <li>해당 필지 주위 전체에 대한 측량이 수반되는 경우에는 예외적으로 면적가산계수를 적용합니다.</li>
                       </ul>
+                      <div class="fee-education-gallery fee-education-gallery--single" aria-label="규모가 큰 필지 분할 교육자료 캡처">
+                        <figure class="fee-education-figure">
+                          <img src="assets/fee-education/fee-page-27-27.jpg" alt="규모가 큰 필지의 분할 교육자료" loading="lazy" />
+                          <figcaption>대면적 분할: 토지 3만㎡, 임야 10만㎡ 이상 기준과 예외 조건</figcaption>
+                        </figure>
+                      </div>
                     </article>
                   </div>
                 </section>
@@ -493,6 +599,12 @@
                         <li>분할, 분할식 지적현황, 경계복원 업무에서 검토합니다.</li>
                         <li>2도곽에 걸쳐 측량하면 2도곽 내 면적을 합산해 적용합니다.</li>
                       </ul>
+                      <div class="fee-education-gallery fee-education-gallery--single" aria-label="도곽내 면적 적용 교육자료 캡처">
+                        <figure class="fee-education-figure">
+                          <img src="assets/fee-education/fee-page-28-28.jpg" alt="도곽내 면적 적용 교육자료" loading="lazy" />
+                          <figcaption>도곽내 면적: 여러 도곽에 걸친 일부 측량 시 합산 기준</figcaption>
+                        </figure>
+                      </div>
                     </article>
                   </div>
                 </section>
@@ -515,6 +627,134 @@
                         <li>동일 소관청의 연속지는 적용할 수 있습니다.</li>
                         <li>군지역 연속지 단가가 낮으면 군지역 41필지는 1~50구간으로 보고, 시지역 32필 중 9필은 1~50구간, 23필은 51~100구간처럼 구분해 안내합니다.</li>
                       </ul>
+                      <div class="fee-education-gallery fee-education-gallery--single" aria-label="연속지 집단지 체감계수 교육자료 캡처">
+                        <figure class="fee-education-figure">
+                          <img src="assets/fee-education/fee-page-29-29.jpg" alt="연속지 집단지 체감계수 교육자료" loading="lazy" />
+                          <figcaption>연속지·집단지 체감계수: 소관청별 51필지 이상 적용</figcaption>
+                        </figure>
+                      </div>
+                    </article>
+                  </div>
+                </section>
+
+                <section class="knowledge-subpanel" data-knowledge-subpanel="fee-by-type" hidden>
+                  <div class="knowledge-grid knowledge-grid--fee">
+                    <article class="knowledge-item knowledge-item--wide" data-search-item>
+                      <i data-lucide="clipboard-list"></i>
+                      <h2>종목별 수수료 적용</h2>
+                      <p>
+                        종목별 수수료는 등록전환, 분할, 경계복원, 지적현황, 지적확정, 재의뢰 측량처럼 업무 목적과 성과 형태에 따라 적용 기준이 달라집니다.
+                      </p>
+                      <div class="fee-rule-badges fee-rule-badges--compact">
+                        <span>등록전환</span>
+                        <span>분할측량</span>
+                        <span>경계복원</span>
+                        <span>지적현황</span>
+                        <span>지적확정</span>
+                        <span>재의뢰</span>
+                      </div>
+                      <div class="knowledge-law-grid">
+                        <section class="knowledge-law-block">
+                          <h3>분할측량</h3>
+                          <ul>
+                            <li>소유권 이전 목적 분할, 차액분할, 현황측량 동시 처리 여부를 구분합니다.</li>
+                            <li>공부정리 여부와 선행 분할 이력에 따라 분할수수료, 내업품, 차액분할 적용이 달라질 수 있습니다.</li>
+                            <li>분할선 변경·추가·삭제는 단순 필지 수가 아니라 실제 업무 범위와 측량 성과를 기준으로 판단합니다.</li>
+                          </ul>
+                        </section>
+                        <section class="knowledge-law-block">
+                          <h3>경계복원측량</h3>
+                          <ul>
+                            <li>동일 소유자, 동일지목, 연접필지 여부를 확인하되 국유지와 위임장 필지는 동일인 소유로 보지 않는 사례가 있습니다.</li>
+                            <li>행정구역이 다르면 합병 조건은 충족해도 행정구역으로 합병할 수 없는 경우를 가정해 수수료를 적용합니다.</li>
+                            <li>분할측량과 연계되는 경계복원은 실제 분할수수료 적용 필지 수를 함께 검토합니다.</li>
+                          </ul>
+                        </section>
+                        <section class="knowledge-law-block">
+                          <h3>지적현황·지적확정</h3>
+                          <ul>
+                            <li>지적현황은 구획, 선, 건축·구조물·점유형태 등 현황 종류를 먼저 나눕니다.</li>
+                            <li>지적확정측량은 중심점·가구점·필계점 말박기 별도 산정, 사업 종류별 적용률, 최소면적 기준을 확인합니다.</li>
+                            <li>2025년 개정 기준으로 관광농원·개간 등 일부 토지개발사업은 최소면적 5,000㎡ 기준을 확인합니다.</li>
+                          </ul>
+                        </section>
+                        <section class="knowledge-law-block">
+                          <h3>재의뢰 측량</h3>
+                          <ul>
+                            <li>지적측량 완료 후 12개월 이내 경계점 표지 재설치 요구는 기본단가의 90%~50% 감면을 검토합니다.</li>
+                            <li>분할·지적현황측량은 선현황측량 지정 130% 기본단가를 기준으로 판단합니다.</li>
+                          </ul>
+                        </section>
+                      </div>
+                      <div class="fee-education-gallery" aria-label="종목별 수수료 적용 교육자료 캡처">
+                        <figure class="fee-education-figure">
+                          <img src="assets/fee-education/fee-page-39-39.jpg" alt="분할측량 차액분할 교육자료" loading="lazy" />
+                          <figcaption>분할측량: 현황측량, 소유권 이전 분할, 차액분할 신청 흐름</figcaption>
+                        </figure>
+                        <figure class="fee-education-figure">
+                          <img src="assets/fee-education/fee-page-45-45.jpg" alt="경계복원측량 행정구역 상이 사례" loading="lazy" />
+                          <figcaption>경계복원측량: 행정구역이 다른 경우 수수료 적용 예시</figcaption>
+                        </figure>
+                        <figure class="fee-education-figure">
+                          <img src="assets/fee-education/fee-page-52-52.jpg" alt="지적확정측량 적용 기준 교육자료" loading="lazy" />
+                          <figcaption>지적확정측량: 적용률과 최소면적 기준</figcaption>
+                        </figure>
+                        <figure class="fee-education-figure">
+                          <img src="assets/fee-education/fee-page-53-53.jpg" alt="재의뢰 측량 감면 기준 교육자료" loading="lazy" />
+                          <figcaption>재의뢰 측량: 완료 후 12개월 이내 재설치 요구 감면</figcaption>
+                        </figure>
+                      </div>
+                    </article>
+                  </div>
+                </section>
+
+                <section class="knowledge-subpanel" data-knowledge-subpanel="fee-cautions" hidden>
+                  <div class="knowledge-grid knowledge-grid--fee">
+                    <article class="knowledge-item knowledge-item--wide" data-search-item>
+                      <i data-lucide="triangle-alert"></i>
+                      <h2>수수료 감면 유의사항</h2>
+                      <p>
+                        감면 상담은 적용 사유만 보는 것이 아니라 중복감면 가능 여부, 증빙서류, 세금계산서 발행 여부, 신청인과 소유자 관계까지 함께 확인해야 합니다.
+                      </p>
+                      <div class="fee-rule-badges fee-rule-badges--compact">
+                        <span>오적용 주의</span>
+                        <span>중복감면 확인</span>
+                        <span>증빙서류 확인</span>
+                        <span>세금계산서 발행 주의</span>
+                      </div>
+                      <div class="knowledge-law-grid">
+                        <section class="knowledge-law-block">
+                          <h3>오적용이 잦은 항목</h3>
+                          <ul>
+                            <li>비활성화된 경감사유나 삭제된 적용구분을 그대로 적용하지 않도록 접수 화면을 확인합니다.</li>
+                            <li>종전분할, 공유토지분할 등 삭제된 적용구분은 상담·접수 때 사용하지 않습니다.</li>
+                            <li>소면적, 필지체감, 연속지, 차액분할, 패키지는 서로 중복 가능 여부가 다르므로 표를 기준으로 확인합니다.</li>
+                          </ul>
+                        </section>
+                        <section class="knowledge-law-block">
+                          <h3>증빙과 발행 기준</h3>
+                          <ul>
+                            <li>국가유공자·장애인 감면은 본인 소유와 신청인 관계, 위임장 제출 여부, 증빙서류를 확인합니다.</li>
+                            <li>세금계산서를 발행하는 경우 감면이 제한되는 항목이 있으므로 영수증 발행 명의를 먼저 정합니다.</li>
+                            <li>농업기반시설, 새뜰마을사업, 행복나눔측량, 자연재해지역은 사업대상 필지와 감면율을 분리해 안내합니다.</li>
+                          </ul>
+                        </section>
+                      </div>
+                      <div class="fee-education-gallery" aria-label="수수료 감면 유의사항 교육자료 캡처">
+                        <figure class="fee-education-figure">
+                          <img src="assets/fee-education/fee-page-55-55.jpg" alt="수수료 감면 적용 철저 교육자료" loading="lazy" />
+                          <figcaption>수수료 감면 적용 철저: 상담·접수 단계 확인 흐름</figcaption>
+                        </figure>
+                        <figure class="fee-education-figure">
+                          <img src="assets/fee-education/fee-page-58-58.jpg" alt="수수료 중복감면 가능여부 확인 교육자료" loading="lazy" />
+                          <figcaption>중복감면 가능여부: 감면 항목 조합별 적용 가능 표</figcaption>
+                        </figure>
+                        <figure class="fee-education-figure">
+                          <img src="assets/fee-education/fee-page-59-59.jpg" alt="각종 감면적용 유의 교육자료" loading="lazy" />
+                          <figcaption>각종 감면적용 유의: 국가유공자, 장애인, 사업대상 필지 감면</figcaption>
+                        </figure>
+                      </div>
+                      <p class="knowledge-source">교육자료 출처: 2026년 지적측량수수료 교육.pdf</p>
                     </article>
                   </div>
                 </section>

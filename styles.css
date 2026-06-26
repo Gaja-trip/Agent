@@ -905,6 +905,41 @@ input {
   width: 18%;
 }
 
+.fee-education-gallery {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 22px;
+}
+
+.fee-education-gallery--single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.fee-education-figure {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 10px;
+  background: #f7faf8;
+  border: 1px solid rgba(31, 107, 85, 0.16);
+  border-radius: 8px;
+}
+
+.fee-education-figure img {
+  width: 100%;
+  background: #fff;
+  border: 1px solid rgba(31, 107, 85, 0.12);
+  border-radius: 6px;
+}
+
+.fee-education-figure figcaption {
+  color: #31463f;
+  font-size: 0.86rem;
+  font-weight: 850;
+  line-height: 1.35;
+}
+
 .knowledge-table {
   width: 100%;
   margin-top: 22px;
@@ -3630,6 +3665,7 @@ input {
   .detail-grid,
   .guide-page-tabs,
   .fee-form-grid,
+  .fee-education-gallery,
   .knowledge-subnav,
   .portal-tabs {
     grid-template-columns: 1fr;
