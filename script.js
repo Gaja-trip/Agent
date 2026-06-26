@@ -5126,6 +5126,109 @@ function initPageSearch() {
   });
 }
 
+function initFeeImageViewer() {
+  const selector = ".fee-education-figure img";
+  let viewer = null;
+  let viewerImage = null;
+  let viewerCaption = null;
+  let closeButton = null;
+  let lastFocus = null;
+
+  function closeViewer() {
+    if (!viewer || viewer.hidden) {
+      return;
+    }
+
+    viewer.hidden = true;
+    document.body.classList.remove("fee-image-viewer-open");
+
+    if (viewerImage) {
+      viewerImage.removeAttribute("src");
+    }
+
+    if (lastFocus && typeof lastFocus.focus === "function") {
+      lastFocus.focus();
+    }
+  }
+
+  function ensureViewer() {
+    if (viewer) {
+      return viewer;
+    }
+
+    viewer = document.createElement("div");
+    viewer.className = "fee-image-viewer";
+    viewer.hidden = true;
+    viewer.setAttribute("role", "dialog");
+    viewer.setAttribute("aria-modal", "true");
+    viewer.setAttribute("aria-label", "교육자료 이미지 확대 보기");
+    viewer.innerHTML = `
+      <div class="fee-image-viewer__dialog" role="document">
+        <button class="fee-image-viewer__close" type="button" aria-label="확대 이미지 닫기">
+          <i data-lucide="x"></i>
+        </button>
+        <img class="fee-image-viewer__image" alt="" />
+        <p class="fee-image-viewer__caption"></p>
+      </div>
+    `;
+
+    document.body.append(viewer);
+    viewerImage = viewer.querySelector(".fee-image-viewer__image");
+    viewerCaption = viewer.querySelector(".fee-image-viewer__caption");
+    closeButton = viewer.querySelector(".fee-image-viewer__close");
+
+    closeButton.addEventListener("click", closeViewer);
+    viewer.addEventListener("click", (event) => {
+      if (event.target === viewer) {
+        closeViewer();
+      }
+    });
+    refreshIcons();
+
+    return viewer;
+  }
+
+  function openViewer(image) {
+    const figure = image.closest(".fee-education-figure");
+    const caption = figure?.querySelector("figcaption")?.textContent?.trim() || image.alt || "교육자료 이미지";
+
+    lastFocus = document.activeElement;
+    ensureViewer();
+    viewerImage.src = image.currentSrc || image.src;
+    viewerImage.alt = image.alt || caption;
+    viewerCaption.textContent = caption;
+    viewer.hidden = false;
+    document.body.classList.add("fee-image-viewer-open");
+    closeButton.focus();
+  }
+
+  document.querySelectorAll(selector).forEach((image) => {
+    image.tabIndex = 0;
+    image.setAttribute("role", "button");
+    image.setAttribute("aria-label", `${image.alt || "교육자료 이미지"} 확대 보기`);
+  });
+
+  document.addEventListener("click", (event) => {
+    const image = event.target.closest(selector);
+
+    if (image) {
+      openViewer(image);
+    }
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      closeViewer();
+      return;
+    }
+
+    if ((event.key === "Enter" || event.key === " ") && event.target.matches(selector)) {
+      event.preventDefault();
+      openViewer(event.target);
+    }
+  });
+}
+
 initPortalTabs();
 initProcessSteps();
 initReadinessChecklist();
@@ -5138,5 +5241,6 @@ initEraConverters();
 initJeongdanCalculator();
 initAreaUnitConverters();
 initAreaChangeBuilders();
+initFeeImageViewer();
 initPageSearch();
 refreshIcons();
