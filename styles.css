@@ -2773,12 +2773,12 @@ body.fee-image-viewer-open {
 }
 
 .page-title.page-title--process {
-  padding-top: clamp(28px, 4vw, 44px);
-  padding-bottom: clamp(20px, 3vw, 30px);
+  padding-top: clamp(10px, 1.4vw, 14px);
+  padding-bottom: clamp(10px, 1.4vw, 14px);
 }
 
 .page-title.page-title--process h1 {
-  font-size: clamp(1.9rem, 3.4vw, 3.2rem);
+  font-size: clamp(1.75rem, 2.4vw, 2.3rem);
 }
 
 .page-title.page-title--process p:not(.eyebrow) {
@@ -2926,13 +2926,18 @@ body.fee-image-viewer-open {
 
 .content-tabs.content-tabs--knowledge button {
   min-height: 40px;
-  padding: 7px 8px;
-  font-size: 0.86rem;
+  padding: 7px 4px;
+  font-size: 0.88rem;
   line-height: 1.1;
+  white-space: nowrap;
 }
 
 .content-tabs--manual {
+  position: sticky;
+  top: 83px;
+  z-index: 16;
   grid-template-columns: repeat(6, minmax(0, 1fr));
+  box-shadow: 0 10px 28px rgba(31, 42, 39, 0.08);
 }
 
 .knowledge-subnav-layout {
@@ -3791,6 +3796,7 @@ body.fee-image-viewer-open {
     top: 0;
   }
 
+  .content-tabs--manual,
   .content-tabs--knowledge {
     top: 0;
     width: 100%;
