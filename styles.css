@@ -2790,13 +2790,14 @@ body.fee-image-viewer-open {
   align-items: center;
   justify-content: space-between;
   gap: 18px;
-  min-height: 104px;
-  padding: clamp(18px, 3vw, 28px) clamp(20px, 5vw, 72px);
+  min-height: 78px;
+  padding: clamp(8px, 1.4vw, 14px) clamp(20px, 5vw, 72px);
 }
 
-.page-title--compact h1 {
+.page-title.page-title--compact h1 {
   flex: 0 0 240px;
   max-width: 240px;
+  font-size: clamp(1.8rem, 2.6vw, 2.6rem);
 }
 
 .page-title--with-search .page-search {
@@ -2839,10 +2840,26 @@ body.fee-image-viewer-open {
 
 .page-search--compact {
   width: min(420px, 100%);
-  padding: 10px;
+  padding: 6px;
   color: var(--ink);
   background: rgba(255, 255, 255, 0.96);
   box-shadow: 0 12px 30px rgba(18, 42, 35, 0.18);
+}
+
+.page-search--compact .page-search__row {
+  grid-template-columns: minmax(0, 1fr) 40px;
+  gap: 6px;
+}
+
+.page-search--compact input {
+  min-height: 38px;
+  padding: 7px 10px;
+}
+
+.page-search--compact .page-search__button {
+  width: 40px;
+  min-width: 40px;
+  min-height: 40px;
 }
 
 .page-search label {
@@ -2904,11 +2921,6 @@ body.fee-image-viewer-open {
   top: 83px;
   z-index: 16;
   grid-template-columns: repeat(9, minmax(0, 1fr));
-  width: min(1120px, 100%);
-  margin-right: auto;
-  margin-left: auto;
-  gap: 6px;
-  padding: 6px;
   box-shadow: 0 10px 28px rgba(31, 42, 39, 0.08);
 }
 
