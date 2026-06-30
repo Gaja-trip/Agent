@@ -2955,6 +2955,10 @@ body.fee-image-viewer-open {
   grid-template-columns: minmax(170px, 220px) minmax(0, 1fr);
 }
 
+.knowledge-subnav-layout--etc {
+  grid-template-columns: minmax(180px, 220px) minmax(0, 1fr);
+}
+
 .knowledge-subnav {
   position: sticky;
   top: 92px;
@@ -3004,6 +3008,17 @@ body.fee-image-viewer-open {
 .knowledge-subnav--law button {
   min-height: 42px;
   font-size: 0.95rem;
+  line-height: 1.25;
+}
+
+.knowledge-subnav--etc {
+  top: 152px;
+}
+
+.knowledge-subnav--etc button {
+  min-height: 40px;
+  padding: 9px 10px;
+  font-size: 0.92rem;
   line-height: 1.25;
 }
 
