@@ -869,8 +869,18 @@
           </section>
 
           <section class="content-panel" data-content-panel="etc" hidden>
-            <div class="knowledge-grid">
-              <article class="knowledge-item knowledge-item--wide" data-search-item>
+            <div class="knowledge-subnav-layout knowledge-subnav-layout--etc" data-knowledge-subtabs>
+              <aside class="knowledge-subnav knowledge-subnav--etc" aria-label="기타 세부 메뉴">
+                <button class="is-active" type="button" aria-selected="true" data-knowledge-subtab="etc-cemetery">묘지·자연장지</button>
+                <button type="button" aria-selected="false" data-knowledge-subtab="etc-farm-shed">농막·가설건축물</button>
+                <button type="button" aria-selected="false" data-knowledge-subtab="etc-dispute">분쟁 가능성</button>
+                <button type="button" aria-selected="false" data-knowledge-subtab="etc-memo">상담 메모</button>
+              </aside>
+
+              <div class="knowledge-subpanels knowledge-subpanels--etc">
+                <section class="knowledge-subpanel is-active" data-knowledge-subpanel="etc-cemetery">
+                  <div class="knowledge-grid">
+                    <article class="knowledge-item knowledge-item--wide" data-search-item>
                 <i data-lucide="tree-pine"></i>
                 <h2>알아두어야 할 내용: 묘지(분묘)와 자연장지 허가면적</h2>
                 <p>
