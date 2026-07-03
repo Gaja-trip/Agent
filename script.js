@@ -59,6 +59,24 @@ const vworldParcelDataId = "LP_PA_CBND_BUBUN";
 const vworldParcelWfsDataIds = ["lp_pa_cbnd_bubun", "lt_c_landinfobasemap"];
 const vworldBuildingDataIds = ["LT_C_SPBD"];
 const vworldBuildingWfsDataIds = ["lt_c_spbd"];
+const vworldAdminTownDataId = "LT_C_ADEMD_INFO";
+const vworldAdminVillageDataId = "LT_C_ADRI_INFO";
+const jeonbukSigunguCodes = {
+  "전주시": ["52111", "52113", "45111", "45113"],
+  "군산시": ["52130", "45130"],
+  "익산시": ["52140", "45140"],
+  "정읍시": ["52180", "45180"],
+  "남원시": ["52190", "45190"],
+  "김제시": ["52210", "45210"],
+  "완주군": ["52710", "45710"],
+  "진안군": ["52720", "45720"],
+  "무주군": ["52730", "45730"],
+  "장수군": ["52740", "45740"],
+  "임실군": ["52750", "45750"],
+  "순창군": ["52770", "45770"],
+  "고창군": ["52790", "45790"],
+  "부안군": ["52800", "45800"],
+};
 const vworldParcelRadiusMeters = 80;
 const vworldBuildingQueryRadiusMeters = 24;
 const vworldPoiQueryRadiusMeters = 180;
@@ -122,6 +140,8 @@ let vworldInfoMarker = null;
 let vworldMeasureMode = "";
 let vworldMeasurePoints = [];
 let vworldMeasureLayer = null;
+const vworldAdminTownCache = new Map();
+const vworldAdminVillageCache = new Map();
 
 const processSteps = {
   consult: {
@@ -691,8 +711,10 @@ function initPortalTabs() {
       ...options.map((option) => {
         const value = typeof option === "string" ? option : option.value;
         const label = typeof option === "string" ? option : option.label;
+        const code = typeof option === "string" ? "" : option.code || "";
         const selected = value === normalizedSelected ? " selected" : "";
-        return `<option value="${escapeHtml(value)}"${selected}>${escapeHtml(label)}</option>`;
+        const codeAttribute = code ? ` data-admin-code="${escapeHtml(code)}"` : "";
+        return `<option value="${escapeHtml(value)}"${selected}${codeAttribute}>${escapeHtml(label)}</option>`;
       })
     );
 
@@ -778,9 +800,9 @@ function initPortalTabs() {
     const rawParcelAddress = getParcelAddress();
     const parcelAddress = escapeHtml(rawParcelAddress);
     const selectedCity = getParcelCity() || "부안군";
-    const townOptions = selectedCity === "부안군" && typeof buanVillageMap !== "undefined" ? Object.keys(buanVillageMap) : [];
+    const townOptions = getLocalAerialTownOptions(selectedCity);
     const initialTown = townOptions.find((town) => rawParcelAddress.includes(town)) || "";
-    const initialVillages = initialTown && typeof buanVillageMap !== "undefined" ? buanVillageMap[initialTown] || [] : [];
+    const initialVillages = getLocalAerialVillageOptions(selectedCity, initialTown);
     const initialVillage = initialVillages.find((village) => rawParcelAddress.includes(village)) || "";
 
     return `
@@ -819,6 +841,16 @@ function initPortalTabs() {
               </div>
             </div>
             <label for="aerial-parcel-address">도로명·명칭 검색</label>
+            <div class="aerial-search__modes" role="radiogroup" aria-label="검색 방식">
+              <label>
+                <input type="radio" name="vworldSearchMode" value="address" checked />
+                <span>도로명</span>
+              </label>
+              <label>
+                <input type="radio" name="vworldSearchMode" value="place" />
+                <span>명칭</span>
+              </label>
+            </div>
             <div class="aerial-search__row">
               <input
                 id="aerial-parcel-address"
@@ -833,16 +865,6 @@ function initPortalTabs() {
                 <i data-lucide="search"></i>
                 검색
               </button>
-            </div>
-            <div class="aerial-search__modes" role="radiogroup" aria-label="검색 방식">
-              <label>
-                <input type="radio" name="vworldSearchMode" value="address" checked />
-                <span>도로명</span>
-              </label>
-              <label>
-                <input type="radio" name="vworldSearchMode" value="place" />
-                <span>명칭</span>
-              </label>
             </div>
           </form>
           <div class="aerial-results" data-aerial-results></div>
@@ -2596,10 +2618,43 @@ function initPortalTabs() {
     const aerialVillageSelect = document.querySelector("[data-aerial-village]");
     const aerialLotInput = document.querySelector("[data-aerial-lot]");
     const resultsNode = document.querySelector("[data-aerial-results]");
+    const parcelSubmitButton = aerialForm?.querySelector('[data-aerial-submit="parcel"]');
+    const textSubmitButton = aerialForm?.querySelector('[data-aerial-submit="text"]');
 
     if (!aerialForm || !resultsNode) {
       return;
     }
+
+    function requestAerialSubmit(button) {
+      if (!button || button.disabled) {
+        return;
+      }
+
+      if (typeof aerialForm.requestSubmit === "function") {
+        aerialForm.requestSubmit(button);
+        return;
+      }
+
+      button.click();
+    }
+
+    function bindEnterSearch(input, button) {
+      if (!input || !button) {
+        return;
+      }
+
+      input.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter" || event.isComposing) {
+          return;
+        }
+
+        event.preventDefault();
+        requestAerialSubmit(button);
+      });
+    }
+
+    bindEnterSearch(aerialLotInput, parcelSubmitButton);
+    bindEnterSearch(aerialInput, textSubmitButton);
 
     function fillAerialSelect(select, options, placeholder, selectedValue = "") {
       if (!select) {
@@ -2607,42 +2662,273 @@ function initPortalTabs() {
       }
 
       const selected = String(selectedValue || "").trim();
+      const normalizedOptions = options
+        .map((option) => ({
+          value: String(typeof option === "string" ? option : option.value || "").trim(),
+          label: String(typeof option === "string" ? option : option.label || option.value || "").trim(),
+          code: String(typeof option === "string" ? "" : option.code || "").trim(),
+        }))
+        .filter((option) => option.value);
+
       select.replaceChildren();
 
       if (placeholder) {
         select.append(new Option(placeholder, ""));
       }
 
-      options.forEach((option) => {
-        const optionElement = new Option(option, option);
-        optionElement.selected = option === selected;
+      normalizedOptions.forEach((option) => {
+        const optionElement = new Option(option.label, option.value);
+        optionElement.selected = option.value === selected;
+        if (option.code) {
+          optionElement.dataset.adminCode = option.code;
+        }
         select.append(optionElement);
       });
 
-      select.disabled = options.length === 0;
+      select.disabled = normalizedOptions.length === 0;
     }
 
-    function getAerialTownOptions() {
-      if (aerialCitySelect?.value !== "부안군" || typeof buanVillageMap === "undefined") {
-        return [];
+    function toAdminOption(name, code = "") {
+      const value = String(name || "").trim();
+
+      if (!value) {
+        return null;
       }
 
-      return Object.keys(buanVillageMap);
+      return {
+        value,
+        label: value,
+        code: String(code || "").trim(),
+      };
     }
 
-    function syncAerialVillageOptions(resetVillage = false) {
-      const villages =
-        aerialCitySelect?.value === "부안군" && aerialTownSelect?.value && typeof buanVillageMap !== "undefined"
-          ? buanVillageMap[aerialTownSelect.value] || []
-          : [];
-      const selectedVillage = resetVillage ? "" : aerialVillageSelect?.value || "";
-      fillAerialSelect(aerialVillageSelect, villages, "리 선택", selectedVillage);
+    function uniqueAdminOptions(options) {
+      const seen = new Set();
+      const result = [];
+
+      options.forEach((option) => {
+        const normalized = typeof option === "string" ? toAdminOption(option) : toAdminOption(option.value || option.label, option.code);
+
+        if (!normalized || seen.has(normalized.value)) {
+          return;
+        }
+
+        seen.add(normalized.value);
+        result.push(normalized);
+      });
+
+      return result;
     }
 
-    function syncAerialTownOptions(resetTown = false) {
-      const towns = getAerialTownOptions();
+    function readVworldAdminProperties(feature) {
+      return feature?.properties || feature?.attributes || feature?.attribute || feature || {};
+    }
+
+    function readVworldAdminValue(properties, keys) {
+      const entries = Object.entries(properties || {});
+
+      for (const key of keys) {
+        if (properties?.[key] != null) {
+          return String(properties[key]).trim();
+        }
+
+        const match = entries.find(([entryKey]) => entryKey.toLowerCase() === key.toLowerCase());
+
+        if (match?.[1] != null) {
+          return String(match[1]).trim();
+        }
+      }
+
+      return "";
+    }
+
+    function cleanAdminName(rawName, suffixPattern) {
+      const text = String(rawName || "").trim().replace(/\s+/g, " ");
+
+      if (!text) {
+        return "";
+      }
+
+      const parts = text.split(" ");
+      const lastPart = parts[parts.length - 1];
+
+      if (suffixPattern.test(lastPart)) {
+        return lastPart;
+      }
+
+      const match = text.match(suffixPattern);
+      return match ? match[0] : lastPart || text;
+    }
+
+    function createVworldAdminDataUrl(dataId, attrFilter) {
+      const url = new URL("https://api.vworld.kr/req/data");
+
+      url.searchParams.set("service", "data");
+      url.searchParams.set("request", "GetFeature");
+      url.searchParams.set("version", "2.0");
+      url.searchParams.set("data", dataId);
+      url.searchParams.set("format", "json");
+      url.searchParams.set("errorformat", "json");
+      url.searchParams.set("geometry", "false");
+      url.searchParams.set("size", "1000");
+      url.searchParams.set("page", "1");
+      url.searchParams.set("key", vworldApiKey);
+      url.searchParams.set("domain", window.location.origin);
+
+      if (attrFilter) {
+        url.searchParams.set("attrFilter", attrFilter);
+      }
+
+      return url;
+    }
+
+    async function fetchVworldAdminFeatures(dataId, attrFilter) {
+      try {
+        const data = await requestVworldJson(createVworldAdminDataUrl(dataId, attrFilter));
+        return extractVworldFeatures(data);
+      } catch (error) {
+        return [];
+      }
+    }
+
+    function makeLocalTownOptions(city) {
+      return getLocalAerialTownOptions(city).map((town) => toAdminOption(town)).filter(Boolean);
+    }
+
+    function makeLocalVillageOptions(city, town) {
+      return getLocalAerialVillageOptions(city, town).map((village) => toAdminOption(village)).filter(Boolean);
+    }
+
+    function findOptionByCurrentAddress(options) {
+      const address = getParcelAddress();
+      return options.find((option) => option?.value && address.includes(option.value))?.value || "";
+    }
+
+    async function getAerialTownOptions(city = aerialCitySelect?.value || "") {
+      const localOptions = makeLocalTownOptions(city);
+
+      if (!city) {
+        return localOptions;
+      }
+
+      if (localOptions.length) {
+        vworldAdminTownCache.set(city, localOptions);
+        return localOptions;
+      }
+
+      if (vworldAdminTownCache.has(city)) {
+        return vworldAdminTownCache.get(city);
+      }
+
+      const fetchedOptions = [];
+
+      for (const sigunguCode of jeonbukSigunguCodes[city] || []) {
+        const features = await fetchVworldAdminFeatures(vworldAdminTownDataId, `sig_cd:=:${sigunguCode}`);
+
+        features.forEach((feature) => {
+          const properties = readVworldAdminProperties(feature);
+          const name = cleanAdminName(
+            readVworldAdminValue(properties, ["emd_kor_nm", "emd_nm", "emd_name", "emd_kor_name", "adm_nm", "full_nm", "name"]),
+            /[가-힣0-9]+(?:읍|면|동|가)$/
+          );
+          const code = readVworldAdminValue(properties, ["emd_cd", "adm_cd", "code"]);
+          const option = toAdminOption(name, code);
+
+          if (option) {
+            fetchedOptions.push(option);
+          }
+        });
+      }
+
+      const mergedOptions = uniqueAdminOptions(fetchedOptions.length ? fetchedOptions : localOptions);
+      vworldAdminTownCache.set(city, mergedOptions);
+      return mergedOptions;
+    }
+
+    async function getAerialVillageOptions(city, town, townCode = "") {
+      const localOptions = makeLocalVillageOptions(city, town);
+
+      if (!city || !town) {
+        return localOptions;
+      }
+
+      if (localOptions.length) {
+        return localOptions;
+      }
+
+      let emdCode = townCode;
+
+      if (!emdCode) {
+        const towns = await getAerialTownOptions(city);
+        emdCode = towns.find((option) => option.value === town)?.code || "";
+      }
+
+      if (!emdCode) {
+        return localOptions;
+      }
+
+      const cacheKey = `${city}:${town}:${emdCode}`;
+
+      if (vworldAdminVillageCache.has(cacheKey)) {
+        return vworldAdminVillageCache.get(cacheKey);
+      }
+
+      const features = await fetchVworldAdminFeatures(vworldAdminVillageDataId, `emd_cd:=:${emdCode}`);
+      const fetchedOptions = features
+        .map((feature) => {
+          const properties = readVworldAdminProperties(feature);
+          const name = cleanAdminName(
+            readVworldAdminValue(properties, ["li_kor_nm", "li_nm", "li_name", "li_kor_name", "adm_nm", "full_nm", "name"]),
+            /[가-힣0-9]+리$/
+          );
+          const code = readVworldAdminValue(properties, ["li_cd", "adm_cd", "code"]);
+          return toAdminOption(name, code);
+        })
+        .filter(Boolean);
+      const villages = uniqueAdminOptions(fetchedOptions.length ? fetchedOptions : localOptions);
+
+      vworldAdminVillageCache.set(cacheKey, villages);
+      return villages;
+    }
+
+    async function syncAerialVillageOptions(resetVillage = false) {
+      const city = aerialCitySelect?.value || "";
+      const town = aerialTownSelect?.value || "";
+      const townCode = aerialTownSelect?.selectedOptions?.[0]?.dataset.adminCode || "";
+      const localVillages = makeLocalVillageOptions(city, town);
+      const selectedVillage = resetVillage ? "" : aerialVillageSelect?.value || findOptionByCurrentAddress(localVillages);
+
+      fillAerialSelect(aerialVillageSelect, localVillages, "리 선택", selectedVillage);
+
+      if (!town) {
+        return;
+      }
+
+      const villages = await getAerialVillageOptions(city, town, townCode);
+
+      if (aerialCitySelect?.value !== city || aerialTownSelect?.value !== town) {
+        return;
+      }
+
+      const nextSelectedVillage = resetVillage ? "" : aerialVillageSelect?.value || findOptionByCurrentAddress(villages) || selectedVillage;
+      fillAerialSelect(aerialVillageSelect, villages, "리 선택", nextSelectedVillage);
+    }
+
+    async function syncAerialTownOptions(resetTown = false) {
+      const city = aerialCitySelect?.value || "";
+      const localTowns = makeLocalTownOptions(city);
       const selectedTown = resetTown ? "" : aerialTownSelect?.value || "";
-      fillAerialSelect(aerialTownSelect, towns, "읍면 선택", selectedTown);
+      fillAerialSelect(aerialTownSelect, localTowns, "읍면 선택", selectedTown);
+      syncAerialVillageOptions(resetTown);
+
+      const towns = await getAerialTownOptions(city);
+
+      if (aerialCitySelect?.value !== city) {
+        return;
+      }
+
+      const nextSelectedTown = resetTown ? "" : aerialTownSelect?.value || findOptionByCurrentAddress(towns) || selectedTown;
+      fillAerialSelect(aerialTownSelect, towns, "읍면 선택", nextSelectedTown);
       syncAerialVillageOptions(resetTown);
     }
 
@@ -2736,7 +3022,8 @@ function initPortalTabs() {
     aerialForm.addEventListener("submit", async (event) => {
       event.preventDefault();
 
-      const submitType = event.submitter?.dataset.aerialSubmit || "text";
+      const activeElement = document.activeElement;
+      const submitType = event.submitter?.dataset.aerialSubmit || (activeElement === aerialLotInput ? "parcel" : "text");
       const searchMode = submitType === "parcel" ? "address" : aerialForm.querySelector("input[name='vworldSearchMode']:checked")?.value || "address";
       const rawQuery = submitType === "parcel" ? buildAerialParcelQuery() : aerialInput?.value.trim() || "";
       const query =
@@ -2778,10 +3065,28 @@ function initPortalTabs() {
   function bindAerialSearchForm() {
     const aerialForm = document.querySelector("[data-aerial-parcel-form]");
     const aerialInput = document.querySelector("[data-aerial-parcel-input]");
+    const textSubmitButton = aerialForm?.querySelector('[data-aerial-submit="text"]') || aerialForm?.querySelector('button[type="submit"]');
 
     if (!aerialForm || !aerialInput) {
       return;
     }
+
+    aerialInput.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" || event.isComposing) {
+        return;
+      }
+
+      event.preventDefault();
+
+      if (textSubmitButton && typeof aerialForm.requestSubmit === "function") {
+        aerialForm.requestSubmit(textSubmitButton);
+        return;
+      }
+
+      if (textSubmitButton) {
+        textSubmitButton.click();
+      }
+    });
 
     aerialInput.addEventListener("input", () => {
       if (parcelInput) {
@@ -4286,9 +4591,7 @@ function initPortalTabs() {
 
         if (action === "clear") {
           clearVworldMeasure();
-          clearVworldClickInfo();
-          clearVworldPoiMarkers();
-          updateAerialStatus("측정 표시를 초기화했습니다.");
+          updateAerialStatus("거리·면적 측정값을 초기화했습니다.");
         }
       });
     });
@@ -4344,9 +4647,10 @@ function initPortalTabs() {
     emptyState.hidden = true;
 
     vworldMap = window.L.map(mapNode, {
-      zoomControl: true,
+      zoomControl: false,
       maxZoom: vworldMapMaxZoom,
     }).setView(defaultAerialCenter, 16);
+    window.L.control.zoom({ position: "topright" }).addTo(vworldMap);
     vworldMap.on("click", handleVworldMapClick);
     vworldMap.on("zoom", syncVworldLotNumberLabelScale);
     vworldMap.on("zoomend", rerenderVworldLotNumberLabels);
@@ -4421,9 +4725,10 @@ function initPortalTabs() {
     emptyState.hidden = true;
 
     vworldMap = window.L.map(mapNode, {
-      zoomControl: true,
+      zoomControl: false,
       maxZoom: vworldMapMaxZoom,
     }).setView([36.4, 127.8], 7);
+    window.L.control.zoom({ position: "topright" }).addTo(vworldMap);
     vworldMap.on("click", handleVworldMapClick);
     vworldMap.on("zoom", syncVworldLotNumberLabelScale);
     vworldMap.on("zoomend", rerenderVworldLotNumberLabels);
@@ -5019,6 +5324,22 @@ const buanVillageMap = {
   "줄포면": ["난산리", "대동리", "신리", "우포리", "장동리", "줄포리", "파산리"],
   "위도면": ["대리", "식도리", "정금리", "진리", "치도리"],
 };
+
+const jeonbukTownVillageMap = window.jeonbukTownVillageMapData || {
+  "부안군": buanVillageMap,
+};
+
+function getLocalAerialTownMap(city) {
+  return jeonbukTownVillageMap[city] || {};
+}
+
+function getLocalAerialTownOptions(city) {
+  return Object.keys(getLocalAerialTownMap(city));
+}
+
+function getLocalAerialVillageOptions(city, town) {
+  return getLocalAerialTownMap(city)[town] || [];
+}
 
 const landCategoryOptions = ["전", "답", "대", "임야", "도로", "구거", "하천", "잡종지", "과수원", "목장용지", "공장용지", "학교용지", "주차장", "주유소용지", "창고용지", "공원", "체육용지", "종교용지", "묘지"];
 

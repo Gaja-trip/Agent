@@ -2141,7 +2141,7 @@ body.fee-image-viewer-open {
 }
 
 .aerial-portal {
-  --aerial-panel-width: 320px;
+  --aerial-panel-width: 360px;
   position: relative;
   display: grid;
   grid-template-columns: var(--aerial-panel-width) minmax(420px, 1fr);
