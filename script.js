@@ -905,7 +905,7 @@ function initPortalTabs() {
               </button>
               <button type="button" class="is-active" data-vworld-action="toggle-cadastral" aria-pressed="true">
                 <i data-lucide="map"></i>
-                경계선
+                편집지적도
               </button>
             </div>
           </div>
@@ -3129,14 +3129,14 @@ function initPortalTabs() {
       toggleButton.setAttribute("aria-expanded", String(!collapsed));
 
       const label = toggleButton.querySelector("span");
-      const icon = toggleButton.querySelector("i");
+      const iconName = collapsed ? "chevron-right" : "chevron-left";
+      const icon = document.createElement("i");
+      icon.setAttribute("data-lucide", iconName);
+      toggleButton.replaceChildren(icon);
 
       if (label) {
         label.textContent = collapsed ? "패널 열기" : "패널 접기";
-      }
-
-      if (icon) {
-        icon.setAttribute("data-lucide", collapsed ? "chevron-right" : "chevron-left");
+        toggleButton.append(label);
       }
 
       toggleButton.setAttribute("aria-label", collapsed ? "패널 열기" : "패널 접기");
@@ -3217,7 +3217,7 @@ function initPortalTabs() {
   function toggleVworldCadastralLayer() {
     vworldCadastralVisible = !vworldCadastralVisible;
     setVworldCadastralLayer();
-    updateAerialStatus(vworldCadastralVisible ? "경계선과 지번을 표시했습니다." : "경계선과 지번을 숨겼습니다.");
+    updateAerialStatus(vworldCadastralVisible ? "편집지적도와 지번을 표시했습니다." : "편집지적도와 지번을 숨겼습니다.");
   }
 
   function setVworldLayer(layerKey) {
