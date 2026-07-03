@@ -117,6 +117,7 @@ let vworldLabelRequestId = 0;
 let vworldInfoRequestId = 0;
 let vworldPoiMarkerRequestId = 0;
 let vworldMarkerVisible = true;
+let vworldCadastralVisible = true;
 let vworldInfoMarker = null;
 let vworldMeasureMode = "";
 let vworldMeasurePoints = [];
@@ -311,7 +312,9 @@ function initPortalTabs() {
     return String(rawAddress || "")
       .trim()
       .replace(/\s+/g, " ")
+      .replace(/(\d+(?:-\d+)?)\s*번지(?=\s|$)/g, "$1")
       .replace(/([가-힣]+(?:리|동|가|읍|면))\s*산\s*(\d+(?:-\d+)?)/g, "$1 산 $2")
+      .replace(/([가-힣]+(?:리|동|가))\s+(\d+(?:-\d+)?)/g, "$1 $2")
       .replace(/(^|\s)산\s*(\d+(?:-\d+)?)/g, "$1산 $2")
       .replace(/\s+/g, " ")
       .trim();
@@ -680,6 +683,22 @@ function initPortalTabs() {
     `;
   }
 
+  function renderOptionList(options, selectedValue = "", placeholder = "") {
+    const normalizedSelected = String(selectedValue || "").trim();
+    const entries = placeholder ? [`<option value="">${escapeHtml(placeholder)}</option>`] : [];
+
+    entries.push(
+      ...options.map((option) => {
+        const value = typeof option === "string" ? option : option.value;
+        const label = typeof option === "string" ? option : option.label;
+        const selected = value === normalizedSelected ? " selected" : "";
+        return `<option value="${escapeHtml(value)}"${selected}>${escapeHtml(label)}</option>`;
+      })
+    );
+
+    return entries.join("");
+  }
+
   function renderAerialPortal() {
     const parcelAddress = escapeHtml(getParcelAddress());
 
@@ -756,13 +775,50 @@ function initPortalTabs() {
   }
 
   function renderAerialPortalConnected() {
-    const parcelAddress = escapeHtml(getParcelAddress());
+    const rawParcelAddress = getParcelAddress();
+    const parcelAddress = escapeHtml(rawParcelAddress);
+    const selectedCity = getParcelCity() || "부안군";
+    const townOptions = selectedCity === "부안군" && typeof buanVillageMap !== "undefined" ? Object.keys(buanVillageMap) : [];
+    const initialTown = townOptions.find((town) => rawParcelAddress.includes(town)) || "";
+    const initialVillages = initialTown && typeof buanVillageMap !== "undefined" ? buanVillageMap[initialTown] || [] : [];
+    const initialVillage = initialVillages.find((village) => rawParcelAddress.includes(village)) || "";
 
     return `
       <div class="aerial-portal aerial-portal--connected">
-        <aside class="aerial-portal__panel">
+        <button class="aerial-panel-toggle" type="button" data-aerial-panel-toggle aria-expanded="true">
+          <i data-lucide="panel-left-close"></i>
+          <span>패널 접기</span>
+        </button>
+        <aside class="aerial-portal__panel" data-aerial-panel>
           <form class="aerial-search" data-aerial-parcel-form>
-            <label for="aerial-parcel-address">주소·도로명·명칭 검색</label>
+            <label>지번 검색</label>
+            <div class="aerial-search__grid" data-aerial-parcel-fields>
+              <select aria-label="시도 선택" data-aerial-province disabled>
+                <option value="전북특별자치도">전북특별자치도</option>
+              </select>
+              <select aria-label="시군 선택" data-aerial-city>
+                ${renderOptionList(jeonbukCityNames, selectedCity, "시군 선택")}
+              </select>
+              <select aria-label="읍면 선택" data-aerial-town>
+                ${renderOptionList(townOptions, initialTown, "읍면 선택")}
+              </select>
+              <select aria-label="리 선택" data-aerial-village>
+                ${renderOptionList(initialVillages, initialVillage, "리 선택")}
+              </select>
+              <input
+                type="search"
+                name="aerialLot"
+                data-aerial-lot
+                placeholder="번지"
+                autocomplete="off"
+                aria-label="번지 입력"
+              />
+              <button class="button button--primary" type="submit" data-aerial-submit="parcel">
+                <i data-lucide="search"></i>
+                검색
+              </button>
+            </div>
+            <label for="aerial-parcel-address">도로명·명칭 검색</label>
             <div class="aerial-search__row">
               <input
                 id="aerial-parcel-address"
@@ -770,10 +826,10 @@ function initPortalTabs() {
                 name="aerialParcel"
                 data-aerial-parcel-input
                 value="${parcelAddress}"
-                placeholder="예: 서울특별시 중구 세종대로 110 또는 지번주소"
+                placeholder="예: 매창로 76 또는 현대오일뱅크"
                 autocomplete="street-address"
               />
-              <button class="button button--primary" type="submit">
+              <button class="button button--primary" type="submit" data-aerial-submit="text">
                 <i data-lucide="search"></i>
                 검색
               </button>
@@ -781,7 +837,7 @@ function initPortalTabs() {
             <div class="aerial-search__modes" role="radiogroup" aria-label="검색 방식">
               <label>
                 <input type="radio" name="vworldSearchMode" value="address" checked />
-                <span>주소</span>
+                <span>도로명</span>
               </label>
               <label>
                 <input type="radio" name="vworldSearchMode" value="place" />
@@ -801,22 +857,23 @@ function initPortalTabs() {
                 <button type="button" data-vworld-layer="hybrid">라벨</button>
               </div>
             </div>
-            <div class="vworld-tool-group">
+            <div class="vworld-tool-group vworld-tool-group--inline vworld-tool-group--measure">
               <strong>측정</strong>
               <button type="button" data-vworld-action="distance">
                 <i data-lucide="ruler"></i>
-                거리재기
+                거리
               </button>
               <button type="button" data-vworld-action="area">
                 <i data-lucide="pentagon"></i>
-                면적재기
+                면적
               </button>
               <button type="button" data-vworld-action="clear">
                 <i data-lucide="eraser"></i>
                 초기화
               </button>
             </div>
-            <div class="vworld-tool-group">
+            <output class="vworld-measure" data-vworld-measure>거리 또는 면적을 선택한 뒤 도면을 클릭하세요.</output>
+            <div class="vworld-tool-group vworld-tool-group--inline vworld-tool-group--view">
               <strong>보기</strong>
               <button type="button" data-vworld-action="center">
                 <i data-lucide="crosshair"></i>
@@ -826,8 +883,11 @@ function initPortalTabs() {
                 <i data-lucide="map-pin"></i>
                 마커
               </button>
+              <button type="button" class="is-active" data-vworld-action="toggle-cadastral" aria-pressed="true">
+                <i data-lucide="map"></i>
+                경계선
+              </button>
             </div>
-            <output class="vworld-measure" data-vworld-measure>거리 또는 면적을 선택한 뒤 도면을 클릭하세요.</output>
           </div>
         </aside>
         <div class="vworld-map-shell">
@@ -2533,11 +2593,117 @@ function initPortalTabs() {
   function bindAerialSearchFormConnected() {
     const aerialForm = document.querySelector("[data-aerial-parcel-form]");
     const aerialInput = document.querySelector("[data-aerial-parcel-input]");
+    const aerialCitySelect = document.querySelector("[data-aerial-city]");
+    const aerialTownSelect = document.querySelector("[data-aerial-town]");
+    const aerialVillageSelect = document.querySelector("[data-aerial-village]");
+    const aerialLotInput = document.querySelector("[data-aerial-lot]");
     const resultsNode = document.querySelector("[data-aerial-results]");
 
-    if (!aerialForm || !aerialInput || !resultsNode) {
+    if (!aerialForm || !resultsNode) {
       return;
     }
+
+    function fillAerialSelect(select, options, placeholder, selectedValue = "") {
+      if (!select) {
+        return;
+      }
+
+      const selected = String(selectedValue || "").trim();
+      select.replaceChildren();
+
+      if (placeholder) {
+        select.append(new Option(placeholder, ""));
+      }
+
+      options.forEach((option) => {
+        const optionElement = new Option(option, option);
+        optionElement.selected = option === selected;
+        select.append(optionElement);
+      });
+
+      select.disabled = options.length === 0;
+    }
+
+    function getAerialTownOptions() {
+      if (aerialCitySelect?.value !== "부안군" || typeof buanVillageMap === "undefined") {
+        return [];
+      }
+
+      return Object.keys(buanVillageMap);
+    }
+
+    function syncAerialVillageOptions(resetVillage = false) {
+      const villages =
+        aerialCitySelect?.value === "부안군" && aerialTownSelect?.value && typeof buanVillageMap !== "undefined"
+          ? buanVillageMap[aerialTownSelect.value] || []
+          : [];
+      const selectedVillage = resetVillage ? "" : aerialVillageSelect?.value || "";
+      fillAerialSelect(aerialVillageSelect, villages, "리 선택", selectedVillage);
+    }
+
+    function syncAerialTownOptions(resetTown = false) {
+      const towns = getAerialTownOptions();
+      const selectedTown = resetTown ? "" : aerialTownSelect?.value || "";
+      fillAerialSelect(aerialTownSelect, towns, "읍면 선택", selectedTown);
+      syncAerialVillageOptions(resetTown);
+    }
+
+    function buildAerialAddressQuery(rawQuery) {
+      const address = normalizeMountainLotAddress(rawQuery);
+      const city = aerialCitySelect?.value || getParcelCity();
+
+      if (!address) {
+        return "";
+      }
+
+      const parts = [];
+
+      if (!hasProvinceToken(address)) {
+        parts.push("전북특별자치도");
+      }
+
+      if (city && !address.includes(city) && !jeonbukCityNames.some((cityName) => address.includes(cityName))) {
+        parts.push(city);
+      }
+
+      parts.push(address);
+      return normalizeMountainLotAddress(parts.join(" "));
+    }
+
+    function buildAerialPlaceQuery(rawQuery) {
+      const query = String(rawQuery || "").trim().replace(/\s+/g, " ");
+      const city = aerialCitySelect?.value || getParcelCity();
+
+      if (!query) {
+        return "";
+      }
+
+      return ["전북특별자치도", city, query].filter((part) => part && !query.includes(part)).concat(query).join(" ").replace(/\s+/g, " ").trim();
+    }
+
+    function buildAerialParcelQuery() {
+      const town = aerialTownSelect?.value || "";
+      const village = aerialVillageSelect?.value || "";
+      const lot = aerialLotInput?.value || "";
+
+      return buildAerialAddressQuery([town, village, lot].filter(Boolean).join(" "));
+    }
+
+    if (aerialCitySelect) {
+      aerialCitySelect.addEventListener("change", () => {
+        writeStoredValue(parcelCityStorageKey, aerialCitySelect.value);
+        syncAerialTownOptions(true);
+        updateAerialStatus(`${aerialCitySelect.value || "선택한 시군"} 기준으로 항공사진 검색을 진행합니다.`);
+      });
+    }
+
+    if (aerialTownSelect) {
+      aerialTownSelect.addEventListener("change", () => {
+        syncAerialVillageOptions(true);
+      });
+    }
+
+    syncAerialTownOptions(false);
 
     resultsNode.addEventListener("click", async (event) => {
       const button = event.target.closest("[data-vworld-result]");
@@ -2572,19 +2738,28 @@ function initPortalTabs() {
     aerialForm.addEventListener("submit", async (event) => {
       event.preventDefault();
 
-      const rawQuery = aerialInput.value.trim();
-      const searchMode = aerialForm.querySelector("input[name='vworldSearchMode']:checked")?.value || "address";
-      const query = searchMode === "address" ? buildContextualParcelAddress(rawQuery) : rawQuery;
+      const submitType = event.submitter?.dataset.aerialSubmit || "text";
+      const searchMode = submitType === "parcel" ? "address" : aerialForm.querySelector("input[name='vworldSearchMode']:checked")?.value || "address";
+      const rawQuery = submitType === "parcel" ? buildAerialParcelQuery() : aerialInput?.value.trim() || "";
+      const query =
+        submitType === "parcel"
+          ? rawQuery
+          : searchMode === "address"
+            ? buildAerialAddressQuery(rawQuery)
+            : buildAerialPlaceQuery(rawQuery);
 
       if (!query) {
         vworldSearchResults = [];
-        renderAerialResults([], "검색어를 입력해 주세요.");
-        updateAerialStatus("주소 또는 명칭을 입력해 주세요.");
+        renderAerialResults([], submitType === "parcel" ? "읍면·리와 번지를 선택 또는 입력해 주세요." : "검색어를 입력해 주세요.");
+        updateAerialStatus(submitType === "parcel" ? "읍면·리와 번지를 입력해 주세요." : "도로명 또는 명칭을 입력해 주세요.");
         return;
       }
 
-      saveParcelAddress(query);
-      if (searchMode === "address" && aerialInput.value !== query) {
+      if (searchMode === "address") {
+        saveParcelAddress(query);
+      }
+
+      if (submitType === "text" && searchMode === "address" && aerialInput && aerialInput.value !== query) {
         aerialInput.value = query;
       }
       renderAerialResults([], "검색 중입니다.");
@@ -2636,6 +2811,43 @@ function initPortalTabs() {
     });
   }
 
+  function bindAerialPanelToggle() {
+    const portal = document.querySelector(".aerial-portal");
+    const toggleButton = document.querySelector("[data-aerial-panel-toggle]");
+
+    if (!portal || !toggleButton || toggleButton.dataset.bound) {
+      return;
+    }
+
+    toggleButton.dataset.bound = "true";
+    toggleButton.addEventListener("click", () => {
+      const collapsed = !portal.classList.contains("is-panel-collapsed");
+      portal.classList.toggle("is-panel-collapsed", collapsed);
+      toggleButton.setAttribute("aria-expanded", String(!collapsed));
+
+      const label = toggleButton.querySelector("span");
+      const icon = toggleButton.querySelector("i");
+
+      if (label) {
+        label.textContent = collapsed ? "패널 열기" : "패널 접기";
+      }
+
+      if (icon) {
+        icon.setAttribute("data-lucide", collapsed ? "panel-left-open" : "panel-left-close");
+      }
+
+      if (window.lucide?.createIcons) {
+        window.lucide.createIcons();
+      }
+
+      window.setTimeout(() => {
+        if (vworldMap) {
+          vworldMap.invalidateSize();
+        }
+      }, 220);
+    });
+  }
+
   function createVworldLayer(layerName) {
     const extension = layerName === "Satellite" ? "jpeg" : "png";
 
@@ -2677,8 +2889,29 @@ function initPortalTabs() {
       vworldCadastralLayer = null;
     }
 
+    if (!vworldCadastralVisible) {
+      syncVworldLotNumberLayerVisibility();
+      syncVworldCadastralButton();
+      return;
+    }
+
     vworldCadastralLayer = createVworldCadastralLayer().addTo(vworldMap);
     vworldCadastralLayer.setZIndex(30);
+    syncVworldLotNumberLayerVisibility();
+    syncVworldCadastralButton();
+  }
+
+  function syncVworldCadastralButton() {
+    document.querySelectorAll('[data-vworld-action="toggle-cadastral"]').forEach((button) => {
+      button.classList.toggle("is-active", vworldCadastralVisible);
+      button.setAttribute("aria-pressed", String(vworldCadastralVisible));
+    });
+  }
+
+  function toggleVworldCadastralLayer() {
+    vworldCadastralVisible = !vworldCadastralVisible;
+    setVworldCadastralLayer();
+    updateAerialStatus(vworldCadastralVisible ? "경계선과 지번을 표시했습니다." : "경계선과 지번을 숨겼습니다.");
   }
 
   function setVworldLayer(layerKey) {
@@ -2720,6 +2953,7 @@ function initPortalTabs() {
 
     if (output) {
       output.textContent = message;
+      output.classList.toggle("is-result", /^(거리|면적)\s[\d,]/.test(String(message || "")));
     }
   }
 
@@ -2802,7 +3036,7 @@ function initPortalTabs() {
   }
 
   function shouldShowVworldLotNumberLabels() {
-    return Boolean(vworldMap && vworldMap.getZoom() >= vworldLotNumberMinZoom);
+    return Boolean(vworldCadastralVisible && vworldMap && vworldMap.getZoom() >= vworldLotNumberMinZoom);
   }
 
   function getVworldLotNumberScale() {
@@ -3713,18 +3947,18 @@ function initPortalTabs() {
 
   function formatDistance(meters) {
     if (meters >= 1000) {
-      return `${(meters / 1000).toFixed(2)} km`;
+      return `${(meters / 1000).toFixed(1)} km`;
     }
 
-    return `${Math.round(meters)} m`;
+    return `${meters.toLocaleString("ko-KR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} m`;
   }
 
   function formatArea(squareMeters) {
     if (squareMeters >= 1000000) {
-      return `${(squareMeters / 1000000).toFixed(2)} km²`;
+      return `${(squareMeters / 1000000).toFixed(1)} km²`;
     }
 
-    return `${Math.round(squareMeters).toLocaleString()} m²`;
+    return `${squareMeters.toLocaleString("ko-KR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} m²`;
   }
 
   function calculatePolygonArea(points) {
@@ -3761,7 +3995,7 @@ function initPortalTabs() {
       button.classList.remove("is-active");
     });
     syncVworldMeasureCursor();
-    updateMeasureOutput("지도 도구를 선택하세요.");
+    updateMeasureOutput("거리 또는 면적을 선택한 뒤 도면을 클릭하세요.");
   }
 
   function renderVworldMeasure() {
@@ -3992,7 +4226,7 @@ function initPortalTabs() {
       button.classList.toggle("is-active", button.dataset.vworldAction === mode);
     });
     syncVworldMeasureCursor();
-    updateMeasureOutput(mode === "distance" ? "거리재기: 지도에서 지점을 클릭하세요." : "면적재기: 지도에서 3개 이상 지점을 클릭하세요.");
+    updateMeasureOutput(mode === "distance" ? "거리: 지도에서 지점을 클릭하세요." : "면적: 지도에서 3개 이상 지점을 클릭하세요.");
   }
 
   function bindVworldTools() {
@@ -4033,6 +4267,10 @@ function initPortalTabs() {
           updateAerialStatus(vworldMarkerVisible ? "마커를 표시했습니다." : "마커를 숨겼습니다.");
         }
 
+        if (action === "toggle-cadastral") {
+          toggleVworldCadastralLayer();
+        }
+
         if (action === "parcels") {
           loadNearbyParcelShapes(vworldCurrentPoint);
         }
@@ -4053,6 +4291,8 @@ function initPortalTabs() {
         }
       });
     });
+
+    syncVworldCadastralButton();
   }
 
   async function initAerialMap() {
@@ -4069,6 +4309,7 @@ function initPortalTabs() {
       vworldHybridLayer = null;
       vworldParcelLayer = null;
       vworldRadiusLayer = null;
+      vworldCadastralLayer = null;
       vworldPoiLayer = null;
       vworldLotNumberLayer = null;
       vworldLabelRequestId += 1;
@@ -4112,6 +4353,7 @@ function initPortalTabs() {
 
     setVworldLayer(vworldCurrentLayer);
     bindVworldTools();
+    bindAerialPanelToggle();
 
     status.textContent = `"${parcelAddress}" 위치를 V-World에서 검색 중입니다.`;
 
@@ -4189,6 +4431,7 @@ function initPortalTabs() {
     setVworldLayer("satellite");
     setVworldCadastralLayer();
     bindVworldTools();
+    bindAerialPanelToggle();
 
     const savedState = getParcelState();
 
