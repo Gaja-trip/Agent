@@ -18,6 +18,21 @@
         </span>
         <strong>토지정보 통합 안내</strong>
       </a>
+      <form class="site-search" role="search" data-site-search>
+        <label class="visually-hidden" for="site-search-input">통합 자료 찾기</label>
+        <div class="site-search__row">
+          <i data-lucide="search"></i>
+          <input
+            id="site-search-input"
+            type="search"
+            placeholder="진행절차·안내자료·매뉴얼·상담지식 찾기"
+            autocomplete="off"
+            data-site-search-input
+          />
+          <button type="submit">찾기</button>
+        </div>
+        <div class="site-search__results" data-site-search-results hidden></div>
+      </form>
       <nav class="main-nav" aria-label="주요 메뉴">
         <a class="main-nav__home" href="index.html" aria-label="홈">
           <i data-lucide="house"></i>
@@ -121,6 +136,135 @@
                 </p>
               </aside>
             </div>
+
+            <article class="guide-card subdivision-guide" data-search-item>
+              <div class="guide-card__toolbar">
+                <div>
+                  <p class="eyebrow">Subdivision Survey</p>
+                  <h2>분할측량 안내자료</h2>
+                </div>
+              </div>
+              <div class="subdivision-guide__body">
+                <div class="subdivision-guide__intro">
+                  <section>
+                    <h3>건축물에 의한 분할제한면적 확인</h3>
+                    <p>
+                      건축물이 있는 대지를 분할할 때는 건축법에 따른 용도지역별 최소 분할제한면적을
+                      먼저 확인합니다. 기준 면적 미만으로 분할하려는 경우에는 건축허가, 개발행위허가,
+                      토지이동 가능 여부를 함께 검토해야 합니다.
+                    </p>
+                  </section>
+                  <section>
+                    <h3>건폐율 확인</h3>
+                    <p>
+                      분할 후 남는 필지와 새로 생기는 필지가 각각 건폐율 기준을 충족하는지 확인합니다.
+                      특히 자연취락지구로 지정된 토지는 건폐율 60% 이하가 적용될 수 있으므로,
+                      토지이음에서 지구 지정 여부를 별도로 확인합니다.
+                    </p>
+                  </section>
+                </div>
+
+                <div class="subdivision-table-wrap" role="region" aria-label="용도지역별 건폐율과 분할제한면적" tabindex="0">
+                  <table class="knowledge-table subdivision-standards-table">
+                    <thead>
+                      <tr>
+                        <th scope="col">구분</th>
+                        <th scope="col">용도지역</th>
+                        <th scope="col">용도지역의 세분</th>
+                        <th scope="col">건폐율</th>
+                        <th scope="col">분할제한면적</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="rowgroup" rowspan="13">도시지역</th>
+                        <th scope="rowgroup" rowspan="3">주거지역</th>
+                        <td>전용주거지역</td>
+                        <td rowspan="3">70% 이하</td>
+                        <td rowspan="3">60㎡</td>
+                      </tr>
+                      <tr>
+                        <td>일반주거지역</td>
+                      </tr>
+                      <tr>
+                        <td>준주거지역</td>
+                      </tr>
+                      <tr>
+                        <th scope="rowgroup" rowspan="4">상업지역</th>
+                        <td>중심상업지역</td>
+                        <td rowspan="4">90% 이하</td>
+                        <td rowspan="4">150㎡</td>
+                      </tr>
+                      <tr>
+                        <td>일반상업지역</td>
+                      </tr>
+                      <tr>
+                        <td>근린상업지역</td>
+                      </tr>
+                      <tr>
+                        <td>유통상업지역</td>
+                      </tr>
+                      <tr>
+                        <th scope="rowgroup" rowspan="3">공업지역</th>
+                        <td>전용공업지역</td>
+                        <td rowspan="3">70% 이하</td>
+                        <td rowspan="3">150㎡</td>
+                      </tr>
+                      <tr>
+                        <td>일반공업지역</td>
+                      </tr>
+                      <tr>
+                        <td>준공업지역</td>
+                      </tr>
+                      <tr>
+                        <th scope="rowgroup" rowspan="3">녹지지역</th>
+                        <td>보전녹지지역</td>
+                        <td rowspan="3">20% 이하</td>
+                        <td rowspan="3">200㎡</td>
+                      </tr>
+                      <tr>
+                        <td>생산녹지지역</td>
+                      </tr>
+                      <tr>
+                        <td>자연녹지지역</td>
+                      </tr>
+                      <tr>
+                        <th scope="rowgroup" rowspan="5">비도시지역</th>
+                        <th scope="rowgroup" rowspan="3">관리지역</th>
+                        <td>보전관리지역</td>
+                        <td>20% 이하</td>
+                        <td rowspan="3">60㎡</td>
+                      </tr>
+                      <tr>
+                        <td>생산관리지역</td>
+                        <td>20% 이하</td>
+                      </tr>
+                      <tr>
+                        <td>계획관리지역</td>
+                        <td>40% 이하</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">농림지역</th>
+                        <td>-</td>
+                        <td>20% 이하</td>
+                        <td>60㎡</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">자연환경보전지역</th>
+                        <td>-</td>
+                        <td>20% 이하</td>
+                        <td>60㎡</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <p class="subdivision-guide__note">
+                  자연취락지구는 건폐율 60% 이하가 적용됩니다. 기본 용도지역 기준만 보지 말고
+                  자연취락지구, 조례상 완화 또는 제한 여부를 함께 확인해야 합니다.
+                </p>
+              </div>
+            </article>
           </section>
 
           <section class="guide-page" id="guide-result-examples" role="tabpanel" data-guide-panel="result-examples" hidden>

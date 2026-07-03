@@ -18,6 +18,21 @@
         </span>
         <strong>토지정보 통합 안내</strong>
       </a>
+      <form class="site-search" role="search" data-site-search>
+        <label class="visually-hidden" for="site-search-input">통합 자료 찾기</label>
+        <div class="site-search__row">
+          <i data-lucide="search"></i>
+          <input
+            id="site-search-input"
+            type="search"
+            placeholder="진행절차·안내자료·매뉴얼·상담지식 찾기"
+            autocomplete="off"
+            data-site-search-input
+          />
+          <button type="submit">찾기</button>
+        </div>
+        <div class="site-search__results" data-site-search-results hidden></div>
+      </form>
       <nav class="main-nav" aria-label="주요 메뉴">
         <a class="main-nav__home" href="index.html" aria-label="홈">
           <i data-lucide="house"></i>

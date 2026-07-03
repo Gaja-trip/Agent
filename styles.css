@@ -164,6 +164,122 @@ input {
   border-color: var(--green);
 }
 
+.site-search {
+  position: relative;
+  flex: 1 1 360px;
+  min-width: 240px;
+  max-width: 460px;
+}
+
+.site-search__row {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 5px 6px 5px 12px;
+  background: #f7faf8;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.site-search__row svg {
+  width: 18px;
+  height: 18px;
+  color: var(--green);
+}
+
+.site-search__row input {
+  width: 100%;
+  min-width: 0;
+  color: #263832;
+  background: transparent;
+  border: 0;
+  outline: 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.site-search__row input::placeholder {
+  color: #71837d;
+  font-weight: 700;
+}
+
+.site-search__row button {
+  min-height: 30px;
+  padding: 5px 11px;
+  color: #fff;
+  background: var(--green);
+  border: 0;
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.site-search__row button:hover,
+.site-search__row button:focus-visible {
+  background: var(--green-dark);
+}
+
+.site-search__results {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  z-index: 90;
+  display: grid;
+  gap: 6px;
+  max-height: min(420px, 70vh);
+  padding: 10px;
+  overflow: auto;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+
+.site-search__results[hidden] {
+  display: none;
+}
+
+.site-search__results a,
+.site-search__empty {
+  display: grid;
+  gap: 3px;
+  padding: 10px 11px;
+  color: #31463f;
+  background: #f7faf8;
+  border: 1px solid transparent;
+  border-radius: 8px;
+}
+
+.site-search__results a:hover,
+.site-search__results a:focus-visible {
+  color: var(--green-dark);
+  background: #edf6f1;
+  border-color: rgba(31, 107, 85, 0.28);
+  outline: 0;
+}
+
+.site-search__results strong {
+  font-size: 0.95rem;
+  line-height: 1.3;
+}
+
+.site-search__results small {
+  color: var(--green);
+  font-size: 0.76rem;
+  font-weight: 900;
+}
+
+.site-search__results span,
+.site-search__empty {
+  color: #60716b;
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
 .hero {
   position: relative;
   display: grid;
@@ -1636,6 +1752,76 @@ body.fee-image-viewer-open {
 .readiness p {
   margin: 0;
   color: rgba(255, 255, 255, 0.76);
+}
+
+.subdivision-guide {
+  margin-top: 24px;
+}
+
+.subdivision-guide__body {
+  display: grid;
+  gap: 22px;
+  padding: clamp(20px, 3vw, 28px);
+}
+
+.subdivision-guide__intro {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.subdivision-guide__intro section {
+  padding: 18px;
+  background: #f7faf8;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.subdivision-guide__intro h3 {
+  margin: 0 0 10px;
+  color: var(--green-dark);
+  font-size: 1.02rem;
+}
+
+.subdivision-guide__intro p {
+  margin: 0;
+  color: #455850;
+}
+
+.subdivision-table-wrap {
+  overflow-x: auto;
+  border-radius: 8px;
+}
+
+.subdivision-standards-table {
+  min-width: 760px;
+  margin-top: 0;
+}
+
+.subdivision-standards-table th,
+.subdivision-standards-table td {
+  text-align: center;
+  vertical-align: middle;
+}
+
+.subdivision-standards-table tbody th {
+  width: auto;
+}
+
+.subdivision-standards-table td:nth-child(3),
+.subdivision-standards-table td:nth-child(4),
+.subdivision-standards-table td:nth-child(5) {
+  font-weight: 850;
+}
+
+.subdivision-guide__note {
+  margin: 0;
+  padding: 16px 18px;
+  color: #5b4633;
+  background: #fff5df;
+  border: 1px solid #efd9a7;
+  border-radius: 8px;
+  font-weight: 850;
 }
 
 .final-panel {
@@ -3822,6 +4008,24 @@ body.fee-image-viewer-open {
   font-size: 1.4rem;
 }
 
+@media (max-width: 1180px) {
+  .site-header {
+    flex-wrap: wrap;
+  }
+
+  .main-nav {
+    order: 3;
+    margin-left: 0;
+  }
+
+  .site-search {
+    order: 2;
+    flex-basis: 100%;
+    max-width: none;
+    width: 100%;
+  }
+}
+
 @media (max-width: 980px) {
   .summary-strip,
   .source-grid,
@@ -3850,6 +4054,10 @@ body.fee-image-viewer-open {
   .process-layout,
   .checklist-layout,
   .portal-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .subdivision-guide__intro {
     grid-template-columns: 1fr;
   }
 

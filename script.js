@@ -227,6 +227,199 @@ const readyMessages = [
   },
 ];
 
+const siteSearchIndex = [
+  {
+    title: "허가부서 상담",
+    section: "진행절차",
+    url: "process.html#consult",
+    summary: "용도지역, 행위제한, 개발행위허가 대상 여부를 허가부서와 먼저 확인하는 단계입니다.",
+    keywords: "허가부서 상담 개발행위허가 토지허가 가능성 검토 사전상담",
+  },
+  {
+    title: "지적측량 신청 및 현장측량",
+    section: "진행절차",
+    url: "process.html#survey",
+    summary: "분할, 경계복원, 지적현황 등 측량 신청과 현장 입회 과정을 안내합니다.",
+    keywords: "지적측량 신청 현장측량 경계복원 분할 지적현황 입회",
+  },
+  {
+    title: "토지허가 진행",
+    section: "진행절차",
+    url: "process.html#permit",
+    summary: "허가 신청서, 관계부서 협의, 보완 요청, 허가 완료까지의 흐름입니다.",
+    keywords: "토지허가 개발행위 관계부서 협의 보완 허가증",
+  },
+  {
+    title: "토지이동신청",
+    section: "진행절차",
+    url: "process.html#movement",
+    summary: "허가 완료 후 분할, 합병, 지목변경 등 지적공부 정리를 신청합니다.",
+    keywords: "토지이동신청 분할 합병 지목변경 등록전환 지적공부",
+  },
+  {
+    title: "등기촉탁",
+    section: "진행절차",
+    url: "process.html#registry",
+    summary: "지적공부 정리 후 등기부 반영과 최종 완료 확인을 안내합니다.",
+    keywords: "등기촉탁 등기부 토지대장 지적공부 완료",
+  },
+  {
+    title: "종합 안내 및 확인 사항",
+    section: "안내자료",
+    url: "checklist.html#survey-checks",
+    summary: "지적측량 상담 전 국민에게 안내할 기본 확인 사항입니다.",
+    keywords: "종합 안내 확인 사항 지적측량 필수 확인",
+  },
+  {
+    title: "후속 조치 안내",
+    section: "안내자료",
+    url: "checklist.html#survey-followup",
+    summary: "지적측량 완료 후 토지 정리와 후속 행정절차를 안내합니다.",
+    keywords: "후속 조치 안내 측량 완료 토지정리 행정절차",
+  },
+  {
+    title: "사전체크리스트",
+    section: "안내자료",
+    url: "checklist.html#prechecklist",
+    summary: "주소, 목적, 토지이음 확인 내용, 지도 여건, 소유자 동의 등 상담 전 준비사항입니다.",
+    keywords: "사전체크리스트 주소 지번 목적 토지이음 지도 소유자 동의",
+  },
+  {
+    title: "분할측량 안내자료",
+    section: "안내자료",
+    url: "checklist.html#prechecklist",
+    summary: "건축물에 의한 분할제한면적, 용도지역별 건폐율, 자연취락지구 60% 기준을 표로 확인합니다.",
+    keywords:
+      "분할측량 안내자료 건축법 건축물 대지 분할제한면적 건폐율 주거지역 상업지역 공업지역 녹지지역 관리지역 농림지역 자연환경보전지역 자연취락지구 60%",
+  },
+  {
+    title: "측량성과도 예시",
+    section: "안내자료",
+    url: "checklist.html#result-examples",
+    summary: "경계복원, 지적현황, 분할, 등록전환 측량성과도 예시를 확인합니다.",
+    keywords: "측량성과도 예시 경계복원 지적현황 분할 등록전환",
+  },
+  {
+    title: "등록사항정정",
+    section: "안내자료",
+    url: "checklist.html#registration-correction",
+    summary: "정단무보 계산, 연호 변환, 면적증감대비표 작성 기능을 모아 둔 자료입니다.",
+    keywords: "등록사항정정 정단무보 대정 소화 단기 면적증감대비표",
+  },
+  {
+    title: "지적측량수수료 계산",
+    section: "안내자료",
+    url: "checklist.html#survey-fee",
+    summary: "일사편리 지적측량 수수료 간편 계산 화면 이용 방법을 안내합니다.",
+    keywords: "지적측량수수료 계산 일사편리 경계복원 지적현황 분할 등록전환",
+  },
+  {
+    title: "출근 후 할일",
+    section: "매뉴얼",
+    url: "manual.html#morning",
+    summary: "가상계좌 수입, 전날 입금 확인, 접수일 변경 기준을 정리했습니다.",
+    keywords: "출근 후 할일 가상계좌 수입 입금 접수일 공휴일",
+  },
+  {
+    title: "공문 발송",
+    section: "매뉴얼",
+    url: "manual.html#official-letter",
+    summary: "지적측량 수행계획서와 성과검사요청서 발송 절차를 설명합니다.",
+    keywords: "공문 발송 지적측량 수행 변경 계획서 성과검사요청서 전자결재",
+  },
+  {
+    title: "측량상담 및 접수",
+    section: "매뉴얼",
+    url: "manual.html#survey-request",
+    summary: "측량 상담과 접수 단계에서 확인할 내용을 정리합니다.",
+    keywords: "측량상담 접수 상담 접수창 의뢰",
+  },
+  {
+    title: "소유자 확인",
+    section: "매뉴얼",
+    url: "manual.html#owner-check",
+    summary: "소유자, 대리인, 위임 여부를 확인하는 절차입니다.",
+    keywords: "소유자 확인 대리인 위임",
+  },
+  {
+    title: "수수료청구",
+    section: "매뉴얼",
+    url: "manual.html#fee-claim",
+    summary: "측량 수수료 청구와 정산 관련 업무 흐름입니다.",
+    keywords: "수수료청구 수수료 정산 청구",
+  },
+  {
+    title: "일정배정",
+    section: "매뉴얼",
+    url: "manual.html#schedule",
+    summary: "측량 일정 배정과 출장 관리 흐름을 확인합니다.",
+    keywords: "일정배정 출장 측량일정",
+  },
+  {
+    title: "지적측량일반",
+    section: "상담지식",
+    url: "knowledge.html#survey-general",
+    summary: "경계, 분할, 지적현황, 등록전환 상담 시 자주 확인하는 기본 지식입니다.",
+    keywords: "지적측량일반 경계 분할 지적현황 등록전환",
+  },
+  {
+    title: "측량의뢰 및 절차",
+    section: "상담지식",
+    url: "knowledge.html#request-process",
+    summary: "측량 의뢰부터 접수, 일정, 성과 안내까지의 절차입니다.",
+    keywords: "측량의뢰 절차 접수 일정 성과",
+  },
+  {
+    title: "수수료",
+    section: "상담지식",
+    url: "knowledge.html#fee",
+    summary: "지적측량수수료 산정기준, 감면, 체감계수, 유의사항을 정리했습니다.",
+    keywords: "수수료 산정기준 감면 체감계수 동일지번 패키지 필지체감 국가유공자",
+  },
+  {
+    title: "결과부",
+    section: "상담지식",
+    url: "knowledge.html#result",
+    summary: "측량 결과부와 성과물 안내에 필요한 상담 지식입니다.",
+    keywords: "결과부 성과도 측량 결과 성과물",
+  },
+  {
+    title: "영수증",
+    section: "상담지식",
+    url: "knowledge.html#receipt",
+    summary: "영수증 발급, 수입, 정산 상담에 필요한 내용을 찾습니다.",
+    keywords: "영수증 발급 수입 정산",
+  },
+  {
+    title: "공간정보",
+    section: "상담지식",
+    url: "knowledge.html#spatial",
+    summary: "공간정보와 지적 관련 데이터 확인에 필요한 내용을 정리합니다.",
+    keywords: "공간정보 지도 지적 데이터 좌표",
+  },
+  {
+    title: "관련법령",
+    section: "상담지식",
+    url: "knowledge.html#law",
+    summary: "관련 법령과 부안군 건축인허가 가이드북 연결 자료입니다.",
+    keywords: "관련법령 법령 부안군 건축인허가 가이드북",
+  },
+  {
+    title: "공사업무일반",
+    section: "상담지식",
+    url: "knowledge.html#office",
+    summary: "공사 업무 처리와 상담에 필요한 일반 지식입니다.",
+    keywords: "공사업무일반 업무처리 상담",
+  },
+  {
+    title: "기타",
+    section: "상담지식",
+    url: "knowledge.html#etc",
+    summary: "묘지, 자연장지, 농막, 가설건축물 등 기타 상담 자료입니다.",
+    keywords: "기타 묘지 자연장지 농막 가설건축물 대지 컨테이너",
+  },
+];
+
 function refreshIcons() {
   if (window.lucide) {
     window.lucide.createIcons();
@@ -5024,8 +5217,12 @@ function initProcessSteps() {
     return;
   }
 
-  function setActiveStep(stepKey) {
+  function setActiveStep(stepKey, options = {}) {
     const step = processSteps[stepKey];
+
+    if (!step) {
+      return;
+    }
 
     stepButtons.forEach((button) => {
       const isActive = button.dataset.step === stepKey;
@@ -5040,13 +5237,23 @@ function initProcessSteps() {
     renderList(stepChecks, step.checks);
     renderList(stepOutputs, step.outputs);
     stepNotice.textContent = step.notice;
+
+    if (options.updateHash) {
+      window.history.replaceState(null, "", `#${stepKey}`);
+    }
   }
 
   stepButtons.forEach((button) => {
-    button.addEventListener("click", () => setActiveStep(button.dataset.step));
+    button.addEventListener("click", () => setActiveStep(button.dataset.step, { updateHash: true }));
   });
 
-  setActiveStep("consult");
+  function activateStepFromHash() {
+    const hashStep = window.location.hash.replace("#", "");
+    setActiveStep(processSteps[hashStep] ? hashStep : "consult");
+  }
+
+  window.addEventListener("hashchange", activateStepFromHash);
+  activateStepFromHash();
 }
 
 function initReadinessChecklist() {
@@ -5116,6 +5323,15 @@ function initGuidePages() {
   const hasInitialPage = [...pagePanels].some((panel) => panel.dataset.guidePanel === initialPage);
 
   setActiveGuidePage(hasInitialPage ? initialPage : pageButtons[0].dataset.guidePage);
+
+  window.addEventListener("hashchange", () => {
+    const nextPage = window.location.hash.replace("#", "");
+    const hasNextPage = [...pagePanels].some((panel) => panel.dataset.guidePanel === nextPage);
+
+    if (hasNextPage) {
+      setActiveGuidePage(nextPage);
+    }
+  });
 }
 
 function initGuidePrintButtons() {
@@ -5193,12 +5409,18 @@ function initContentTabs() {
       return;
     }
 
+    function getHashContentKey() {
+      const hashKey = window.location.hash.replace("#", "");
+      return buttons.some((button) => button.dataset.contentTab === hashKey) ? hashKey : "";
+    }
+
     buttons.forEach((button) => {
       button.addEventListener("click", () => {
         scope.querySelectorAll("[data-search-item]").forEach((item) => {
           item.hidden = false;
         });
         setScopedContentTab(scope, button.dataset.contentTab);
+        window.history.replaceState(null, "", `#${button.dataset.contentTab}`);
 
         const status = scope.querySelector("[data-page-search-status]");
         const input = scope.querySelector("[data-page-search-input]");
@@ -5213,8 +5435,20 @@ function initContentTabs() {
       });
     });
 
-    const initialKey = buttons.find((button) => button.classList.contains("is-active"))?.dataset.contentTab || buttons[0].dataset.contentTab;
+    const initialKey =
+      getHashContentKey() || buttons.find((button) => button.classList.contains("is-active"))?.dataset.contentTab || buttons[0].dataset.contentTab;
     setScopedContentTab(scope, initialKey);
+
+    window.addEventListener("hashchange", () => {
+      const hashKey = getHashContentKey();
+
+      if (hashKey) {
+        scope.querySelectorAll("[data-search-item]").forEach((item) => {
+          item.hidden = false;
+        });
+        setScopedContentTab(scope, hashKey);
+      }
+    });
   });
 }
 
@@ -5691,6 +5925,116 @@ function initPageSearch() {
   });
 }
 
+function normalizeSiteSearchText(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function getSiteSearchMatches(query) {
+  const normalizedQuery = normalizeSiteSearchText(query);
+
+  if (!normalizedQuery) {
+    return [];
+  }
+
+  const tokens = normalizedQuery.split(" ").filter(Boolean);
+
+  return siteSearchIndex
+    .map((entry) => {
+      const haystack = normalizeSiteSearchText(`${entry.title} ${entry.section} ${entry.summary} ${entry.keywords}`);
+      const matches = tokens.every((token) => haystack.includes(token));
+      const titleMatch = normalizeSiteSearchText(entry.title).includes(normalizedQuery);
+      const sectionMatch = normalizeSiteSearchText(entry.section).includes(normalizedQuery);
+
+      return {
+        entry,
+        matches,
+        score: Number(titleMatch) * 3 + Number(sectionMatch) * 2,
+      };
+    })
+    .filter((result) => result.matches)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 8)
+    .map((result) => result.entry);
+}
+
+function initSiteSearch() {
+  document.querySelectorAll("[data-site-search]").forEach((form) => {
+    const input = form.querySelector("[data-site-search-input]");
+    const results = form.querySelector("[data-site-search-results]");
+
+    if (!input || !results) {
+      return;
+    }
+
+    function hideResults() {
+      results.hidden = true;
+      results.replaceChildren();
+    }
+
+    function renderResults() {
+      const query = input.value;
+      const matches = getSiteSearchMatches(query);
+
+      if (!normalizeSiteSearchText(query)) {
+        hideResults();
+        return matches;
+      }
+
+      if (!matches.length) {
+        results.innerHTML = `<p class="site-search__empty">검색 결과가 없습니다.</p>`;
+        results.hidden = false;
+        return matches;
+      }
+
+      results.innerHTML = matches
+        .map(
+          (entry) => `
+            <a href="${escapeHtml(String(entry.url))}">
+              <small>${escapeHtml(String(entry.section))}</small>
+              <strong>${escapeHtml(String(entry.title))}</strong>
+              <span>${escapeHtml(String(entry.summary))}</span>
+            </a>
+          `
+        )
+        .join("");
+      results.hidden = false;
+      return matches;
+    }
+
+    input.addEventListener("input", renderResults);
+    input.addEventListener("focus", () => {
+      if (normalizeSiteSearchText(input.value)) {
+        renderResults();
+      }
+    });
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const matches = renderResults();
+
+      if (matches[0]) {
+        window.location.href = matches[0].url;
+      }
+    });
+
+    document.addEventListener("click", (event) => {
+      if (!form.contains(event.target)) {
+        hideResults();
+      }
+    });
+
+    input.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        hideResults();
+        input.blur();
+      }
+    });
+  });
+}
+
 function initFeeImageViewer() {
   const selector = ".fee-education-figure img";
   let viewer = null;
@@ -5807,5 +6151,6 @@ initJeongdanCalculator();
 initAreaUnitConverters();
 initAreaChangeBuilders();
 initFeeImageViewer();
+initSiteSearch();
 initPageSearch();
 refreshIcons();
