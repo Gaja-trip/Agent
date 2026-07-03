@@ -2141,10 +2141,13 @@ body.fee-image-viewer-open {
 }
 
 .aerial-portal {
+  --aerial-panel-width: 320px;
   position: relative;
   display: grid;
-  grid-template-columns: minmax(280px, 340px) minmax(420px, 1fr);
-  min-height: calc(100vh - 150px);
+  grid-template-columns: var(--aerial-panel-width) minmax(420px, 1fr);
+  height: calc(100vh - 150px);
+  min-height: 560px;
+  overflow: hidden;
   background: #f7faf8;
   transition: grid-template-columns 0.2s ease;
 }
@@ -2155,36 +2158,52 @@ body.fee-image-viewer-open {
 
 .aerial-panel-toggle {
   position: absolute;
-  top: 14px;
-  left: 14px;
+  top: 22px;
+  left: calc(var(--aerial-panel-width) - 1px);
   z-index: 520;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  min-height: 36px;
-  padding: 7px 10px;
-  color: #fff;
-  background: rgba(31, 107, 85, 0.94);
-  border: 1px solid rgba(255, 255, 255, 0.34);
-  border-radius: 8px;
-  box-shadow: 0 10px 26px rgba(18, 42, 35, 0.18);
+  justify-content: center;
+  width: 34px;
+  height: 58px;
+  padding: 0;
+  color: #17342d;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(31, 107, 85, 0.28);
+  border-left: 0;
+  border-radius: 0 10px 10px 0;
+  box-shadow: 8px 8px 24px rgba(18, 42, 35, 0.14);
   cursor: pointer;
-  font-size: 0.82rem;
-  font-weight: 900;
+  transition:
+    left 0.2s ease,
+    color 0.16s ease,
+    background 0.16s ease;
+}
+
+.aerial-portal.is-panel-collapsed .aerial-panel-toggle {
+  left: 0;
+}
+
+.aerial-panel-toggle:hover {
+  color: #fff;
+  background: var(--green);
 }
 
 .aerial-panel-toggle svg {
-  width: 17px;
-  height: 17px;
-  stroke-width: 2.4;
+  width: 22px;
+  height: 22px;
+  stroke-width: 3;
 }
 
 .aerial-portal__panel {
   min-width: 0;
-  padding: 58px 14px 14px;
+  height: 100%;
+  padding: 14px 14px 18px;
   background: #fff;
   border-right: 1px solid var(--line);
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
   transition:
     opacity 0.18s ease,
     padding 0.18s ease;
@@ -2204,14 +2223,34 @@ body.fee-image-viewer-open {
   gap: 8px;
 }
 
-.aerial-search__grid {
+.aerial-search label {
+  font-size: 0.82rem;
+  line-height: 1.2;
+}
+
+.aerial-search input,
+.aerial-search select {
+  min-height: 34px;
+  padding: 7px 8px;
+  border-radius: 7px;
+  font-size: 0.82rem;
+}
+
+.aerial-search__parcel {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
 }
 
-.aerial-search__grid .button {
-  grid-column: 1 / -1;
+.aerial-search__region {
+  display: grid;
+  grid-template-columns: minmax(78px, 0.78fr) minmax(76px, 0.72fr) minmax(72px, 0.68fr);
+  gap: 6px;
+}
+
+.aerial-search__lot-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px;
 }
 
 .aerial-search__row {
@@ -2231,14 +2270,14 @@ body.fee-image-viewer-open {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  min-height: 38px;
-  padding: 8px 10px;
+  min-height: 30px;
+  padding: 5px 8px;
   color: #31463f;
   background: #f6faf8;
   border: 1px solid var(--line);
   border-radius: 8px;
   cursor: pointer;
-  font-size: 0.88rem;
+  font-size: 0.8rem;
   font-weight: 900;
 }
 
@@ -2249,15 +2288,17 @@ body.fee-image-viewer-open {
 }
 
 .aerial-search__modes input {
-  width: 14px;
-  height: 14px;
+  width: 12px;
+  height: 12px;
+  min-height: 0;
+  padding: 0;
   accent-color: var(--green);
 }
 
 .aerial-search .button {
   width: auto;
-  min-height: 42px;
-  padding: 10px;
+  min-height: 34px;
+  padding: 7px 9px;
 }
 
 .aerial-results {
@@ -2265,6 +2306,10 @@ body.fee-image-viewer-open {
   gap: 10px;
   margin-top: 14px;
   color: #31463f;
+}
+
+.aerial-results:empty {
+  display: none;
 }
 
 .aerial-results > strong {
@@ -3804,8 +3849,7 @@ body.fee-image-viewer-open {
   .map-panel,
   .process-layout,
   .checklist-layout,
-  .portal-panel,
-  .aerial-portal {
+  .portal-panel {
     grid-template-columns: 1fr;
   }
 
@@ -3941,6 +3985,7 @@ body.fee-image-viewer-open {
   }
 
   .aerial-portal {
+    height: auto;
     min-height: auto;
   }
 
@@ -3975,7 +4020,8 @@ body.fee-image-viewer-open {
     grid-template-columns: 1fr;
   }
 
-  .aerial-search__grid {
+  .aerial-search__region,
+  .aerial-search__lot-row {
     grid-template-columns: 1fr;
   }
 

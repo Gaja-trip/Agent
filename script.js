@@ -785,17 +785,14 @@ function initPortalTabs() {
 
     return `
       <div class="aerial-portal aerial-portal--connected">
-        <button class="aerial-panel-toggle" type="button" data-aerial-panel-toggle aria-expanded="true">
-          <i data-lucide="panel-left-close"></i>
-          <span>패널 접기</span>
+        <button class="aerial-panel-toggle" type="button" data-aerial-panel-toggle aria-expanded="true" aria-label="패널 접기" title="패널 접기">
+          <i data-lucide="chevron-left"></i>
         </button>
         <aside class="aerial-portal__panel" data-aerial-panel>
           <form class="aerial-search" data-aerial-parcel-form>
             <label>지번 검색</label>
-            <div class="aerial-search__grid" data-aerial-parcel-fields>
-              <select aria-label="시도 선택" data-aerial-province disabled>
-                <option value="전북특별자치도">전북특별자치도</option>
-              </select>
+            <div class="aerial-search__parcel" data-aerial-parcel-fields>
+              <div class="aerial-search__region">
               <select aria-label="시군 선택" data-aerial-city>
                 ${renderOptionList(jeonbukCityNames, selectedCity, "시군 선택")}
               </select>
@@ -805,6 +802,8 @@ function initPortalTabs() {
               <select aria-label="리 선택" data-aerial-village>
                 ${renderOptionList(initialVillages, initialVillage, "리 선택")}
               </select>
+              </div>
+              <div class="aerial-search__lot-row">
               <input
                 type="search"
                 name="aerialLot"
@@ -817,6 +816,7 @@ function initPortalTabs() {
                 <i data-lucide="search"></i>
                 검색
               </button>
+              </div>
             </div>
             <label for="aerial-parcel-address">도로명·명칭 검색</label>
             <div class="aerial-search__row">
@@ -845,9 +845,7 @@ function initPortalTabs() {
               </label>
             </div>
           </form>
-          <div class="aerial-results" data-aerial-results>
-            <p>검색 결과를 선택하면 항공사진과 연속지적도가 함께 이동합니다.</p>
-          </div>
+          <div class="aerial-results" data-aerial-results></div>
           <div class="vworld-tools" aria-label="항공사진 지도 도구">
             <div class="vworld-tool-group">
               <strong>지도</strong>
@@ -2833,8 +2831,11 @@ function initPortalTabs() {
       }
 
       if (icon) {
-        icon.setAttribute("data-lucide", collapsed ? "panel-left-open" : "panel-left-close");
+        icon.setAttribute("data-lucide", collapsed ? "chevron-right" : "chevron-left");
       }
+
+      toggleButton.setAttribute("aria-label", collapsed ? "패널 열기" : "패널 접기");
+      toggleButton.setAttribute("title", collapsed ? "패널 열기" : "패널 접기");
 
       if (window.lucide?.createIcons) {
         window.lucide.createIcons();
