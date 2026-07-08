@@ -3051,25 +3051,21 @@ body.fee-image-viewer-open {
 }
 
 .vworld-lot-number-label span {
-  display: inline-block;
-  padding: 0;
-  color: #12aeea;
-  background: transparent;
-  border: 0;
-  border-radius: 0;
+  display: inline-grid;
+  place-items: center;
+  padding: 1px 4px;
+  color: #111;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(17, 17, 17, 0.16);
+  border-radius: 4px;
   box-shadow: none;
   line-height: 1.05;
   text-align: center;
-  text-shadow:
-    0 1px 1px rgba(255, 255, 255, 0.95),
-    0 -1px 1px rgba(255, 255, 255, 0.82),
-    1px 0 1px rgba(255, 255, 255, 0.86),
-    -1px 0 1px rgba(255, 255, 255, 0.86),
-    0 2px 4px rgba(0, 58, 120, 0.35);
+  text-shadow: none;
   transform: scale(var(--vworld-lot-label-scale, 1));
   transform-origin: center;
   white-space: nowrap;
-  -webkit-text-stroke: 0.35px rgba(0, 67, 150, 0.72);
+  -webkit-text-stroke: 0;
 }
 
 .vworld-lot-number-label b,
@@ -3079,14 +3075,14 @@ body.fee-image-viewer-open {
 }
 
 .vworld-lot-number-label b {
-  color: #12aeea;
-  font-size: 0.82rem;
+  color: #111;
+  font-size: 0.76rem;
   font-weight: 950;
 }
 
 .vworld-lot-number-label small {
-  color: #2276d9;
-  font-size: 0.66rem;
+  color: #252525;
+  font-size: 0.62rem;
   font-weight: 900;
 }
 
