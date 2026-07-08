@@ -600,11 +600,11 @@ function initPortalTabs() {
     return text.includes(town) && text.includes(village);
   }
 
-  function saveParcelAddress(nextAddress = getParcelAddress()) {
-    const address = String(nextAddress || "").trim().replace(/\s+/g, " ");
+  function saveParcelAddress(nextAddress = getParcelAddress(), options = {}) {
+    const address = options.preserveTyping ? String(nextAddress || "").replace(/\s+/g, " ") : String(nextAddress || "").trim().replace(/\s+/g, " ");
     const savedState = readStoredJson(parcelStateStorageKey);
 
-    if (parcelInput && parcelInput.value !== address) {
+    if (parcelInput && options.updateInput !== false && parcelInput.value !== address) {
       parcelInput.value = address;
     }
 
@@ -3286,7 +3286,7 @@ function initPortalTabs() {
         parcelInput.value = aerialInput.value;
       }
 
-      saveParcelAddress(aerialInput.value);
+      saveParcelAddress(aerialInput.value, { preserveTyping: true, updateInput: false });
     });
 
     aerialForm.addEventListener("submit", async (event) => {
@@ -5007,7 +5007,7 @@ function initPortalTabs() {
   if (parcelInput) {
     parcelInput.value = readStoredValue(parcelStorageKey);
     parcelInput.addEventListener("input", () => {
-      saveParcelAddress();
+      saveParcelAddress(parcelInput.value, { preserveTyping: true, updateInput: false });
       clearParcelCandidateChoices();
     });
   }
