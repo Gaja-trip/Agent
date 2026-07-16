@@ -1178,6 +1178,151 @@ body.fee-image-viewer-open {
   font-weight: 950;
 }
 
+.authority-staff-card {
+  overflow: hidden;
+}
+
+.authority-staff-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.authority-staff-summary span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 6px 11px;
+  border: 1px solid rgba(31, 107, 85, 0.2);
+  border-radius: 999px;
+  background: #eef7f1;
+  color: var(--green-dark);
+  font-size: 0.86rem;
+  font-weight: 900;
+}
+
+.authority-staff-table-wrap {
+  margin-top: 22px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow-x: auto;
+  background: #fff;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(31, 107, 85, 0.48) #edf4ef;
+}
+
+.authority-staff-table {
+  width: 100%;
+  min-width: 1180px;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.88rem;
+  line-height: 1.48;
+}
+
+.authority-staff-table th,
+.authority-staff-table td {
+  padding: 11px 12px;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+
+.authority-staff-table th:last-child,
+.authority-staff-table td:last-child {
+  border-right: 0;
+}
+
+.authority-staff-table tbody tr:last-child th,
+.authority-staff-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.authority-staff-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #dfeaf3;
+  color: #16342d;
+  font-weight: 950;
+  text-align: center;
+}
+
+.authority-staff-table tbody th {
+  width: 112px;
+  background: #f7faf8;
+  color: var(--green-dark);
+  font-weight: 950;
+  white-space: nowrap;
+}
+
+.authority-staff-table td strong,
+.authority-staff-table td small {
+  display: block;
+}
+
+.authority-staff-table td strong {
+  color: #14221e;
+  font-weight: 950;
+}
+
+.authority-staff-table td small {
+  margin-top: 2px;
+  color: #697a74;
+  font-size: 0.76rem;
+  font-weight: 850;
+}
+
+.authority-staff-table .authority-date,
+.authority-date {
+  color: #d92e2e;
+  font-weight: 950;
+}
+
+.authority-note {
+  color: #687973;
+  font-weight: 850;
+}
+
+.authority-staff-source {
+  margin-top: 20px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f8fbf9;
+  overflow: hidden;
+}
+
+.authority-staff-source summary {
+  cursor: pointer;
+  padding: 13px 16px;
+  color: var(--green-dark);
+  font-weight: 950;
+}
+
+.authority-staff-source a {
+  display: block;
+  padding: 0 16px 16px;
+}
+
+.authority-staff-source img {
+  display: block;
+  width: 100%;
+  max-height: 540px;
+  object-fit: contain;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+}
+
+.authority-staff-source p {
+  margin: -4px 16px 16px;
+  color: #687973;
+  font-size: 0.88rem;
+  font-weight: 800;
+}
+
 .knowledge-law-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

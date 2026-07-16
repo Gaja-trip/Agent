@@ -977,6 +977,7 @@
               <aside class="knowledge-subnav knowledge-subnav--etc" aria-label="기타 세부 메뉴">
                 <button class="is-active" type="button" aria-selected="true" data-knowledge-subtab="etc-cemetery">묘지·자연장지</button>
                 <button type="button" aria-selected="false" data-knowledge-subtab="etc-farm-shed">농막·가설건축물</button>
+                <button type="button" aria-selected="false" data-knowledge-subtab="etc-authority-staff">소관청 담당자</button>
                 <button type="button" aria-selected="false" data-knowledge-subtab="etc-dispute">분쟁 가능성</button>
                 <button type="button" aria-selected="false" data-knowledge-subtab="etc-memo">상담 메모</button>
               </aside>
@@ -1324,6 +1325,209 @@
                         </ul>
                       </div>
                       <p class="knowledge-source">근거: 「농지법 시행규칙」 제3조의2, 「건축법」 제14조·제20조, 「건축법 시행령」 제11조·제15조 기준. 세부 적용은 관할 지자체 조례와 건축부서 판단을 함께 확인합니다.</p>
+                    </article>
+                  </div>
+                </section>
+
+                <section class="knowledge-subpanel" data-knowledge-subpanel="etc-authority-staff" hidden>
+                  <div class="knowledge-grid">
+                    <article class="knowledge-item knowledge-item--wide authority-staff-card" data-search-item>
+                      <i data-lucide="users-round"></i>
+                      <h2>소관청 담당자 현황</h2>
+                      <p>
+                        지적측량 상담 중 소관청 협의가 필요할 때 민원과, 지적계, 지적재조사, 토지관리, 공간주소 담당자를
+                        빠르게 확인할 수 있도록 첨부 표를 상담용 요약표로 정리했습니다.
+                      </p>
+
+                      <div class="authority-staff-summary" aria-label="담당부서 빠른 분류">
+                        <span>민원과</span>
+                        <span>지적계</span>
+                        <span>지적재조사</span>
+                        <span>토지관리</span>
+                        <span>공간주소</span>
+                        <span>부동산평가</span>
+                      </div>
+
+                      <div class="authority-staff-table-wrap" role="region" aria-label="소관청 담당자 요약표" tabindex="0">
+                        <table class="authority-staff-table">
+                          <thead>
+                            <tr>
+                              <th scope="col">소관청</th>
+                              <th scope="col">민원과</th>
+                              <th scope="col">지적계</th>
+                              <th scope="col">지적재조사</th>
+                              <th scope="col">토지관리·지가</th>
+                              <th scope="col">공간주소·기타</th>
+                              <th scope="col">비고</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr>
+                              <th scope="row">전주 완산구</th>
+                              <td><strong>한종희</strong><small>과장 변경 7.3주 예정</small></td>
+                              <td>김수진<br>민유미, 송은아, 송미라</td>
+                              <td>슬기경<br>이종익, 김의진, 정다혜</td>
+                              <td>이수영<br>박수빈, 최소영, 김가람</td>
+                              <td class="authority-note">원본표 확인</td>
+                              <td>완산구 구간</td>
+                            </tr>
+                            <tr>
+                              <th scope="row">전주 덕진구</th>
+                              <td><strong>김태훈</strong><small>과장 변경 7.3주 예정</small></td>
+                              <td>김성훈<br>정재훈, 김정훈</td>
+                              <td>손길돈<br>전수일, 권재탁, 안지연</td>
+                              <td>김윤정<br>민은경, 문영익, 이경환, 김수범</td>
+                              <td class="authority-note">원본표 확인</td>
+                              <td>덕진구 구간</td>
+                            </tr>
+                            <tr>
+                              <th scope="row">완주군청</th>
+                              <td><strong>김형진</strong><small class="authority-date">과장 변경 7.7 완료</small></td>
+                              <td>박성훈<br>이동훈, 우승, 이재순, 권승환, 박가영</td>
+                              <td>임미선<br>이신호, 최요한</td>
+                              <td>어윤중, 송피애<br>권상일, 최민진, 이혜진, 유지영, 이진희</td>
+                              <td>임종률<br>이윤주, 서효지, 이대부, 정수아, 소은선</td>
+                              <td>부동산평가계 별도 기재</td>
+                            </tr>
+                            <tr>
+                              <th scope="row">군산시</th>
+                              <td><strong>이홍구</strong><small>과장 변경 7.3주 예정</small></td>
+                              <td>이혁주<br>김명호, 이종원, 장소정</td>
+                              <td>김윤정<br>최용태, 박장수, 박보라</td>
+                              <td>정욱현<br>서정빈, 최혜원, 류다원</td>
+                              <td>오덕호<br>김창현, 김영노, 김혜진</td>
+                              <td>군산시 구간</td>
+                            </tr>
+                            <tr>
+                              <th scope="row">익산시</th>
+                              <td><strong>이형대</strong><small>인사발령 예정 / 현재 기준</small></td>
+                              <td>김홍<br>홍재인, 안현지, 박소연, 최자연</td>
+                              <td>신상우<br>박기원, 차승민, 정성수, 최지선, 김은구</td>
+                              <td>손숙경<br>이서림, 신가영, 박재희, 최란</td>
+                              <td>김병오<br>이지현, 손기창, 김병두</td>
+                              <td>공간정보계 표기</td>
+                            </tr>
+                            <tr>
+                              <th scope="row">익산 함열</th>
+                              <td class="authority-note">원본표 확인</td>
+                              <td>최성용<br>이상민, 정도윤, 윤찬우</td>
+                              <td class="authority-note">원본표 확인</td>
+                              <td class="authority-note">원본표 확인</td>
+                              <td class="authority-note">원본표 확인</td>
+                              <td>함열출장소 별도 구간</td>
+                            </tr>
+                            <tr>
+                              <th scope="row">정읍시</th>
+                              <td><strong>강민석</strong><small class="authority-date">과장 변경 7.6 완료</small></td>
+                              <td>최진홍<br>최경현, 황수석, 이하성, 정보, 정미선, 오희옥</td>
+                              <td>이성훈<br>이명숙, 송광명, 이현규, 강우희, 장소희</td>
+                              <td>최윤<br>윤지홍, 정재홍, 신강덕, 고경은, 박영화, 하철정</td>
+                              <td>송용훈<br>양준석, 이정은, 주민영, 송미리</td>
+                              <td>공간정보계 표기</td>
+                            </tr>
+                            <tr>
+                              <th scope="row">남원시</th>
+                              <td><strong>김종표</strong><small>과장 변경 7.3주 예정</small></td>
+                              <td>윤희정<br>김성민, 이유비, 양예린, 김형희</td>
+                              <td>류소영<br>김국한, 이대림, 노시준, 이승원</td>
+                              <td>오미자<br>김가희, 박예서, 김민수, 김숙영, 긴신</td>
+                              <td>김미선<br>김찬란, 김호원, 조수영, 서현주</td>
+                              <td>공간정보계 표기</td>
+                            </tr>
+                            <tr>
+                              <th scope="row">김제시</th>
+                              <td><strong>최미화</strong><small class="authority-date">과장 변경 7.14 완료 / 변동없음</small></td>
+                              <td>임미화<br>마승일, 최가연, 임재국</td>
+                              <td>이송환<br>이하늘, 이용희, 오영욱, 이상아, 구아름, 김승연</td>
+                              <td>도선덕<br>정지영, 이랑호, 이정화</td>
+                              <td>박진호<br>김정남, 김용권(형)</td>
+                              <td>일부 담당명 원본표 대조</td>
+                            </tr>
+                            <tr>
+                              <th scope="row">진안군</th>
+                              <td><strong>권사률</strong><small>8월 예정</small></td>
+                              <td>최진표<br>강남이, 김주연</td>
+                              <td>최춘식<br>김진국, 이소영, 손유진</td>
+                              <td>최성병<br>문대섭, 이지웅, 이포호</td>
+                              <td class="authority-note">원본표 확인</td>
+                              <td>진안군 구간</td>
+                            </tr>
+                            <tr>
+                              <th scope="row">무주군</th>
+                              <td><strong>김일중</strong><small>인사 완료 표기</small></td>
+                              <td>김민진<br>최선호, 이윤정, 최우정, 안서연, 전순희</td>
+                              <td>손규랑<br>손예민, 손지구, 염예빈</td>
+                              <td>갈종호<br>조준선, 박승귀, 김준아, 박승이</td>
+                              <td class="authority-note">원본표 확인</td>
+                              <td>무주군 구간</td>
+                            </tr>
+                            <tr>
+                              <th scope="row">장수군</th>
+                              <td><strong>장복기</strong><small>9월 예정</small></td>
+                              <td>정용태<br>박용태, 김재영, 최보미, 김희주</td>
+                              <td>탁용근<br>최광식, 김정민, 정진선, 박민서</td>
+                              <td>박현진<br>김현, 이윤호, 이진경</td>
+                              <td class="authority-note">원본표 확인</td>
+                              <td>장수군 구간</td>
+                            </tr>
+                            <tr>
+                              <th scope="row">임실군</th>
+                              <td><strong>최경진</strong><small class="authority-date">전자계무라 / 7.20 완료 표기</small></td>
+                              <td>오명구<br>공명진, 최연재</td>
+                              <td>고기정<br>강훈, 전성도</td>
+                              <td>오태경<br>주성현, 최하진, 주슬기, 김상은, 김예림</td>
+                              <td class="authority-note">원본표 확인</td>
+                              <td>전자계무 표기 확인</td>
+                            </tr>
+                            <tr>
+                              <th scope="row">순창군</th>
+                              <td><strong>하성길</strong><small class="authority-date">과장 변경 7.13 완료</small></td>
+                              <td>박윤옥<br>정하나, 문수영</td>
+                              <td>김일정<br>오성은, 심병창</td>
+                              <td>오용호<br>김태우, 전소현</td>
+                              <td class="authority-note">원본표 확인</td>
+                              <td>순창군 구간</td>
+                            </tr>
+                            <tr>
+                              <th scope="row">고창군</th>
+                              <td><strong>양미숙</strong><small>7월 예정</small></td>
+                              <td>김남중<br>정윤규, 최빙호, 김태영</td>
+                              <td>간문철<br>박현석, 허지웅, 이재호</td>
+                              <td>문용<br>임정민, 석다현</td>
+                              <td class="authority-note">원본표 확인</td>
+                              <td>고창군 구간</td>
+                            </tr>
+                            <tr>
+                              <th scope="row">부안군</th>
+                              <td><strong>허진상</strong><small class="authority-date">과장 변경 7.6 완료</small></td>
+                              <td>조용환<br>최선숙, 박서진, 양아름, 박공일</td>
+                              <td>문동일<br>장혜성, 권형우, 김승재, 김완수, 김순주</td>
+                              <td>변금이<br>황윤성, 이현민, 박환희, 박경인</td>
+                              <td>공간주소 별도 기재</td>
+                              <td>부안군 담당자 우선 확인</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+
+                      <div class="knowledge-note">
+                        <h3>사용 방법</h3>
+                        <ul>
+                          <li>담당자 변경 일정은 붉은 글씨 또는 비고란을 먼저 확인하고, 실제 전화 연결 전 최신 인사발령 여부를 한 번 더 확인합니다.</li>
+                          <li>지적측량 접수·성과·토지이동 상담은 지적계, 지적재조사 사업지는 지적재조사 담당, 지가·부동산 자료는 토지관리 담당을 우선 확인합니다.</li>
+                          <li>도로명주소, 공간정보, 건물번호 관련 상담은 공간주소 담당 또는 원본표의 공간정보계 표기를 확인합니다.</li>
+                        </ul>
+                      </div>
+
+                      <details class="authority-staff-source">
+                        <summary>첨부 원본표 확인</summary>
+                        <a href="assets/authority-staff-source.png" target="_blank" rel="noopener">
+                          <img src="assets/authority-staff-source.png" alt="소관청 담당자 원본표" loading="lazy">
+                        </a>
+                        <p>작은 글자 또는 겹친 칸은 원본표를 확대해서 확인합니다.</p>
+                      </details>
+
+                      <p class="knowledge-source">자료 기준: 첨부된 소관청 담당자 현황표 판독 기준. 담당자·인사일자는 소관청 최신 공문 또는 연락망으로 최종 확인합니다.</p>
                     </article>
                   </div>
                 </section>

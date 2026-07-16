@@ -412,11 +412,18 @@ const siteSearchIndex = [
     keywords: "공사업무일반 업무처리 상담",
   },
   {
+    title: "소관청 담당자",
+    section: "상담지식",
+    url: "knowledge.html#etc",
+    summary: "시군별 민원과, 지적계, 지적재조사, 토지관리, 공간주소 담당자를 표로 정리했습니다.",
+    keywords: "소관청 담당자 민원과 지적계 지적재조사 토지관리 공간주소 부동산평가 시군 담당자",
+  },
+  {
     title: "기타",
     section: "상담지식",
     url: "knowledge.html#etc",
-    summary: "묘지, 자연장지, 농막, 가설건축물 등 기타 상담 자료입니다.",
-    keywords: "기타 묘지 자연장지 농막 가설건축물 대지 컨테이너",
+    summary: "묘지, 자연장지, 농막, 가설건축물, 소관청 담당자 등 기타 상담 자료입니다.",
+    keywords: "기타 묘지 자연장지 농막 가설건축물 대지 컨테이너 소관청 담당자",
   },
 ];
 
