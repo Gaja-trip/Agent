@@ -16,11 +16,11 @@ const portalData = {
     frameTitle: "브이월드 항공사진 및 주제도",
     type: "aerial",
   },
-  realestate: {
-    title: "부동산정보",
-    url: "https://kras.jeonbuk.go.kr/land_info/info/baseInfo/baseInfo.do",
-    frameTitle: "전북 부동산정보 통합열람",
-    type: "realestate",
+  farmland: {
+    title: "농지공간정보",
+    url: "https://njy.mafra.go.kr/map/mapMain.do#n",
+    frameTitle: "농지공간포털 지도서비스",
+    type: "farmland",
   },
   law: {
     title: "법령정보",
@@ -713,10 +713,6 @@ function initPortalTabs() {
     return url.toString();
   }
 
-  function getRealEstateUrl() {
-    return portalData.realestate.url;
-  }
-
   function renderSharedParcel(label = "토지이음 검색 주소") {
     const parcelAddress = escapeHtml(getParcelAddress());
     const displayText = parcelAddress || "아직 입력 전";
@@ -809,37 +805,44 @@ function initPortalTabs() {
     `;
   }
 
-  function renderRealEstatePortal() {
+  // The official portal sends X-Frame-Options: SAMEORIGIN. Open the original
+  // map so its aerial layers and parcel-information interactions remain intact.
+  function renderFarmlandPortal() {
     const parcelAddress = escapeHtml(getParcelAddress());
     const displayText = parcelAddress || "주소검색 후 이곳에 검색 주소가 표시됩니다.";
 
     return `
-      <div class="realestate-connect">
-        ${renderSharedParcel("부동산정보 검색 주소")}
-        <div class="realestate-connect__body">
-          <div class="realestate-connect__icon" aria-hidden="true">
-            <i data-lucide="shield-alert"></i>
+      <div class="farmland-connect">
+        ${renderSharedParcel("농지공간정보 검색 주소")}
+        <div class="farmland-connect__body">
+          <div class="farmland-connect__icon" aria-hidden="true">
+            <i data-lucide="sprout"></i>
           </div>
-          <div class="realestate-connect__content">
-            <p class="realestate-connect__eyebrow">KRAS 웹방화벽 안내</p>
-            <h2>부동산정보는 공식 사이트에서 직접 열람합니다.</h2>
+          <div class="farmland-connect__content">
+            <p class="farmland-connect__eyebrow">농지공간포털 지도서비스</p>
+            <h2>농지공간정보</h2>
             <p>
-              전북 부동산정보 통합열람은 외부 페이지 내부 호출이나 필지 직접 URL 접근이 웹방화벽에서 차단될 수 있습니다.
-              아래 버튼으로 공식 사이트를 열고, 복사된 주소를 지번 또는 도로명 검색란에 입력해 확인해 주세요.
+              일반지도와 항공영상으로 농지를 살펴보고, 필지를 선택해 속성정보를 확인하세요.
+              농지공간포털은 외부 화면 안에 표시할 수 없어 공식 지도를 새 창에서 엽니다.
             </p>
-            <div class="realestate-connect__address">
+            <p>
+              지도에서 주소를 검색한 뒤 ‘지도선택’에서 ‘항공영상’을 선택하세요.
+              ‘필지정보’를 켜고 원하는 필지를 클릭하면 해당 필지의 속성정보를 확인할 수 있습니다.
+              현재 검색 주소는 자동으로 전달되지 않으므로 아래 주소를 복사해 지도에서 검색해 주세요.
+            </p>
+            <div class="farmland-connect__address">
               <span>현재 검색 주소</span>
               <strong data-shared-parcel>${displayText}</strong>
             </div>
-            <div class="realestate-connect__actions">
-              <button class="button realestate-connect__copy" type="button" data-realestate-copy>
+            <div class="farmland-connect__actions">
+              <button class="button farmland-connect__copy" type="button" data-farmland-copy>
                 <i data-lucide="copy"></i>
                 주소 복사
               </button>
-              <button class="button button--primary" type="button" data-realestate-open>
+              <a class="button button--primary" href="${escapeHtml(portalData.farmland.url)}" target="_blank" rel="noopener noreferrer">
                 <i data-lucide="external-link"></i>
-                KRAS 공식 사이트 열기
-              </button>
+                농지공간포털 지도 열기 (새 창)
+              </a>
             </div>
           </div>
         </div>
@@ -1213,8 +1216,8 @@ function initPortalTabs() {
       view.innerHTML =
         portal.type === "aerial"
           ? renderAerialPortalConnected()
-          : portal.type === "realestate"
-            ? renderRealEstatePortal()
+          : portal.type === "farmland"
+            ? renderFarmlandPortal()
             : renderEmbeddedPortal(portal);
       portalPanel.append(view);
       portalViews.set(portalKey, view);
@@ -1226,8 +1229,8 @@ function initPortalTabs() {
       return { view, isNew: true };
     }
 
-    if (portal.type === "realestate") {
-      view.innerHTML = renderRealEstatePortal();
+    if (portal.type === "farmland") {
+      view.innerHTML = renderFarmlandPortal();
     } else if (portal.type !== "aerial") {
       if (portal === portalData.eum) {
         const wrapper = view.querySelector(".embedded-site");
@@ -5154,8 +5157,7 @@ function initPortalTabs() {
 
   portalPanel.addEventListener("click", (event) => {
     const eumActionButton = event.target.closest("[data-eum-action]");
-    const copyButton = event.target.closest("[data-realestate-copy]");
-    const openButton = event.target.closest("[data-realestate-open]");
+    const copyButton = event.target.closest("[data-farmland-copy]");
 
     if (eumActionButton) {
       const action = eumActionButton.dataset.eumAction;
@@ -5180,23 +5182,14 @@ function initPortalTabs() {
       return;
     }
 
-    if (openButton) {
-      const openedWindow = window.open(getRealEstateUrl(), "_blank");
-      copyParcelAddress();
-
-      if (!openedWindow) {
-        updateParcelStatus("팝업 차단으로 KRAS 공식 사이트를 열 수 없습니다. 브라우저의 팝업 허용을 확인해 주세요.");
-      } else {
-        openedWindow.opener = null;
-      }
-    }
   });
 
   portalTabs.forEach((button) => {
     button.addEventListener("click", () => setActivePortal(button.dataset.portal));
   });
 
-  const initialPortal = initialParams.get("portal");
+  const requestedPortal = initialParams.get("portal");
+  const initialPortal = requestedPortal === "realestate" ? "farmland" : requestedPortal;
   setActivePortal(selectedLaw ? "law" : portalData[initialPortal] ? initialPortal : "eum");
 }
 

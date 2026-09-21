@@ -2365,7 +2365,7 @@ body.fee-image-viewer-open {
   min-height: 1080px;
 }
 
-.realestate-connect {
+.farmland-connect {
   display: flex;
   min-height: calc(100vh - 150px);
   flex-direction: column;
@@ -2374,7 +2374,7 @@ body.fee-image-viewer-open {
     #f7faf8;
 }
 
-.realestate-connect__body {
+.farmland-connect__body {
   display: grid;
   grid-template-columns: 74px minmax(0, 760px);
   gap: 22px;
@@ -2383,7 +2383,7 @@ body.fee-image-viewer-open {
   padding: clamp(34px, 6vw, 74px) 24px;
 }
 
-.realestate-connect__icon {
+.farmland-connect__icon {
   display: grid;
   width: 74px;
   height: 74px;
@@ -2394,13 +2394,13 @@ body.fee-image-viewer-open {
   box-shadow: 0 18px 42px rgba(31, 107, 85, 0.18);
 }
 
-.realestate-connect__icon svg {
+.farmland-connect__icon svg {
   width: 34px;
   height: 34px;
   stroke-width: 2.2;
 }
 
-.realestate-connect__content {
+.farmland-connect__content {
   padding: 30px;
   background: rgba(255, 255, 255, 0.92);
   border: 1px solid var(--line);
@@ -2408,27 +2408,27 @@ body.fee-image-viewer-open {
   box-shadow: 0 18px 46px rgba(31, 42, 39, 0.08);
 }
 
-.realestate-connect__eyebrow {
+.farmland-connect__eyebrow {
   margin: 0 0 8px;
   color: #1f6b55;
   font-size: 0.88rem;
   font-weight: 900;
 }
 
-.realestate-connect h2 {
+.farmland-connect h2 {
   margin: 0;
   color: var(--ink);
   font-size: clamp(1.45rem, 2.2vw, 2.1rem);
   letter-spacing: 0;
 }
 
-.realestate-connect p:not(.realestate-connect__eyebrow) {
+.farmland-connect p:not(.farmland-connect__eyebrow) {
   margin: 14px 0 0;
   color: #455850;
   line-height: 1.72;
 }
 
-.realestate-connect__address {
+.farmland-connect__address {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   gap: 12px;
@@ -2440,13 +2440,13 @@ body.fee-image-viewer-open {
   border-radius: 8px;
 }
 
-.realestate-connect__address span {
+.farmland-connect__address span {
   color: var(--muted);
   font-size: 0.86rem;
   font-weight: 900;
 }
 
-.realestate-connect__address strong {
+.farmland-connect__address strong {
   min-width: 0;
   overflow: hidden;
   text-align: right;
@@ -2454,20 +2454,20 @@ body.fee-image-viewer-open {
   white-space: nowrap;
 }
 
-.realestate-connect__actions {
+.farmland-connect__actions {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
   margin-top: 22px;
 }
 
-.realestate-connect__copy {
+.farmland-connect__copy {
   color: #1f6b55;
   background: #fff;
   border-color: rgba(31, 107, 85, 0.24);
 }
 
-.realestate-connect__copy:hover {
+.farmland-connect__copy:hover {
   background: #eef6f2;
 }
 
@@ -4344,29 +4344,29 @@ body.fee-image-viewer-open {
     min-height: auto;
   }
 
-  .realestate-connect {
+  .farmland-connect {
     min-height: auto;
   }
 
-  .realestate-connect__body {
+  .farmland-connect__body {
     grid-template-columns: 1fr;
     padding: 22px 14px;
   }
 
-  .realestate-connect__icon {
+  .farmland-connect__icon {
     width: 58px;
     height: 58px;
   }
 
-  .realestate-connect__content {
+  .farmland-connect__content {
     padding: 22px;
   }
 
-  .realestate-connect__address {
+  .farmland-connect__address {
     grid-template-columns: 1fr;
   }
 
-  .realestate-connect__address strong {
+  .farmland-connect__address strong {
     text-align: left;
     white-space: normal;
   }
