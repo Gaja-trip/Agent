@@ -123,7 +123,7 @@ const vworldUrbanPlanningLayers = [
   { id: "lt_c_upisuq151", title: "도시계획도로" },
   { id: "lt_c_upisuq159", title: "기타 기반시설" },
 ];
-const vworldUrbanPlanningVisible = new Set();
+const vworldUrbanPlanningVisible = new Set(["lt_c_upisuq151"]);
 const vworldUrbanPlanningOverlays = new Map();
 const vworldUrbanPlanningStates = new Map();
 let vworldUrbanPlanningOpacity = 0.75;
@@ -933,7 +933,7 @@ function initPortalTabs() {
   }
 
   function renderAerialParcelDetails() {
-    const { label, pnu, data, loading, error } = aerialParcelDetailsState;
+    const { pnu, data, loading, error } = aerialParcelDetailsState;
     const value = (kind) => {
       if (loading) return "조회 중…";
       if (error || data?.errors?.[kind]) return "조회 실패";
@@ -944,9 +944,7 @@ function initPortalTabs() {
     };
     const errors = [...new Set([error, ...Object.values(data?.errors || {})].filter(Boolean))];
     document.querySelectorAll(".aerial-portal [data-parcel-zoning]").forEach((node) => {
-      node.innerHTML = `<h3>선택 필지 용도지역·지구</h3>
-        <strong>${escapeHtml(label)}</strong>${pnu ? `<small>PNU ${escapeHtml(pnu)}</small>` : ""}
-        <dl><dt>지번</dt><dd>${escapeHtml(getLotNumberFromPnu(pnu) || "—")}</dd>
+      node.innerHTML = `<dl><dt>지번</dt><dd>${escapeHtml(getLotNumberFromPnu(pnu) || "—")}</dd>
         <dt>면적</dt><dd>${escapeHtml(value("area"))}</dd><dt>용도지역</dt><dd>${escapeHtml(value("region"))}</dd><dt>용도지구</dt><dd>${escapeHtml(value("district"))}</dd></dl>
         ${errors.map((message) => `<p role="alert">${escapeHtml(message)}</p>`).join("")}
         ${data ? `<small>자료: V-World${data.year ? ` · 토지특성 ${escapeHtml(data.year)}년` : ""}</small>` : ""}`;
@@ -1158,7 +1156,7 @@ function initPortalTabs() {
           </div>
           <div class="farmland-info-tabs" role="tablist" aria-label="농지공간정보 상세 메뉴">
             <button id="farmland-tab-parcel" type="button" role="tab" aria-selected="true" aria-controls="farmland-panel-parcel" data-farmland-info-tab="parcel">필지정보</button>
-            <button id="farmland-tab-plan" type="button" role="tab" aria-selected="false" aria-controls="farmland-panel-plan" tabindex="-1" data-farmland-info-tab="plan">토지이용계획<br>· 공시지가</button>
+            <button id="farmland-tab-plan" type="button" role="tab" aria-selected="false" aria-controls="farmland-panel-plan" tabindex="-1" data-farmland-info-tab="plan">토지이용계획</button>
             <button id="farmland-tab-building" type="button" role="tab" aria-selected="false" aria-controls="farmland-panel-building" tabindex="-1" data-farmland-info-tab="building">건축물정보</button>
           </div>
           <section id="farmland-panel-parcel" role="tabpanel" aria-labelledby="farmland-tab-parcel" tabindex="0" data-farmland-info-panel="parcel">
@@ -1279,7 +1277,7 @@ function initPortalTabs() {
             </button>
           </form>
           <div class="vworld-tools" aria-label="V-World 지도 기능">
-            <div class="vworld-tool-group">
+            <div class="vworld-tool-group vworld-tool-group--map">
               <strong>지도</strong>
               <div class="vworld-segment" role="group" aria-label="배경지도 선택">
                 <button type="button" class="is-active" data-vworld-layer="satellite">항공</button>
@@ -1404,7 +1402,7 @@ function initPortalTabs() {
           </form>
           <div class="aerial-results" data-aerial-results></div>
           <div class="vworld-tools" aria-label="항공사진 지도 도구">
-            <div class="vworld-tool-group">
+            <div class="vworld-tool-group vworld-tool-group--map">
               <strong>지도</strong>
               <div class="vworld-segment" role="group" aria-label="배경지도 선택">
                 <button type="button" class="is-active" data-vworld-layer="satellite">항공</button>
@@ -3754,9 +3752,8 @@ function initPortalTabs() {
           <input type="range" min="10" max="100" step="5" value="${vworldUrbanPlanningOpacity * 100}" data-vworld-urban-opacity aria-label="도시계획 레이어 선명도" />
           <output data-vworld-urban-opacity-value>${Math.round(vworldUrbanPlanningOpacity * 100)}%</output>
         </label>
-        <button type="button" data-vworld-urban-hide>도시계획 모두 숨기기</button>
       </fieldset>
-      <section class="parcel-zoning" data-parcel-zoning aria-live="polite"></section>
+      <section class="parcel-zoning" data-parcel-zoning aria-label="선택 필지 정보" aria-live="polite"></section>
     `;
   }
 
@@ -3832,9 +3829,6 @@ function initPortalTabs() {
         vworldUrbanPlanningOpacity = Number(event.target.value) / 100;
         vworldUrbanPlanningOverlays.forEach((layer) => layer.setOpacity(vworldUrbanPlanningOpacity));
         group.querySelector("[data-vworld-urban-opacity-value]").textContent = `${Math.round(vworldUrbanPlanningOpacity * 100)}%`;
-      });
-      group.querySelector("[data-vworld-urban-hide]").addEventListener("click", () => {
-        [...vworldUrbanPlanningVisible].forEach((id) => setVworldUrbanPlanningLayer(id, false));
       });
     }
     vworldUrbanPlanningVisible.forEach((id) => setVworldUrbanPlanningLayer(id, true));

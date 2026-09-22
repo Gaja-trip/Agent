@@ -2636,7 +2636,7 @@ body.fee-image-viewer-open {
 .aerial-portal__panel {
   min-width: 0;
   height: 100%;
-  padding: 14px 14px 18px;
+  padding: 12px 14px;
   background: #fff;
   border-right: 1px solid var(--line);
   overflow-y: auto;
@@ -2658,7 +2658,7 @@ body.fee-image-viewer-open {
 
 .aerial-search {
   display: grid;
-  gap: 8px;
+  gap: 6px;
 }
 
 .aerial-search label {
@@ -2806,16 +2806,46 @@ body.fee-image-viewer-open {
 
 .vworld-tools {
   display: grid;
-  gap: 14px;
-  margin-top: 14px;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.aerial-portal .parcel-zoning {
+  margin: 0;
+  padding: 10px 12px;
+  line-height: 1.4;
+}
+
+.aerial-portal .parcel-zoning dl {
+  grid-template-columns: 60px minmax(0, 1fr);
+  gap: 5px 8px;
+  margin: 0;
+}
+
+.aerial-portal .parcel-zoning small {
+  margin-top: 5px;
+}
+
+.aerial-portal .vworld-tool-group--map {
+  grid-template-columns: 32px minmax(0, 1fr);
+  align-items: center;
+}
+
+.aerial-portal .vworld-tool-group--inline {
+  grid-template-columns: 32px repeat(3, minmax(0, 1fr));
+  align-items: center;
+}
+
+.aerial-portal .vworld-tool-group--inline strong {
+  grid-column: auto;
 }
 
 .vworld-urban-planning {
   display: grid;
-  gap: 10px;
+  gap: 8px;
   min-width: 0;
   margin: 0;
-  padding: 12px;
+  padding: 8px 10px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #f7faf8;
@@ -2843,7 +2873,7 @@ body.fee-image-viewer-open {
 }
 
 .vworld-urban-planning input {
-  accent-color: #c62828;
+  accent-color: #800020;
 }
 
 .vworld-urban-planning__filter {
@@ -2863,7 +2893,7 @@ body.fee-image-viewer-open {
   appearance: none;
   -webkit-appearance: none;
   border-radius: 999px;
-  background: linear-gradient(to right, #f2a0a0, #c62828);
+  background: linear-gradient(to right, #c38394, #800020);
   cursor: pointer;
 }
 
@@ -2871,26 +2901,17 @@ body.fee-image-viewer-open {
   -webkit-appearance: none;
   width: 16px;
   height: 16px;
-  border: 2px solid #8e1b1b;
+  border: 2px solid #580016;
   border-radius: 50%;
-  background: #c62828;
+  background: #800020;
 }
 
 .vworld-urban-planning__opacity input::-moz-range-thumb {
   width: 12px;
   height: 12px;
-  border: 2px solid #8e1b1b;
+  border: 2px solid #580016;
   border-radius: 50%;
-  background: #c62828;
-}
-
-.vworld-urban-planning button {
-  padding: 7px;
-  color: #31463f;
-  background: #fff;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  cursor: pointer;
+  background: #800020;
 }
 
 .vworld-urban-planning p {
@@ -2976,14 +2997,15 @@ body.fee-image-viewer-open {
 
 .vworld-measure {
   display: block;
-  min-height: 42px;
-  padding: 10px;
+  min-height: 32px;
+  padding: 6px 8px;
   color: #5b4633;
   background: #fff5df;
   border: 1px solid #efd9a7;
   border-radius: 8px;
   font-size: 0.83rem;
   font-weight: 800;
+  line-height: 1.4;
 }
 
 .vworld-measure.is-result {
