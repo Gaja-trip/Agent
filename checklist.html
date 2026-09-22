@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg?v=3" />
     <meta name="description" content="지적측량 사전 안내자료와 상담 체크리스트" />
     <title>안내자료 | 토지정보 통합 안내</title>
     <link rel="stylesheet" href="styles.css" />
@@ -13,10 +14,25 @@
     <header class="site-header">
       <a class="brand" href="index.html" aria-label="토지정보 통합 안내 첫 화면">
         <span class="brand__mark" aria-hidden="true">
-          <i data-lucide="land-plot"></i>
+          <img src="assets/land-info-logo.png" alt="" />
         </span>
         <strong>토지정보 통합 안내</strong>
       </a>
+      <form class="site-search" role="search" data-site-search>
+        <label class="visually-hidden" for="site-search-input">통합 자료 찾기</label>
+        <div class="site-search__row">
+          <i data-lucide="search"></i>
+          <input
+            id="site-search-input"
+            type="search"
+            placeholder="진행절차·안내자료·매뉴얼·상담지식 찾기"
+            autocomplete="off"
+            data-site-search-input
+          />
+          <button type="submit">찾기</button>
+        </div>
+        <div class="site-search__results" data-site-search-results hidden></div>
+      </form>
       <nav class="main-nav" aria-label="주요 메뉴">
         <a class="main-nav__home" href="index.html" aria-label="홈">
           <i data-lucide="house"></i>
@@ -33,43 +49,52 @@
       <section class="section section--compact section--guide">
         <div class="guide-page-tabs" role="tablist" aria-label="안내자료 항목">
           <button class="is-active" type="button" role="tab" aria-selected="true" aria-controls="guide-survey-checks" data-guide-page="survey-checks">
-            지적측량 종합 안내 및 필수 확인 사항
+            종합 안내 및 확인 사항
           </button>
           <button type="button" role="tab" aria-selected="false" aria-controls="guide-survey-followup" data-guide-page="survey-followup">
-            지적측량 완료 후 후속 조치 안내
+            후속 조치 안내
           </button>
           <button type="button" role="tab" aria-selected="false" aria-controls="guide-prechecklist" data-guide-page="prechecklist">
             사전체크리스트
+          </button>
+          <button type="button" role="tab" aria-selected="false" aria-controls="guide-result-examples" data-guide-page="result-examples">
+            측량성과도(예시)
+          </button>
+          <button type="button" role="tab" aria-selected="false" aria-controls="guide-registration-correction" data-guide-page="registration-correction">
+            등록사항정정
+          </button>
+          <button type="button" role="tab" aria-selected="false" aria-controls="guide-survey-fee" data-guide-page="survey-fee">
+            지적측량수수료 계산
           </button>
         </div>
 
         <div class="guide-pages">
           <section class="guide-page is-active" id="guide-survey-checks" role="tabpanel" data-guide-panel="survey-checks">
-            <div class="guide-materials" aria-label="지적측량 종합 안내 및 필수 확인 사항">
+            <div class="guide-materials" aria-label="종합 안내 및 확인 사항">
               <article class="guide-card" id="survey-checks">
                 <div class="guide-card__toolbar">
-                  <h2>지적측량 종합 안내 및 필수 확인 사항</h2>
-                  <button class="button button--primary" type="button" data-print-image="assets/survey-checks.png" data-print-title="지적측량 종합 안내 및 필수 확인 사항">
+                  <h2>종합 안내 및 확인 사항</h2>
+                  <button class="button button--primary" type="button" data-print-image="assets/survey-checks.png" data-print-title="종합 안내 및 확인 사항">
                     <i data-lucide="printer"></i>
                     출력
                   </button>
                 </div>
-                <img src="assets/survey-checks.png" alt="2026 지적측량 종합 안내 및 필수 확인 사항" />
+                <img src="assets/survey-checks.png" alt="2026 종합 안내 및 확인 사항" />
               </article>
             </div>
           </section>
 
           <section class="guide-page" id="guide-survey-followup" role="tabpanel" data-guide-panel="survey-followup" hidden>
-            <div class="guide-materials" aria-label="지적측량 완료 후 후속 조치 안내">
+            <div class="guide-materials" aria-label="후속 조치 안내">
               <article class="guide-card" id="survey-followup">
                 <div class="guide-card__toolbar">
-                  <h2>지적측량 완료 후 후속 조치 안내</h2>
-                  <button class="button button--primary" type="button" data-print-image="assets/survey-followup.png" data-print-title="지적측량 완료 후 후속 조치 안내">
+                  <h2>후속 조치 안내</h2>
+                  <button class="button button--primary" type="button" data-print-image="assets/survey-followup.png" data-print-title="후속 조치 안내">
                     <i data-lucide="printer"></i>
                     출력
                   </button>
                 </div>
-                <img src="assets/survey-followup.png" alt="지적측량 완료 후 후속 조치 안내" />
+                <img src="assets/survey-followup.png" alt="후속 조치 안내" />
               </article>
             </div>
           </section>
@@ -110,6 +135,550 @@
                   지번과 목적이 먼저 정리되면 토지이음, 지도, 법령 검토를 빠르게 연결할 수 있습니다.
                 </p>
               </aside>
+            </div>
+
+            <article class="guide-card subdivision-guide" data-search-item>
+              <div class="guide-card__toolbar">
+                <div>
+                  <p class="eyebrow">Subdivision Survey</p>
+                  <h2>분할측량 안내자료</h2>
+                </div>
+              </div>
+              <div class="subdivision-guide__body">
+                <div class="subdivision-guide__intro">
+                  <section>
+                    <h3>건축물에 의한 분할제한면적 확인</h3>
+                    <p>
+                      건축물이 있는 대지를 분할할 때는 건축법에 따른 용도지역별 최소 분할제한면적을
+                      먼저 확인합니다. 기준 면적 미만으로 분할하려는 경우에는 건축허가, 개발행위허가,
+                      토지이동 가능 여부를 함께 검토해야 합니다.
+                    </p>
+                  </section>
+                  <section>
+                    <h3>건폐율 확인</h3>
+                    <p>
+                      분할 후 남는 필지와 새로 생기는 필지가 각각 건폐율 기준을 충족하는지 확인합니다.
+                      특히 자연취락지구로 지정된 토지는 건폐율 60% 이하가 적용될 수 있으므로,
+                      토지이음에서 지구 지정 여부를 별도로 확인합니다.
+                    </p>
+                  </section>
+                </div>
+
+                <div class="subdivision-table-wrap" role="region" aria-label="용도지역별 건폐율과 분할제한면적" tabindex="0">
+                  <table class="knowledge-table subdivision-standards-table">
+                    <thead>
+                      <tr>
+                        <th scope="col">구분</th>
+                        <th scope="col">용도지역</th>
+                        <th scope="col">용도지역의 세분</th>
+                        <th scope="col">건폐율</th>
+                        <th scope="col">분할제한면적</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="rowgroup" rowspan="13">도시지역</th>
+                        <th scope="rowgroup" rowspan="3">주거지역</th>
+                        <td>전용주거지역</td>
+                        <td rowspan="3">70% 이하</td>
+                        <td rowspan="3">60㎡</td>
+                      </tr>
+                      <tr>
+                        <td>일반주거지역</td>
+                      </tr>
+                      <tr>
+                        <td>준주거지역</td>
+                      </tr>
+                      <tr>
+                        <th scope="rowgroup" rowspan="4">상업지역</th>
+                        <td>중심상업지역</td>
+                        <td rowspan="4">90% 이하</td>
+                        <td rowspan="4">150㎡</td>
+                      </tr>
+                      <tr>
+                        <td>일반상업지역</td>
+                      </tr>
+                      <tr>
+                        <td>근린상업지역</td>
+                      </tr>
+                      <tr>
+                        <td>유통상업지역</td>
+                      </tr>
+                      <tr>
+                        <th scope="rowgroup" rowspan="3">공업지역</th>
+                        <td>전용공업지역</td>
+                        <td rowspan="3">70% 이하</td>
+                        <td rowspan="3">150㎡</td>
+                      </tr>
+                      <tr>
+                        <td>일반공업지역</td>
+                      </tr>
+                      <tr>
+                        <td>준공업지역</td>
+                      </tr>
+                      <tr>
+                        <th scope="rowgroup" rowspan="3">녹지지역</th>
+                        <td>보전녹지지역</td>
+                        <td rowspan="3">20% 이하</td>
+                        <td rowspan="3">200㎡</td>
+                      </tr>
+                      <tr>
+                        <td>생산녹지지역</td>
+                      </tr>
+                      <tr>
+                        <td>자연녹지지역</td>
+                      </tr>
+                      <tr>
+                        <th scope="rowgroup" rowspan="5">비도시지역</th>
+                        <th scope="rowgroup" rowspan="3">관리지역</th>
+                        <td>보전관리지역</td>
+                        <td>20% 이하</td>
+                        <td rowspan="3">60㎡</td>
+                      </tr>
+                      <tr>
+                        <td>생산관리지역</td>
+                        <td>20% 이하</td>
+                      </tr>
+                      <tr>
+                        <td>계획관리지역</td>
+                        <td>40% 이하</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">농림지역</th>
+                        <td>-</td>
+                        <td>20% 이하</td>
+                        <td>60㎡</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">자연환경보전지역</th>
+                        <td>-</td>
+                        <td>20% 이하</td>
+                        <td>60㎡</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <p class="subdivision-guide__note">
+                  자연취락지구는 건폐율 60% 이하가 적용됩니다. 기본 용도지역 기준만 보지 말고
+                  자연취락지구, 조례상 완화 또는 제한 여부를 함께 확인해야 합니다.
+                </p>
+              </div>
+            </article>
+          </section>
+
+          <section class="guide-page" id="guide-result-examples" role="tabpanel" data-guide-panel="result-examples" hidden>
+            <div class="result-example-workspace" data-content-scope>
+              <div class="content-tabs result-example-tabs" role="tablist" aria-label="측량성과도 예시 종류">
+                <button class="is-active" type="button" role="tab" aria-selected="true" data-content-tab="boundary-restoration">
+                  경계복원측량성과도
+                </button>
+                <button type="button" role="tab" aria-selected="false" data-content-tab="status-survey">
+                  지적현황측량성과도
+                </button>
+                <button type="button" role="tab" aria-selected="false" data-content-tab="subdivision-survey">
+                  분할측량성과도
+                </button>
+                <button type="button" role="tab" aria-selected="false" data-content-tab="conversion-survey">
+                  등록전환측량성과도
+                </button>
+              </div>
+
+              <div class="content-panels">
+                <section class="content-panel is-active" data-content-panel="boundary-restoration">
+                  <article class="guide-card result-example-card">
+                    <div class="guide-card__toolbar">
+                      <h2>경계복원측량성과도 예시</h2>
+                      <button class="button button--primary" type="button" data-print-image="assets/survey-result-boundary-restoration.svg" data-print-title="경계복원측량성과도 예시">
+                        <i data-lucide="printer"></i>
+                        출력
+                      </button>
+                    </div>
+                    <img src="assets/survey-result-boundary-restoration.svg" alt="도장과 일부 개인정보를 흐릿하게 처리한 경계복원측량성과도 예시" />
+                  </article>
+                </section>
+
+                <section class="content-panel" data-content-panel="status-survey" hidden>
+                  <article class="guide-card result-example-card">
+                    <div class="guide-card__toolbar">
+                      <h2>지적현황측량성과도 예시</h2>
+                      <button class="button button--primary" type="button" data-print-image="assets/survey-result-status.svg" data-print-title="지적현황측량성과도 예시">
+                        <i data-lucide="printer"></i>
+                        출력
+                      </button>
+                    </div>
+                    <img src="assets/survey-result-status.svg" alt="현황선과 지적선을 함께 표시한 지적현황측량성과도 예시" />
+                  </article>
+                </section>
+
+                <section class="content-panel" data-content-panel="subdivision-survey" hidden>
+                  <article class="guide-card result-example-card">
+                    <div class="guide-card__toolbar">
+                      <h2>분할측량성과도 예시</h2>
+                      <button class="button button--primary" type="button" data-print-image="assets/survey-result-subdivision.svg" data-print-title="분할측량성과도 예시">
+                        <i data-lucide="printer"></i>
+                        출력
+                      </button>
+                    </div>
+                    <img src="assets/survey-result-subdivision.svg" alt="분할 전후 지번과 면적을 표시한 분할측량성과도 예시" />
+                  </article>
+                </section>
+
+                <section class="content-panel" data-content-panel="conversion-survey" hidden>
+                  <article class="guide-card result-example-card">
+                    <div class="guide-card__toolbar">
+                      <h2>등록전환측량성과도 예시</h2>
+                      <button class="button button--primary" type="button" data-print-image="assets/survey-result-conversion.svg" data-print-title="등록전환측량성과도 예시">
+                        <i data-lucide="printer"></i>
+                        출력
+                      </button>
+                    </div>
+                    <img src="assets/survey-result-conversion.svg" alt="임야도에서 지적도로 등록전환하는 등록전환측량성과도 예시" />
+                  </article>
+                </section>
+              </div>
+            </div>
+          </section>
+
+          <section class="guide-page" id="guide-registration-correction" role="tabpanel" data-guide-panel="registration-correction" hidden>
+            <div class="registration-correction" data-content-scope>
+              <div class="registration-correction__header">
+                <div>
+                  <p class="eyebrow">Registration Correction</p>
+                  <h2>등록사항정정</h2>
+                </div>
+                <form class="page-search page-search--compact" data-page-search>
+                  <label class="visually-hidden" for="correction-search-input">등록사항정정 자료 검색</label>
+                  <div class="page-search__row">
+                    <input id="correction-search-input" type="search" placeholder="예: 대정, 소화, 단기" data-page-search-input />
+                    <button class="button button--primary page-search__button" type="submit" aria-label="등록사항정정 자료 찾기">
+                      <i data-lucide="search"></i>
+                    </button>
+                  </div>
+                  <output class="visually-hidden" data-page-search-status></output>
+                </form>
+              </div>
+
+              <section class="correction-knowledge-grid" aria-label="연호 및 단기 계산법">
+                <article class="correction-knowledge-card" data-search-item>
+                  <h3>대정(大正) 연호 계산</h3>
+                  <p>대정은 1912년 7월 30일부터 1926년 12월 24일까지 사용된 일본 연호입니다.</p>
+                  <strong>서기 = 대정 연도 + 1911</strong>
+                  <small>예: 대정 4년 = 1915년</small>
+                </article>
+                <article class="correction-knowledge-card" data-search-item>
+                  <h3>소화(昭和) 연호 계산</h3>
+                  <p>소화는 1926년 12월 25일부터 1989년 1월 7일까지 사용된 일본 연호입니다.</p>
+                  <strong>서기 = 소화 연도 + 1925</strong>
+                  <small>예: 소화 31년 = 1956년</small>
+                </article>
+                <article class="correction-knowledge-card" data-search-item>
+                  <h3>단기 계산법</h3>
+                  <p>단기는 서기에 2333년을 더해 표시하는 방식입니다.</p>
+                  <strong>단기 = 서기 + 2333</strong>
+                  <small>예: 1956년 = 단기 4289년</small>
+                </article>
+              </section>
+
+              <section class="era-converter" aria-labelledby="era-converter-title" data-era-converter data-search-item>
+                <div>
+                  <p class="eyebrow">연호 변환기</p>
+                  <h3 id="era-converter-title">대정ㆍ소화ㆍ단기 → 서기</h3>
+                  <p>연호와 연도를 입력하면 서기 연도로 바로 변환합니다.</p>
+                </div>
+                <div class="era-converter__controls">
+                  <label>
+                    구분
+                    <select data-era-type>
+                      <option value="taisho">대정(大正)</option>
+                      <option value="showa">소화(昭和)</option>
+                      <option value="dangi">단기</option>
+                    </select>
+                  </label>
+                  <label>
+                    연도
+                    <input type="number" min="1" step="1" value="1" data-era-year />
+                  </label>
+                </div>
+                <div class="era-converter__result" aria-live="polite">
+                  <span>서기</span>
+                  <strong data-era-output>1912년</strong>
+                  <small data-era-note>대정 1년은 1912년입니다.</small>
+                </div>
+              </section>
+
+              <section class="jeongdan-calculator" aria-labelledby="jeongdan-title" data-jeongdan-calculator>
+                <div>
+                  <p class="eyebrow">정ㆍ단ㆍ무ㆍ보 계산기</p>
+                  <h3 id="jeongdan-title">정단무보 면적 계산</h3>
+                  <p>엑셀 계산식과 같이 정(町)은 3,000평, 단(段)은 300평, 무(畝)는 30평, 보(步)는 1평으로 합산합니다.</p>
+                </div>
+                <div class="jeongdan-calculator__inputs">
+                  <label>정(町)<input type="number" min="0" step="1" value="0" data-jeongdan-field="jeong" /></label>
+                  <label>단(段)<input type="number" min="0" step="1" value="0" data-jeongdan-field="dan" /></label>
+                  <label>무(畝)<input type="number" min="0" step="1" value="0" data-jeongdan-field="mu" /></label>
+                  <label>보(步)<input type="number" min="0" step="1" value="0" data-jeongdan-field="bo" /></label>
+                </div>
+                <div class="jeongdan-calculator__result" aria-live="polite">
+                  <span>평</span>
+                  <strong data-jeongdan-output="pyeong">0</strong>
+                  <span>㎡</span>
+                  <strong data-jeongdan-output="sqm">0.0</strong>
+                </div>
+              </section>
+
+              <section class="area-unit-converter" aria-labelledby="area-unit-title" data-area-unit-converter data-search-item>
+                <div>
+                  <p class="eyebrow">면적 단위 변환</p>
+                  <h3 id="area-unit-title">제곱미터 ⇄ 평 계산</h3>
+                  <p>제곱미터 또는 평수 중 하나를 입력하면 다른 단위를 자동 계산합니다.</p>
+                </div>
+                <div class="area-unit-converter__inputs">
+                  <label>
+                    제곱미터(㎡)
+                    <input type="number" min="0" step="0.01" data-area-unit-sqm placeholder="예: 397" />
+                  </label>
+                  <label>
+                    평
+                    <input type="number" min="0" step="0.01" data-area-unit-pyeong placeholder="예: 120.09" />
+                  </label>
+                </div>
+                <div class="area-unit-converter__result" aria-live="polite">
+                  <span data-area-unit-note>값을 입력하면 자동 계산됩니다.</span>
+                </div>
+              </section>
+
+              <section class="area-change-builder" aria-labelledby="area-change-title" data-area-change-builder>
+                <div class="area-change-builder__toolbar">
+                  <div>
+                    <p class="eyebrow">면적증감대비표</p>
+                    <h3 id="area-change-title">면적증감대비표 작성</h3>
+                  </div>
+                  <button class="button button--primary" type="button" data-area-row-add>
+                    <i data-lucide="plus"></i>
+                    행 추가
+                  </button>
+                </div>
+                <p class="area-change-builder__note">
+                  공차는 토지 기준으로 <strong>0.026 × 0.026 × 1200 × √대장면적</strong>을 적용하며 소수점 한 자리까지 자동 계산합니다.
+                  오차는 <strong>산출면적 - 대장면적</strong>으로 계산됩니다.
+                </p>
+
+                <div class="area-change-table-wrap">
+                  <table class="area-change-table">
+                    <caption>면적증감대비표</caption>
+                    <thead>
+                      <tr>
+                        <th colspan="2">토지소재</th>
+                        <th rowspan="2">지번</th>
+                        <th rowspan="2">지목</th>
+                        <th rowspan="2">대장면적</th>
+                        <th rowspan="2">공차</th>
+                        <th rowspan="2">산출면적</th>
+                        <th rowspan="2">오차</th>
+                        <th rowspan="2">결정면적</th>
+                        <th rowspan="2">증감</th>
+                        <th rowspan="2">변동사유</th>
+                        <th colspan="2">소유자</th>
+                        <th rowspan="2">관리</th>
+                      </tr>
+                      <tr>
+                        <th>읍면</th>
+                        <th>동리</th>
+                        <th>주소</th>
+                        <th>성명</th>
+                      </tr>
+                    </thead>
+                    <tbody data-area-rows>
+                      <tr>
+                        <td><select data-area-field="town"></select></td>
+                        <td><select data-area-field="village"></select></td>
+                        <td><input type="text" data-area-field="lot" placeholder="산9-1" /></td>
+                        <td><select data-area-field="landCategory"></select></td>
+                        <td><input type="number" min="0" step="0.1" data-area-field="ledgerArea" placeholder="397" /></td>
+                        <td><output data-area-output="tolerance">0.0</output></td>
+                        <td><input type="number" min="0" step="0.1" data-area-field="computedArea" placeholder="422.9" /></td>
+                        <td><output data-area-output="error">0.0</output></td>
+                        <td><input type="number" min="0" step="0.1" data-area-field="fixedArea" /></td>
+                        <td><input type="text" data-area-field="change" placeholder="증25.9" /></td>
+                        <td><textarea data-area-field="reason" rows="2" placeholder="1915년 8월 3일 분할되어 본번에 부합"></textarea></td>
+                        <td><textarea data-area-field="ownerAddress" rows="2" placeholder="전라북도 부안군..."></textarea></td>
+                        <td><input type="text" data-area-field="ownerName" placeholder="노전호" /></td>
+                        <td><button class="area-change-table__remove" type="button" data-area-row-remove aria-label="행 삭제">삭제</button></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </section>
+
+          <section class="guide-page" id="guide-survey-fee" role="tabpanel" data-guide-panel="survey-fee" hidden>
+            <div class="survey-fee-guide">
+              <article class="survey-fee-hero">
+                <div>
+                  <p class="eyebrow">Cadastral Survey Fee</p>
+                  <h2>지적측량수수료 계산 안내</h2>
+                  <p>
+                    지적측량을 신청하기 전 예상 수수료가 궁금한 경우, 일사편리의
+                    <strong>지적측량 수수료 계산</strong> 화면에서 국민이 직접 금액을 확인할 수 있습니다.
+                    실제 접수 금액은 신청 내용, 측량 조건, 감면 여부, 현장 여건에 따라 달라질 수 있으므로
+                    최종 금액은 접수기관의 안내를 함께 확인해야 합니다.
+                  </p>
+                </div>
+                <div class="survey-fee-hero__actions">
+                  <a class="button button--primary" href="https://kras.go.kr/feeAct/selectActView.do" target="_blank" rel="noopener noreferrer">
+                    <i data-lucide="calculator"></i>
+                    수수료 계산 바로가기
+                  </a>
+                  <a class="button" href="https://kras.go.kr/mainView.do" target="_blank" rel="noopener noreferrer">
+                    <i data-lucide="external-link"></i>
+                    일사편리 메인 열기
+                  </a>
+                </div>
+              </article>
+
+              <section class="survey-fee-flow" aria-label="일사편리 지적측량수수료 계산 절차">
+                <article class="survey-fee-step">
+                  <span>01</span>
+                  <h3>일사편리 접속</h3>
+                  <p>일사편리 메인 화면 또는 고객지원의 지적측량 안내 메뉴로 들어갑니다.</p>
+                </article>
+                <article class="survey-fee-step">
+                  <span>02</span>
+                  <h3>수수료 계산 선택</h3>
+                  <p>메인 화면의 지적측량 수수료 간편 계산 또는 지적측량 안내의 수수료 계산을 선택합니다.</p>
+                </article>
+                <article class="survey-fee-step">
+                  <span>03</span>
+                  <h3>측량종목 선택</h3>
+                  <p>경계복원, 지적현황, 분할측량, 등록전환 중 신청하려는 종목을 선택합니다.</p>
+                </article>
+                <article class="survey-fee-step">
+                  <span>04</span>
+                  <h3>토지 정보 입력</h3>
+                  <p>소재지, 산 여부, 지번, 면적, 지목, 토지구분, 축척, 개별공시지가를 입력합니다.</p>
+                </article>
+                <article class="survey-fee-step">
+                  <span>05</span>
+                  <h3>계산하기</h3>
+                  <p>측량수수료 계산하기를 누르면 산정 목록에 수수료와 금액이 표시됩니다.</p>
+                </article>
+              </section>
+
+              <section class="survey-fee-layout">
+                <article class="survey-fee-card survey-fee-card--wide">
+                  <p class="eyebrow">입력 항목</p>
+                  <h3>계산 전에 준비할 정보</h3>
+                  <div class="survey-fee-input-grid">
+                    <div>
+                      <strong>측량종목</strong>
+                      <span>경계복원, 지적현황, 분할측량, 등록전환</span>
+                    </div>
+                    <div>
+                      <strong>측량 소재지</strong>
+                      <span>시도, 시군구, 읍면동, 리, 산 여부, 본번, 부번</span>
+                    </div>
+                    <div>
+                      <strong>기본 토지 정보</strong>
+                      <span>면적, 지목, 토지구분, 축척</span>
+                    </div>
+                    <div>
+                      <strong>가격 정보</strong>
+                      <span>개별공시지가</span>
+                    </div>
+                    <div>
+                      <strong>상세 조건</strong>
+                      <span>지적현황, 분할측량, 등록전환은 적용구분과 필지수 또는 면적을 추가 입력</span>
+                    </div>
+                    <div>
+                      <strong>결과 확인</strong>
+                      <span>업무종목, 소재지, 원면적, 수량, 수수료, 경감액, 금액</span>
+                    </div>
+                  </div>
+                </article>
+
+                <aside class="survey-fee-card">
+                  <p class="eyebrow">상담 설명 문구</p>
+                  <h3>국민에게 이렇게 안내합니다</h3>
+                  <p class="survey-fee-quote">
+                    "일사편리에서 지적측량 예상 수수료를 직접 계산해볼 수 있습니다.
+                    다만 화면의 금액은 사전 확인용이며, 실제 접수 금액은 측량 종류와 현장 조건,
+                    감면 적용 여부에 따라 달라질 수 있습니다."
+                  </p>
+                  <ul>
+                    <li>정확한 지번과 면적을 알고 있을수록 예상 금액이 실제와 가까워집니다.</li>
+                    <li>산 번지는 산 체크 후 본번과 부번을 나누어 입력합니다.</li>
+                    <li>계산 결과는 접수 전 상담자료로 활용하고, 최종 수수료는 접수 단계에서 확인합니다.</li>
+                  </ul>
+                </aside>
+              </section>
+
+              <section class="survey-fee-screen-guide" aria-label="일사편리 화면별 확인 지점">
+                <article class="fee-screen-mock">
+                  <a
+                    class="fee-browser-bar"
+                    href="https://kras.go.kr/feeAct/selectActView.do"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="일사편리 지적측량 수수료 계산 화면 열기"
+                  >
+                    https://kras.go.kr/feeAct/selectActView.do
+                  </a>
+                  <div class="fee-menu-list">
+                    <span>지적측량 온택트</span>
+                    <strong>지적측량 수수료 간편 계산</strong>
+                    <span>부동산통합열람 바로가기</span>
+                  </div>
+                  <p>메인 화면에서는 가운데 메뉴의 <strong>지적측량 수수료 간편 계산</strong>을 선택합니다.</p>
+                </article>
+
+                <article class="fee-screen-mock fee-screen-mock--form">
+                  <div class="fee-tabs">
+                    <strong>경계복원</strong>
+                    <span>지적현황</span>
+                    <span>분할측량</span>
+                    <span>등록전환</span>
+                  </div>
+                  <div class="fee-form-grid">
+                    <span>전북특별자치도</span>
+                    <span>부안군</span>
+                    <span>하서면</span>
+                    <span>장신리</span>
+                    <span>산 0225 - 0000</span>
+                    <span>검색</span>
+                    <span>면적 16,264㎡</span>
+                    <span>지목 묘지</span>
+                    <span>축척 1:6000</span>
+                    <span>개별공시지가 10,400원</span>
+                  </div>
+                  <p>소재지와 토지 정보를 입력한 뒤 검색하고, 하단의 <strong>측량수수료 계산하기</strong>를 누릅니다.</p>
+                </article>
+
+                <article class="fee-screen-mock fee-screen-mock--result">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>업무종목</th>
+                        <th>소재지</th>
+                        <th>원면적</th>
+                        <th>수수료</th>
+                        <th>금액</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>경계복원측량</td>
+                        <td>전북특별자치도 부안군 하서면 장신리</td>
+                        <td>16,264㎡</td>
+                        <td>804,000</td>
+                        <td>804,000</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <p>산정 목록에 표시된 금액은 예상 수수료입니다. 출력하거나 상담 시 참고자료로 활용할 수 있습니다.</p>
+                </article>
+              </section>
             </div>
           </section>
         </div>

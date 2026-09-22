@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1420" height="620" viewBox="0 0 1420 620" role="img" aria-labelledby="title desc">
+  <title id="title">검사요청처리 패널</title>
+  <desc id="desc">검사요청처리 패널에서 전자결재와 검색 버튼, 검사요청 대상 행을 빨간색으로 강조하고 확대 표시한 예시 화면</desc>
+  <rect width="1420" height="620" fill="#f5f8fa"/>
+  <rect width="1420" height="46" fill="#06446e"/>
+  <text x="18" y="30" fill="#fff" font-family="Arial, sans-serif" font-size="18" font-weight="800">성과 &gt;&gt; 검사요청</text>
+  <g font-family="Arial, sans-serif" font-size="18" font-weight="800" text-anchor="middle">
+    <text x="180" y="30" fill="#fff">접수</text>
+    <text x="300" y="30" fill="#fff">일정</text>
+    <text x="420" y="30" fill="#fff">정산</text>
+    <text x="540" y="30" fill="#fff">성과</text>
+    <text x="660" y="30" fill="#fff">결산</text>
+    <text x="790" y="30" fill="#fff">계산서</text>
+  </g>
+  <rect x="496" y="0" width="88" height="46" fill="none" stroke="#ff2a2a" stroke-width="5"/>
+
+  <rect x="0" y="46" width="1420" height="52" fill="#edf7ff" stroke="#0a5c91"/>
+  <rect x="12" y="56" width="112" height="42" rx="3" fill="#fff" stroke="#0a5c91"/>
+  <text x="68" y="83" fill="#06446e" font-family="Arial, sans-serif" font-size="16" font-weight="800" text-anchor="middle">검사요청처리</text>
+  <rect x="124" y="56" width="138" height="42" rx="3" fill="#eef2f5" stroke="#b5c5d0"/>
+  <text x="193" y="83" fill="#87939b" font-family="Arial, sans-serif" font-size="16" font-weight="800" text-anchor="middle">검사요청처리자료</text>
+
+  <rect x="0" y="98" width="1420" height="108" fill="#fff" stroke="#b8c5cf"/>
+  <text x="24" y="129" fill="#0f2c45" font-family="Arial, sans-serif" font-size="15" font-weight="800">검색조건</text>
+  <text x="26" y="164" fill="#0f2c45" font-family="Arial, sans-serif" font-size="14" font-weight="800">회계년도</text>
+  <rect x="88" y="143" width="44" height="34" fill="#fff" stroke="#d5dde2"/>
+  <text x="96" y="165" fill="#111" font-family="Arial, sans-serif" font-size="13">2026</text>
+  <text x="180" y="164" fill="#0f2c45" font-family="Arial, sans-serif" font-size="14" font-weight="800">기관</text>
+  <rect x="220" y="143" width="145" height="34" fill="#f2f4f6" stroke="#d5dde2"/>
+  <text x="390" y="164" fill="#0f2c45" font-family="Arial, sans-serif" font-size="14" font-weight="800">관할</text>
+  <rect x="432" y="143" width="140" height="34" fill="#fff" stroke="#d5dde2"/>
+  <text x="452" y="165" fill="#111" font-family="Arial, sans-serif" font-size="13" font-weight="800">부안군</text>
+  <text x="26" y="196" fill="#0f2c45" font-family="Arial, sans-serif" font-size="14" font-weight="800">처리구분</text>
+  <rect x="88" y="179" width="82" height="30" fill="#fff" stroke="#d5dde2"/>
+  <text x="103" y="199" fill="#111" font-family="Arial, sans-serif" font-size="13">검사요청</text>
+  <text x="204" y="196" fill="#0f2c45" font-family="Arial, sans-serif" font-size="14" font-weight="800">검사요청일자</text>
+  <rect x="294" y="179" width="96" height="30" fill="#f7f7f7" stroke="#d5dde2"/>
+  <text x="304" y="199" fill="#777" font-family="Arial, sans-serif" font-size="13">2026-05-28</text>
+
+  <g font-family="Arial, sans-serif" font-size="13" font-weight="800" text-anchor="middle">
+    <rect x="1010" y="100" width="70" height="32" rx="4" fill="#0a63a5"/>
+    <text x="1045" y="121" fill="#fff">전송상태</text>
+    <rect x="1082" y="100" width="68" height="32" rx="4" fill="#0a63a5"/>
+    <text x="1116" y="121" fill="#fff">파일전송</text>
+    <rect x="1152" y="96" width="72" height="40" rx="4" fill="#0a63a5"/>
+    <text x="1188" y="121" fill="#fff">전자결재</text>
+    <rect x="1230" y="100" width="70" height="32" rx="4" fill="#0a63a5"/>
+    <text x="1265" y="121" fill="#fff">사본처리</text>
+    <rect x="1335" y="94" width="66" height="44" rx="4" fill="#0067ad"/>
+    <text x="1368" y="121" fill="#fff">검색</text>
+  </g>
+  <rect x="1148" y="88" width="80" height="56" fill="none" stroke="#ff2a2a" stroke-width="5"/>
+  <rect x="1328" y="88" width="80" height="56" fill="none" stroke="#ff2a2a" stroke-width="5"/>
+
+  <rect x="0" y="206" width="1420" height="54" fill="#d8dee4" stroke="#b8c5cf"/>
+  <g font-family="Arial, sans-serif" font-size="14" fill="#111" font-weight="800" text-anchor="middle">
+    <text x="66" y="239">업무</text>
+    <text x="158" y="239">종목</text>
+    <text x="260" y="239">접수일자</text>
+    <text x="365" y="239">접수번호</text>
+    <text x="520" y="239">결재문서번호</text>
+    <text x="690" y="239">처리상태</text>
+    <text x="808" y="239">전자결재진행상태</text>
+    <text x="1018" y="239">토지소재지</text>
+    <text x="1168" y="239">지번수</text>
+    <text x="1260" y="239">측량일</text>
+    <text x="1362" y="239">문자전송</text>
+  </g>
+  <g font-family="Arial, sans-serif" font-size="14" fill="#111">
+    <rect x="0" y="260" width="1420" height="42" fill="#fff" stroke="#ccd4da"/>
+    <text x="38" y="287">일반업무</text><text x="116" y="287">분할측량</text><text x="232" y="287">2026-05-20</text><text x="352" y="287" fill="#002dbb" text-decoration="underline">58</text><text x="470" y="287">부안지사-1493</text><text x="678" y="287">요청</text><text x="792" y="287">완료</text><text x="910" y="287">보안면 신복리 218-32</text><text x="1162" y="287">2</text><text x="1245" y="287">2026-05-27</text><text x="1364" y="287" fill="#0067ad">☑</text>
+    <rect x="0" y="302" width="1420" height="42" fill="#f8fafb" stroke="#ccd4da"/>
+    <text x="38" y="329">특수업무</text><text x="116" y="329">기초(도로)</text><text x="232" y="329">2026-01-27</text><text x="352" y="329" fill="#002dbb" text-decoration="underline">1</text><text x="470" y="329">부안지사-1434</text><text x="678" y="329">요청</text><text x="792" y="329">완료</text><text x="910" y="329">변산면 격포리 1</text><text x="1162" y="329">233</text><text x="1245" y="329">2026-02-26</text><text x="1364" y="329" fill="#0067ad">☑</text>
+  </g>
+  <rect x="0" y="258" width="1420" height="46" fill="none" stroke="#ff2a2a" stroke-width="3"/>
+
+  <g transform="translate(78 395)">
+    <rect width="565" height="160" rx="8" fill="#fff" stroke="#ff2a2a" stroke-width="5"/>
+    <text x="24" y="36" fill="#ff2a2a" font-family="Arial, sans-serif" font-size="17" font-weight="900">확대 보기: 전자결재와 검색</text>
+    <rect x="235" y="64" width="116" height="54" rx="5" fill="#0a63a5"/>
+    <text x="293" y="99" fill="#fff" font-family="Arial, sans-serif" font-size="20" font-weight="900" text-anchor="middle">전자결재</text>
+    <rect x="390" y="60" width="112" height="62" rx="5" fill="#0067ad"/>
+    <text x="446" y="99" fill="#fff" font-family="Arial, sans-serif" font-size="20" font-weight="900" text-anchor="middle">검색</text>
+  </g>
+  <g transform="translate(690 395)">
+    <rect width="600" height="160" rx="8" fill="#fff" stroke="#ff2a2a" stroke-width="5"/>
+    <text x="24" y="36" fill="#ff2a2a" font-family="Arial, sans-serif" font-size="17" font-weight="900">확대 보기: 검사요청 대상 선택</text>
+    <text x="40" y="82" fill="#111" font-family="Arial, sans-serif" font-size="19" font-weight="900">분할측량  보안면 신복리 218-32</text>
+    <text x="40" y="116" fill="#111" font-family="Arial, sans-serif" font-size="17">처리상태: 요청 / 전자결재진행상태: 완료</text>
+    <text x="520" y="112" fill="#0067ad" font-family="Arial, sans-serif" font-size="30" font-weight="900">☑</text>
+  </g>
+</svg>

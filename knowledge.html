@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg?v=3" />
     <meta name="description" content="토지 상담에 필요한 핵심 지식 정리" />
     <title>상담지식 | 토지정보 통합 안내</title>
     <link rel="stylesheet" href="styles.css" />
@@ -13,10 +14,25 @@
     <header class="site-header">
       <a class="brand" href="index.html" aria-label="토지정보 통합 안내 첫 화면">
         <span class="brand__mark" aria-hidden="true">
-          <i data-lucide="land-plot"></i>
+          <img src="assets/land-info-logo.png" alt="" />
         </span>
         <strong>토지정보 통합 안내</strong>
       </a>
+      <form class="site-search" role="search" data-site-search>
+        <label class="visually-hidden" for="site-search-input">통합 자료 찾기</label>
+        <div class="site-search__row">
+          <i data-lucide="search"></i>
+          <input
+            id="site-search-input"
+            type="search"
+            placeholder="진행절차·안내자료·매뉴얼·상담지식 찾기"
+            autocomplete="off"
+            data-site-search-input
+          />
+          <button type="submit">찾기</button>
+        </div>
+        <div class="site-search__results" data-site-search-results hidden></div>
+      </form>
       <nav class="main-nav" aria-label="주요 메뉴">
         <a class="main-nav__home" href="index.html" aria-label="홈">
           <i data-lucide="house"></i>
@@ -29,38 +45,1515 @@
       </nav>
     </header>
 
-    <main class="page-main">
-      <section class="page-title" aria-labelledby="page-title">
-        <p class="eyebrow">Consulting Knowledge</p>
+    <main class="page-main content-page" data-content-scope>
+      <section class="page-title page-title--compact page-title--with-search" aria-labelledby="page-title">
         <h1 id="page-title">상담지식</h1>
-        <p>토지 상담에서 반복적으로 확인해야 하는 쟁점을 지번, 현황, 허가, 후속 절차 기준으로 정리했습니다.</p>
+        <form class="page-search page-search--compact" data-page-search>
+          <label class="visually-hidden" for="knowledge-search-input">상담지식 검색</label>
+          <div class="page-search__row">
+            <input id="knowledge-search-input" type="search" placeholder="예: 진입로, 조례, 지목, 등기" data-page-search-input />
+            <button class="button button--primary page-search__button" type="submit" aria-label="상담지식 찾기">
+              <i data-lucide="search"></i>
+            </button>
+          </div>
+          <output class="visually-hidden" data-page-search-status></output>
+        </form>
       </section>
 
-      <section class="section section--compact">
-        <div class="knowledge-grid">
-          <article class="knowledge-item">
-            <i data-lucide="land-plot"></i>
-            <h2>공부와 현황은 따로 확인</h2>
-            <p>지목, 면적, 경계는 공부 기준으로 확인하고 실제 이용 상태는 지도와 항공사진으로 별도 대조합니다.</p>
-          </article>
+      <section class="section section--compact content-section">
+        <div class="content-tabs content-tabs--knowledge" role="tablist" aria-label="상담지식 분류" data-content-tabs>
+          <button class="is-active" type="button" role="tab" aria-selected="true" data-content-tab="survey-general">지적측량일반</button>
+          <button type="button" role="tab" aria-selected="false" data-content-tab="request-process">측량의뢰 및 절차</button>
+          <button type="button" role="tab" aria-selected="false" data-content-tab="fee">수수료</button>
+          <button type="button" role="tab" aria-selected="false" data-content-tab="result">결과부</button>
+          <button type="button" role="tab" aria-selected="false" data-content-tab="receipt">영수증</button>
+          <button type="button" role="tab" aria-selected="false" data-content-tab="spatial">공간정보</button>
+          <button type="button" role="tab" aria-selected="false" data-content-tab="law">관련법령</button>
+          <button type="button" role="tab" aria-selected="false" data-content-tab="office">공사업무일반</button>
+          <button type="button" role="tab" aria-selected="false" data-content-tab="etc">기타</button>
+        </div>
 
-          <article class="knowledge-item">
-            <i data-lucide="route"></i>
-            <h2>진입로와 배수 조건</h2>
-            <p>개발행위나 분할 상담에서는 도로 접속, 배수 방향, 경사, 인접 토지 관계가 핵심 확인 항목입니다.</p>
-          </article>
+        <div class="content-panels">
+          <section class="content-panel is-active" data-content-panel="survey-general">
+            <div class="knowledge-subnav-layout" data-knowledge-subtabs>
+              <aside class="knowledge-subnav" aria-label="지적측량일반 세부 메뉴">
+                <button class="is-active" type="button" aria-selected="true" data-knowledge-subtab="boundary">경계</button>
+                <button type="button" aria-selected="false" data-knowledge-subtab="division">분할</button>
+                <button type="button" aria-selected="false" data-knowledge-subtab="status">지적현황</button>
+                <button type="button" aria-selected="false" data-knowledge-subtab="conversion">등록전환</button>
+              </aside>
 
-          <article class="knowledge-item">
-            <i data-lucide="scale"></i>
-            <h2>규제는 조례까지 확인</h2>
-            <p>용도지역 행위제한은 법령뿐 아니라 도시계획조례와 지자체 운영 기준에 따라 달라질 수 있습니다.</p>
-          </article>
+              <div class="knowledge-subpanels">
+                <section class="knowledge-subpanel is-active" data-knowledge-subpanel="boundary">
+                  <div class="knowledge-grid">
+                    <article class="knowledge-item" data-search-item>
+                      <i data-lucide="land-plot"></i>
+                      <h2>경계는 공부 기준으로 안내</h2>
+                      <p>경계복원측량은 지적공부에 등록된 경계점을 현장에 복원하는 측량입니다. 현장 이용선, 담장, 배수로, 도로 경계가 공부상 경계와 다를 수 있음을 먼저 설명합니다.</p>
+                    </article>
+                    <article class="knowledge-item" data-search-item>
+                      <i data-lucide="map-pinned"></i>
+                      <h2>현장 확인 포인트</h2>
+                      <p>입회자, 인접 토지 이용 현황, 기존 말뚝·담장·옹벽 위치를 확인하고, 항공사진과 연속지적도를 참고자료로 함께 대조합니다.</p>
+                    </article>
+                    <article class="knowledge-item knowledge-item--wide" data-search-item>
+                      <i data-lucide="ruler"></i>
+                      <h2>경계 상담 시 설명할 내용</h2>
+                      <div class="knowledge-law-grid">
+                        <section class="knowledge-law-block">
+                          <h3>접수 전</h3>
+                          <ul>
+                            <li>측량 대상 지번, 소유자 또는 대리인 여부, 현장 출입 가능 여부를 확인합니다.</li>
+                            <li>경계분쟁, 담장 설치, 건축 계획 등 의뢰 목적을 확인하여 설명 범위를 정합니다.</li>
+                          </ul>
+                        </section>
+                        <section class="knowledge-law-block">
+                          <h3>성과 안내</h3>
+                          <ul>
+                            <li>측량 결과는 공부상 경계를 현장에 표시하는 것이며, 소유권 분쟁 자체를 판단하는 절차는 아님을 안내합니다.</li>
+                            <li>성과도와 현장 표지를 함께 확인하고, 필요한 경우 인접 소유자 협의 또는 후속 행정절차를 안내합니다.</li>
+                          </ul>
+                        </section>
+                      </div>
+                    </article>
+                  </div>
+                </section>
 
-          <article class="knowledge-item">
-            <i data-lucide="file-check-2"></i>
-            <h2>허가 후 공부 정리</h2>
-            <p>허가가 끝나도 분할, 합병, 지목변경 등 토지이동신청과 등기 반영까지 마쳐야 절차가 정리됩니다.</p>
-          </article>
+                <section class="knowledge-subpanel" data-knowledge-subpanel="division" hidden>
+                  <div class="knowledge-grid">
+                    <article class="knowledge-item" data-search-item>
+                      <i data-lucide="ruler"></i>
+                      <h2>측량 목적 먼저 정리</h2>
+                      <p>분할 목적이 매매, 건축, 도로 확보, 인허가, 상속·정리 중 무엇인지에 따라 필요한 서류와 현장 확인 범위가 달라집니다.</p>
+                    </article>
+                    <article class="knowledge-item knowledge-item--wide" data-search-item>
+                      <i data-lucide="split"></i>
+                      <h2>분할측량 시 알아두어야 할 사항</h2>
+                      <p>
+                        분할측량은 하나의 필지를 둘 이상으로 나누기 위한 지적측량입니다. 측량만으로 공부가 바로 정리되는 것이 아니므로,
+                        분할 목적, 허가 필요 여부, 현장 경계, 성과검사, 토지이동신청까지 순서대로 안내해야 합니다.
+                      </p>
+                      <div class="knowledge-law-grid">
+                        <section class="knowledge-law-block">
+                          <h3>접수 전 확인</h3>
+                          <ul>
+                            <li>토지소유자, 공유자, 대리인 위임 여부와 의뢰 대상 지번을 먼저 확인합니다.</li>
+                            <li>분할 목적이 매매, 건축, 도로 확보, 인허가, 상속·정리 중 무엇인지 구분합니다.</li>
+                            <li>분할선, 예정 면적, 진입로, 맹지 발생 여부, 기존 건축물·담장·도로와의 관계를 확인합니다.</li>
+                            <li>개발행위허가, 농지·산지 전용, 건축법상 분할제한면적, 도시계획선 등 사전 협의가 필요한지 검토합니다.</li>
+                          </ul>
+                        </section>
+                        <section class="knowledge-law-block">
+                          <h3>현장 측량 시 확인</h3>
+                          <ul>
+                            <li>입회자에게 기존 경계점, 분할 예정선, 인접 토지와 도로 경계를 현장에서 설명합니다.</li>
+                            <li>공부상 경계와 실제 이용 현황이 다를 수 있으므로 항공사진, 연속지적도, 현장 구조물을 함께 대조합니다.</li>
+                            <li>분할 후 잔여지와 신설 필지의 이용 가능성, 도로 접합, 면적 차이 가능성을 기록합니다.</li>
+                            <li>이해관계가 있는 인접 토지나 공유자가 있으면 현장 안내 내용과 보완 필요사항을 남깁니다.</li>
+                          </ul>
+                        </section>
+                        <section class="knowledge-law-block">
+                          <h3>성과 후 안내</h3>
+                          <ul>
+                            <li>분할측량은 토지이동이 있는 측량이므로 지적소관청의 성과검사 절차를 거쳐야 합니다.</li>
+                            <li>성과검사 완료 후 결과부와 성과도를 교부하고, 토지소유자가 관할 지적소관청에 토지이동신청을 해야 합니다.</li>
+                            <li>허가 조건, 분할 면적, 지목, 지번 부여 내용이 성과도와 맞는지 확인한 뒤 공부 정리와 등기촉탁 단계로 안내합니다.</li>
+                            <li>분할 결과가 인허가 도면과 다르거나 보완 조건이 있으면 허가부서와 다시 맞춘 뒤 접수하도록 설명합니다.</li>
+                          </ul>
+                        </section>
+                      </div>
+                    </article>
+                  </div>
+                </section>
+
+                <section class="knowledge-subpanel" data-knowledge-subpanel="status" hidden>
+                  <div class="knowledge-grid">
+                    <article class="knowledge-item" data-search-item>
+                      <i data-lucide="scan-line"></i>
+                      <h2>지적현황측량의 목적</h2>
+                      <p>지적현황측량은 지상 구조물, 점유 현황, 이용 경계 등을 지적도와 비교하여 현황을 파악하기 위한 측량입니다. 경계 확정이나 분할 자체를 목적으로 하는 측량과 구분해 안내합니다.</p>
+                    </article>
+                    <article class="knowledge-item" data-search-item>
+                      <i data-lucide="clipboard-list"></i>
+                      <h2>상담 시 확인할 자료</h2>
+                      <p>건축물, 담장, 도로, 배수로, 묘지, 농지 이용선 등 확인하려는 대상물을 구체적으로 정하고, 현장 사진과 토지이용계획을 함께 검토합니다.</p>
+                    </article>
+                    <article class="knowledge-item knowledge-item--wide" data-search-item>
+                      <i data-lucide="map"></i>
+                      <h2>결과 활용 안내</h2>
+                      <p>현황측량 성과는 인허가 협의, 점유 현황 확인, 민원 상담의 참고자료로 활용되며, 공부 정리를 위해서는 별도의 토지이동 또는 인허가 절차가 필요할 수 있습니다.</p>
+                    </article>
+                  </div>
+                </section>
+
+                <section class="knowledge-subpanel" data-knowledge-subpanel="conversion" hidden>
+                  <div class="knowledge-grid">
+                    <article class="knowledge-item" data-search-item>
+                      <i data-lucide="replace"></i>
+                      <h2>등록전환의 기본 개념</h2>
+                      <p>등록전환은 임야대장과 임야도에 등록된 토지를 토지대장과 지적도에 등록하기 위한 절차입니다. 개발, 건축, 산지전용 등 후속 행정절차와 연결되는 경우가 많습니다.</p>
+                    </article>
+                    <article class="knowledge-item" data-search-item>
+                      <i data-lucide="file-search"></i>
+                      <h2>사전 확인 사항</h2>
+                      <p>토지 소재, 지목, 면적, 임야도 위치, 인허가 조건, 산지전용 또는 개발행위허가 여부를 확인하고, 등록전환 후 지번·면적·도면 정리 방향을 설명합니다.</p>
+                    </article>
+                    <article class="knowledge-item knowledge-item--wide" data-search-item>
+                      <i data-lucide="check-check"></i>
+                      <h2>성과 후 진행</h2>
+                      <p>측량 성과가 정리되면 지적소관청의 검사와 토지이동 정리를 거쳐 공부가 변경됩니다. 인허가 면적과 성과 면적이 다르면 보완 협의가 필요할 수 있음을 안내합니다.</p>
+                    </article>
+                  </div>
+                </section>
+              </div>
+            </div>
+          </section>
+
+          <section class="content-panel" data-content-panel="request-process" hidden>
+            <div class="knowledge-grid">
+              <article class="knowledge-item" data-search-item>
+                <i data-lucide="clipboard-check"></i>
+                <h2>접수 전 기본 확인</h2>
+                <p>의뢰인, 소유자, 대상 토지, 측량 종목, 연락처를 먼저 맞춘 뒤 접수를 진행합니다.</p>
+              </article>
+              <article class="knowledge-item" data-search-item>
+                <i data-lucide="route"></i>
+                <h2>현장 진행 절차</h2>
+                <p>접수, 수수료 납부, 일정 배정, 현장측량, 성과 정리, 결과 교부 순서로 안내합니다.</p>
+              </article>
+            </div>
+          </section>
+
+          <section class="content-panel" data-content-panel="fee" hidden>
+            <div class="knowledge-subnav-layout knowledge-subnav-layout--fee" data-knowledge-subtabs>
+              <aside class="knowledge-subnav knowledge-subnav--fee" aria-label="수수료 감면 세부 메뉴">
+                <button class="is-active" type="button" aria-selected="true" data-knowledge-subtab="fee-current-rule">최신 규정</button>
+                <button type="button" aria-selected="false" data-knowledge-subtab="fee-calculation">산출 구조</button>
+                <button type="button" aria-selected="false" data-knowledge-subtab="fee-package">동일지번 패키지</button>
+                <button type="button" aria-selected="false" data-knowledge-subtab="fee-parcel-discount">필지체감</button>
+                <button type="button" aria-selected="false" data-knowledge-subtab="fee-disaster">자연재해지역</button>
+                <button type="button" aria-selected="false" data-knowledge-subtab="fee-small-area">소면적 경감</button>
+                <button type="button" aria-selected="false" data-knowledge-subtab="fee-difference">차인 적용</button>
+                <button type="button" aria-selected="false" data-knowledge-subtab="fee-large-parcel">대면적 분할</button>
+                <button type="button" aria-selected="false" data-knowledge-subtab="fee-map-sheet">도곽내 면적</button>
+                <button type="button" aria-selected="false" data-knowledge-subtab="fee-continuous">연속지·집단지</button>
+                <button type="button" aria-selected="false" data-knowledge-subtab="fee-by-type">종목별 적용</button>
+                <button type="button" aria-selected="false" data-knowledge-subtab="fee-veteran">국가유공자 감면</button>
+                <button type="button" aria-selected="false" data-knowledge-subtab="fee-cautions">각종 감면&유의사항</button>
+              </aside>
+
+              <div class="knowledge-subpanels knowledge-subpanels--fee">
+                <section class="knowledge-subpanel is-active" data-knowledge-subpanel="fee-current-rule">
+                  <div class="knowledge-grid knowledge-grid--fee">
+                    <article class="knowledge-item knowledge-item--wide" data-search-item>
+                      <i data-lucide="book-open-check"></i>
+                      <h2>지적측량수수료 산정기준 등에 관한 규정</h2>
+                      <p>
+                        2026년 현재 국가법령정보센터에서 확인되는 현행 행정규칙은
+                        「지적측량수수료 산정기준 등에 관한 규정」이며,
+                        교육자료 기준 2026년 수수료는 대부분 종목 2.3% 인상, 경계복원측량은 2.0% 인상으로 안내합니다.
+                      </p>
+                      <div class="fee-rule-badges fee-rule-badges--compact">
+                        <span>2026년 현재 현행</span>
+                        <span>시행 2025. 12. 24.</span>
+                        <span>국토교통부예규 제450호</span>
+                        <span>2025. 12. 24. 일부개정</span>
+                        <span>대부분 종목 2.3%</span>
+                        <span>경계복원 2.0%</span>
+                      </div>
+                      <div class="knowledge-law-grid">
+                        <section class="knowledge-law-block">
+                          <h3>원문에서 확인할 항목</h3>
+                          <ul>
+                            <li>본문: 수수료 산정 기준, 체감·경감·감면 적용 기준, 업무별 적용 원칙을 확인합니다.</li>
+                            <li>부칙: 시행일과 개정 적용 시점을 확인합니다.</li>
+                            <li>별표/서식: 수수료 산정표, 세부 기준, 첨부 서식을 확인합니다.</li>
+                          </ul>
+                        </section>
+                        <section class="knowledge-law-block">
+                          <h3>상담 활용 기준</h3>
+                          <ul>
+                            <li>수수료 감면 상담은 먼저 이 규정의 시행일과 예규 번호를 확인한 뒤 진행합니다.</li>
+                            <li>동일지번 패키지, 필지체감, 자연재해지역, 소면적 경감 등 세부 메뉴의 내용은 이 규정을 기준으로 안내합니다.</li>
+                            <li>시스템 산출 금액과 상담 판단이 다를 때에는 국가법령정보센터 원문과 내부 수수료 산정 화면을 함께 대조합니다.</li>
+                          </ul>
+                        </section>
+                        <section class="knowledge-law-block">
+                          <h3>2026년 상담 포인트</h3>
+                          <ul>
+                            <li>수수료 조정 민원에는 “생산원가 변동과 구성비를 반영한 고시”라는 기준으로 설명합니다.</li>
+                            <li>접수 화면에서 개인사업자·법인사업자 구분과 소면적 경감 대상 여부가 정확히 표시되는지 확인합니다.</li>
+                            <li>감면은 전년과 동일하게 적용하되, 중복감면 가능 여부와 증빙서류 확인을 먼저 합니다.</li>
+                          </ul>
+                        </section>
+                      </div>
+                      <div class="fee-education-gallery fee-education-gallery--single" aria-label="2026년 수수료 교육자료 캡처">
+                        <figure class="fee-education-figure">
+                          <img src="assets/fee-education/fee-page-04-04.jpg" alt="2026년 수수료 고시 교육자료" loading="lazy" />
+                          <figcaption>2026년 수수료 고시: 대부분 종목 2.3%, 경계복원측량 2.0% 인상</figcaption>
+                        </figure>
+                      </div>
+                      <div class="knowledge-law-links" aria-label="지적측량수수료 산정기준 등에 관한 규정 바로 열기">
+                        <h3>공식 원문 바로보기</h3>
+                        <div class="law-link-chips">
+                          <a class="law-link-chip" href="index.html?portal=law&amp;lawTitle=지적측량수수료 산정기준 등에 관한 규정&amp;lawUrl=https%3A%2F%2Fwww.law.go.kr%2FLSW%2FadmRulLsInfoP.do%3FadmRulSeq%3D2100000270280">
+                            <i data-lucide="external-link"></i>
+                            <span>국가법령정보센터</span>
+                            <strong>현행 규정</strong>
+                            <small>법령정보 패널에서 열기</small>
+                          </a>
+                        </div>
+                      </div>
+                      <p class="knowledge-source">
+                        확인 기준: 국가법령정보센터, 행정규칙 상세 페이지(확인일 2026. 6. 11.)
+                      </p>
+                    </article>
+                  </div>
+                </section>
+
+                <section class="knowledge-subpanel" data-knowledge-subpanel="fee-calculation" hidden>
+                  <div class="knowledge-grid knowledge-grid--fee">
+                    <article class="knowledge-item knowledge-item--wide" data-search-item>
+                      <i data-lucide="calculator"></i>
+                      <h2>수수료 구성 및 산출 구조</h2>
+                      <p>
+                        지적측량수수료는 직접측량비와 간접측량비를 기초로 산출하고, 토지구분·지역계수·면적가산·필지수·개별공시지가 구간 등을 반영해 최종 금액을 결정합니다.
+                      </p>
+                      <div class="fee-rule-badges fee-rule-badges--compact">
+                        <span>직접측량비</span>
+                        <span>간접측량비</span>
+                        <span>토지·임야·수치 계수</span>
+                        <span>기준면적·가산횟수</span>
+                        <span>지역·공시지가 계수</span>
+                      </div>
+                      <div class="knowledge-law-grid">
+                        <section class="knowledge-law-block">
+                          <h3>기본 구성</h3>
+                          <ul>
+                            <li>직접인건비, 현장여비, 기계경비, 재료소모품비가 직접측량비를 구성합니다.</li>
+                            <li>제경비와 기술료는 직접인건비를 기준으로 산정되는 간접측량비 항목입니다.</li>
+                            <li>최종수수료는 항목별 합계에 적용률을 반영한 뒤 필요한 감면·경감 여부를 검토합니다.</li>
+                          </ul>
+                        </section>
+                        <section class="knowledge-law-block">
+                          <h3>면적 기준</h3>
+                          <ul>
+                            <li>신규등록, 등록전환, 분할, 지적현황은 토지·수치 1,500㎡, 임야 5,000㎡를 기준면적으로 봅니다.</li>
+                            <li>경계복원, 도시계획선명시는 토지·수치 300㎡, 임야 3,000㎡를 기준면적으로 봅니다.</li>
+                            <li>대상면적이 기준면적을 초과하면 가산횟수에 따라 계수를 적용하며, 소수점 이하는 절상합니다.</li>
+                          </ul>
+                        </section>
+                      </div>
+                      <div class="fee-education-gallery" aria-label="수수료 산출 구조 교육자료 캡처">
+                        <figure class="fee-education-figure">
+                          <img src="assets/fee-education/fee-page-12-12.jpg" alt="지적측량수수료 구성 교육자료" loading="lazy" />
+                          <figcaption>수수료 구성: 직접측량비와 간접측량비의 항목</figcaption>
+                        </figure>
+                        <figure class="fee-education-figure">
+                          <img src="assets/fee-education/fee-page-14-14.jpg" alt="지적측량수수료 산출 공식 교육자료" loading="lazy" />
+                          <figcaption>산출 공식: 직접측량비와 간접측량비에 적용률 반영</figcaption>
+                        </figure>
+                        <figure class="fee-education-figure">
+                          <img src="assets/fee-education/fee-page-15-15.jpg" alt="기준면적과 가산횟수 교육자료" loading="lazy" />
+                          <figcaption>기준면적과 가산횟수: 종목별 면적 기준 확인</figcaption>
+                        </figure>
+                      </div>
+                    </article>
+                  </div>
+                </section>
+
+                <section class="knowledge-subpanel" data-knowledge-subpanel="fee-package" hidden>
+                  <div class="knowledge-grid knowledge-grid--fee">
+                    <article class="knowledge-item knowledge-item--wide" data-search-item>
+                      <i data-lucide="layers-3"></i>
+                      <h2>동일지번 2종목 이상 지적측량(패키지)</h2>
+                      <p>
+                        소유자가 같은 동일 지번 또는 연접 필지에 대해 2종목 이상의 지적측량을 신청하고,
+                        한 번의 현장 측량으로 완료되는 경우에 적용합니다.
+                      </p>
+                      <div class="fee-rule-badges fee-rule-badges--compact">
+                        <span>규정 제24조제1항</span>
+                        <span>원필지 기준 1:1 대응</span>
+                        <span>동일소유자 의뢰</span>
+                      </div>
+                      <div class="knowledge-law-grid">
+                        <section class="knowledge-law-block">
+                          <h3>적용 순서</h3>
+                          <ul>
+                            <li>경계복원, 도시계획선명시, 지적현황측량, 분할, 등록전환측량을 순차적으로 검토합니다.</li>
+                            <li>일반업무와 특수업무 구분 없이 동일 기준으로 적용하되 동일소유자가 의뢰한 경우에만 봅니다.</li>
+                            <li>등록전환예정지(유료)와 토지 내 분할 현황(유료)이 함께 있는 경우에는 예외적으로 감면 적용이 가능합니다.</li>
+                          </ul>
+                        </section>
+                        <section class="knowledge-law-block">
+                          <h3>적용 불가</h3>
+                          <ul>
+                            <li>연속지 또는 집단지인 경우에는 패키지 감면을 적용하지 않습니다.</li>
+                            <li>등록전환을 무료처리하고 분할측량을 수반하는 경우에는 적용하지 않습니다.</li>
+                            <li>측량재의뢰 건은 패키지 감면 대상이 아닙니다. 예: 측량재의뢰 + 신규분할.</li>
+                            <li>연접지가 도해지역과 수치지역처럼 측량방법을 달리하는 경우에는 적용하지 않습니다.</li>
+                          </ul>
+                        </section>
+                        <section class="knowledge-law-block">
+                          <h3>주의 사례</h3>
+                          <ul>
+                            <li>차액분할(종목변경) 때 건물현황측량이 수반되면 현황측량 1종목만 측량하는 것으로 보아 감면하지 않습니다.</li>
+                            <li>면적현황과 구조물현황이 동시에 처리되는 경우에도 패키지 감면 대상에서 제외합니다.</li>
+                          </ul>
+                        </section>
+                        <section class="knowledge-law-block">
+                          <h3>취소·반환</h3>
+                          <ul>
+                            <li>경계복원과 분할을 함께 접수한 뒤 분할을 취소하면, 경계복원에서 감면된 금액을 수입 처리하고 분할 차액분을 반환합니다.</li>
+                          </ul>
+                        </section>
+                      </div>
+                      <div class="fee-education-gallery fee-education-gallery--single" aria-label="동일지번 패키지 교육자료 캡처">
+                        <figure class="fee-education-figure">
+                          <img src="assets/fee-education/fee-page-22-22.jpg" alt="동일지번 2종목 이상 지적측량 패키지 예시" loading="lazy" />
+                          <figcaption>패키지 감면 적용·제외 사례와 원필지 기준 1:1 대응 예시</figcaption>
+                        </figure>
+                      </div>
+                    </article>
+                  </div>
+                </section>
+
+                <section class="knowledge-subpanel" data-knowledge-subpanel="fee-parcel-discount" hidden>
+                  <div class="knowledge-grid knowledge-grid--fee">
+                    <article class="knowledge-item knowledge-item--wide" data-search-item>
+                      <i data-lucide="list-minus"></i>
+                      <h2>필지체감 적용</h2>
+                      <p>
+                        지적소관청별로 지적측량 전체 필지수가 3필 이상 50필지 이하이면 기본단가의 5% 체감을 적용합니다.
+                      </p>
+                      <div class="fee-rule-badges fee-rule-badges--compact">
+                        <span>규정 제12조</span>
+                        <span>3필 이상 50필 이하</span>
+                        <span>기본단가 5%</span>
+                      </div>
+                      <ul class="fee-check-list">
+                        <li>분할 후 필지를 기준으로 판단합니다.</li>
+                        <li>51필지 이상이어도 필지체감 적용 수수료가 더 저렴하면 적용 가능합니다.</li>
+                        <li>점·선 현황 등 50% 적용 대상과 무료분은 제외합니다.</li>
+                        <li>분할, 경계복원, 지적현황, 도시계획선명시측량에 적용합니다.</li>
+                        <li>수치·도해 등 측량방법별, 동일 종목별로 각각 적용합니다.</li>
+                      </ul>
+                      <div class="fee-education-gallery fee-education-gallery--single" aria-label="필지체감 교육자료 캡처">
+                        <figure class="fee-education-figure">
+                          <img src="assets/fee-education/fee-page-23-23.jpg" alt="필지체감 적용 기준 교육자료" loading="lazy" />
+                          <figcaption>필지체감: 3필 이상 50필 이하 기본단가 5% 체감 기준</figcaption>
+                        </figure>
+                      </div>
+                    </article>
+                  </div>
+                </section>
+
+                <section class="knowledge-subpanel" data-knowledge-subpanel="fee-disaster" hidden>
+                  <div class="knowledge-grid knowledge-grid--fee">
+                    <article class="knowledge-item knowledge-item--wide" data-search-item>
+                      <i data-lucide="cloud-rain"></i>
+                      <h2>자연재해지역 감면</h2>
+                      <p>
+                        자연재해로 피해를 입은 토지의 피해복구 측량은 피해 정도에 따라 수수료 50% 또는 100% 감면을 검토합니다.
+                      </p>
+                      <div class="fee-rule-badges fee-rule-badges--compact">
+                        <span>규정 제23조제2항</span>
+                        <span>제3항</span>
+                        <span>제4항</span>
+                      </div>
+                      <ul class="fee-check-list">
+                        <li>피해사실 확인서가 발급된 토지여야 합니다.</li>
+                        <li>피해복구를 위한 지적측량이어야 하며 재난발생일로부터 2년 이내여야 합니다.</li>
+                        <li>전파, 유실, 전소 등이 확인된 토지는 100%, 그 외 토지는 50% 감면 기준으로 봅니다.</li>
+                        <li>국가·지자체·공공기관 의뢰 건은 감면 적용 대상에서 제외합니다.</li>
+                        <li>2025년 8월 6일 이후 기준은 주택·창고·공장·농축산상업시설 100%, 비닐하우스·농경지 등 50% 감면으로 안내합니다.</li>
+                        <li>2025년 8월 6일 이후에는 횟수 1회를 기준으로 하며, 재난피해 필지에 신축할 수 없는 경우 이전 필지에 적용합니다.</li>
+                      </ul>
+                      <div class="fee-education-gallery fee-education-gallery--single" aria-label="자연재해지역 감면 교육자료 캡처">
+                        <figure class="fee-education-figure">
+                          <img src="assets/fee-education/fee-page-24-24.jpg" alt="자연재해지역 감면 기준 교육자료" loading="lazy" />
+                          <figcaption>자연재해지역 감면: 피해복구 측량, 피해 정도, 적용 기간 확인</figcaption>
+                        </figure>
+                      </div>
+                    </article>
+                  </div>
+                </section>
+
+                <section class="knowledge-subpanel" data-knowledge-subpanel="fee-small-area" hidden>
+                  <div class="knowledge-grid knowledge-grid--fee">
+                    <article class="knowledge-item knowledge-item--wide" data-search-item>
+                      <i data-lucide="minimize-2"></i>
+                      <h2>소면적 경감 적용</h2>
+                      <p>
+                        개인이 신청하는 소면적인 필지는 종목별 기본단가의 10% 감면을 적용합니다. 신청인 기준과 영수증 발행 명의를 함께 확인해야 합니다.
+                      </p>
+                      <div class="fee-rule-badges fee-rule-badges--compact">
+                        <span>규정 제8조제2항</span>
+                        <span>기본단가 10%</span>
+                        <span>소급 적용 불가</span>
+                      </div>
+                      <table class="knowledge-table fee-table" aria-label="소면적 경감 적용 기준">
+                        <thead>
+                          <tr>
+                            <th>구분</th>
+                            <th>조건</th>
+                            <th>적용 종목</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <th>토지·수치</th>
+                            <td>분할 후 면적이 토지대장등록지 60㎡ 이하</td>
+                            <td>신규등록, 등록전환, 분할, 지적현황(분할식)</td>
+                          </tr>
+                          <tr>
+                            <th>임야</th>
+                            <td>분할 후 면적이 임야대장등록지 200㎡ 이하</td>
+                            <td>신규등록, 등록전환, 분할, 지적현황(분할식)</td>
+                          </tr>
+                          <tr>
+                            <th>등록전환</th>
+                            <td>등록전환 면적이 200㎡ 이하</td>
+                            <td>등록전환</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                      <div class="knowledge-law-grid">
+                        <section class="knowledge-law-block">
+                          <h3>적용 판단 사례</h3>
+                          <ul>
+                            <li>개인토지를 법인이 대리 신청하는 경우: 감면하지 않습니다.</li>
+                            <li>다만 영수증을 개인 명의로 발행하는 경우: 감면 가능합니다.</li>
+                            <li>법인소유 필지를 개인이 신청하는 경우: 감면 가능합니다.</li>
+                            <li>개인사업자 영수증 발행: 감면 가능, 법인사업자 영수증 발행: 감면 불가.</li>
+                          </ul>
+                        </section>
+                        <section class="knowledge-law-block">
+                          <h3>신청인 기준</h3>
+                          <ul>
+                            <li>소유자가 국공유지·법인·개인인 경우 모두 개인(사업자) 신청은 감면 가능으로 봅니다.</li>
+                            <li>국가·지자체 또는 법인사업자가 신청하는 경우에는 감면하지 않습니다.</li>
+                            <li>상담 때 신청인 기준과 수익자 부담 원칙을 함께 안내합니다.</li>
+                          </ul>
+                        </section>
+                      </div>
+                      <div class="fee-education-gallery fee-education-gallery--single" aria-label="소면적 경감 교육자료 캡처">
+                        <figure class="fee-education-figure">
+                          <img src="assets/fee-education/fee-page-25-25.jpg" alt="소면적 경감 적용 기준 교육자료" loading="lazy" />
+                          <figcaption>소면적 경감: 신청인·영수증 기준에 따른 감면 여부</figcaption>
+                        </figure>
+                      </div>
+                    </article>
+                  </div>
+                </section>
+
+                <section class="knowledge-subpanel" data-knowledge-subpanel="fee-difference" hidden>
+                  <div class="knowledge-grid knowledge-grid--fee">
+                    <article class="knowledge-item knowledge-item--wide" data-search-item>
+                      <i data-lucide="split"></i>
+                      <h2>차인 적용</h2>
+                      <p>
+                        면적이 5,000㎡ 이상인 필지를 분할하면서 분할 후 면적이 분할 전 면적의 80% 이상이 되는 경우에는 차인 방식을 검토합니다.
+                      </p>
+                      <div class="fee-rule-badges fee-rule-badges--compact">
+                        <span>규정 제8조제1항제1호</span>
+                        <span>기본단가 적용</span>
+                      </div>
+                      <ul class="fee-check-list">
+                        <li>20% 미만이 되는 필지의 면적을 먼저 측정한 뒤 분할 전 면적에서 측정 면적을 빼는 방식입니다.</li>
+                        <li>동일한 측량 결과도에서 측정할 수 있는 경우에 한해 검토합니다.</li>
+                        <li>좌표면적계산법으로 면적을 측정하는 경우, 해당 필지 주위 전체 측량이 수반되는 경우에는 제한됩니다.</li>
+                      </ul>
+                      <div class="fee-education-gallery fee-education-gallery--single" aria-label="차인 적용 교육자료 캡처">
+                        <figure class="fee-education-figure">
+                          <img src="assets/fee-education/fee-page-26-26.jpg" alt="차인 적용 교육자료" loading="lazy" />
+                          <figcaption>차인 적용: 80% 이상 잔여 필지와 일부 면적 측정 방식</figcaption>
+                        </figure>
+                      </div>
+                    </article>
+                  </div>
+                </section>
+
+                <section class="knowledge-subpanel" data-knowledge-subpanel="fee-large-parcel" hidden>
+                  <div class="knowledge-grid knowledge-grid--fee">
+                    <article class="knowledge-item knowledge-item--wide" data-search-item>
+                      <i data-lucide="maximize-2"></i>
+                      <h2>규모가 큰 필지의 분할</h2>
+                      <p>
+                        분할 후 필지의 면적이 토지 3만㎡, 임야 10만㎡ 이상이면 각각 해당 면적에 해당하는 수수료를 적용합니다.
+                      </p>
+                      <div class="fee-rule-badges fee-rule-badges--compact">
+                        <span>규정 제8조제1항제2호</span>
+                        <span>토지 3만㎡</span>
+                        <span>임야 10만㎡</span>
+                      </div>
+                      <ul class="fee-check-list">
+                        <li>토지는 3만㎡, 임야는 10만㎡에 해당하는 수수료 기준으로 안내합니다.</li>
+                        <li>해당 필지 주위 전체에 대한 측량이 수반되는 경우에는 예외적으로 면적가산계수를 적용합니다.</li>
+                      </ul>
+                      <div class="fee-education-gallery fee-education-gallery--single" aria-label="규모가 큰 필지 분할 교육자료 캡처">
+                        <figure class="fee-education-figure">
+                          <img src="assets/fee-education/fee-page-27-27.jpg" alt="규모가 큰 필지의 분할 교육자료" loading="lazy" />
+                          <figcaption>대면적 분할: 토지 3만㎡, 임야 10만㎡ 이상 기준과 예외 조건</figcaption>
+                        </figure>
+                      </div>
+                    </article>
+                  </div>
+                </section>
+
+                <section class="knowledge-subpanel" data-knowledge-subpanel="fee-map-sheet" hidden>
+                  <div class="knowledge-grid knowledge-grid--fee">
+                    <article class="knowledge-item knowledge-item--wide" data-search-item>
+                      <i data-lucide="scan"></i>
+                      <h2>도곽내 면적 적용</h2>
+                      <p>
+                        여러 도곽에 걸쳐 있는 1필지의 일부만 측량하는 경우에는 해당 도곽 내 면적만 가산계수에 반영합니다.
+                      </p>
+                      <div class="fee-rule-badges fee-rule-badges--compact">
+                        <span>규정 제8조제1항제3호</span>
+                        <span>도곽 내 면적</span>
+                      </div>
+                      <ul class="fee-check-list">
+                        <li>도로, 하천, 구거, 제방, 철도용지, 수도용지가 대상입니다.</li>
+                        <li>분할, 분할식 지적현황, 경계복원 업무에서 검토합니다.</li>
+                        <li>2도곽에 걸쳐 측량하면 2도곽 내 면적을 합산해 적용합니다.</li>
+                      </ul>
+                      <div class="fee-education-gallery fee-education-gallery--single" aria-label="도곽내 면적 적용 교육자료 캡처">
+                        <figure class="fee-education-figure">
+                          <img src="assets/fee-education/fee-page-28-28.jpg" alt="도곽내 면적 적용 교육자료" loading="lazy" />
+                          <figcaption>도곽내 면적: 여러 도곽에 걸친 일부 측량 시 합산 기준</figcaption>
+                        </figure>
+                      </div>
+                    </article>
+                  </div>
+                </section>
+
+                <section class="knowledge-subpanel" data-knowledge-subpanel="fee-continuous" hidden>
+                  <div class="knowledge-grid knowledge-grid--fee">
+                    <article class="knowledge-item knowledge-item--wide" data-search-item>
+                      <i data-lucide="rows-3"></i>
+                      <h2>연속지·집단지 체감계수</h2>
+                      <p>
+                        지적소관청별로 각각 51필지 이상인 경우에는 기본단가에 체감계수를 적용합니다.
+                      </p>
+                      <div class="fee-rule-badges fee-rule-badges--compact">
+                        <span>규정 제11조</span>
+                        <span>51필지 이상</span>
+                        <span>도해·수치 각각 적용</span>
+                      </div>
+                      <ul class="fee-check-list">
+                        <li>신규등록, 등록전환, 분할, 경계복원, 지적현황, 도시계획선명시, 축척변경, 지적불부합지조사에 적용합니다.</li>
+                        <li>동일 소관청의 연속지는 적용할 수 있습니다.</li>
+                        <li>군지역 연속지 단가가 낮으면 군지역 41필지는 1~50구간으로 보고, 시지역 32필 중 9필은 1~50구간, 23필은 51~100구간처럼 구분해 안내합니다.</li>
+                      </ul>
+                      <div class="fee-education-gallery fee-education-gallery--single" aria-label="연속지 집단지 체감계수 교육자료 캡처">
+                        <figure class="fee-education-figure">
+                          <img src="assets/fee-education/fee-page-29-29.jpg" alt="연속지 집단지 체감계수 교육자료" loading="lazy" />
+                          <figcaption>연속지·집단지 체감계수: 소관청별 51필지 이상 적용</figcaption>
+                        </figure>
+                      </div>
+                    </article>
+                  </div>
+                </section>
+
+                <section class="knowledge-subpanel" data-knowledge-subpanel="fee-by-type" hidden>
+                  <div class="knowledge-grid knowledge-grid--fee">
+                    <article class="knowledge-item knowledge-item--wide" data-search-item>
+                      <i data-lucide="clipboard-list"></i>
+                      <h2>종목별 수수료 적용</h2>
+                      <p>
+                        종목별 수수료는 등록전환, 분할, 경계복원, 지적현황, 지적확정, 재의뢰 측량처럼 업무 목적과 성과 형태에 따라 적용 기준이 달라집니다.
+                      </p>
+                      <div class="fee-rule-badges fee-rule-badges--compact">
+                        <span>등록전환</span>
+                        <span>분할측량</span>
+                        <span>경계복원</span>
+                        <span>지적현황</span>
+                        <span>지적확정</span>
+                        <span>재의뢰</span>
+                      </div>
+                      <div class="knowledge-law-grid">
+                        <section class="knowledge-law-block">
+                          <h3>분할측량</h3>
+                          <ul>
+                            <li>소유권 이전 목적 분할, 차액분할, 현황측량 동시 처리 여부를 구분합니다.</li>
+                            <li>공부정리 여부와 선행 분할 이력에 따라 분할수수료, 내업품, 차액분할 적용이 달라질 수 있습니다.</li>
+                            <li>분할선 변경·추가·삭제는 단순 필지 수가 아니라 실제 업무 범위와 측량 성과를 기준으로 판단합니다.</li>
+                          </ul>
+                        </section>
+                        <section class="knowledge-law-block">
+                          <h3>경계복원측량</h3>
+                          <ul>
+                            <li>동일 소유자, 동일지목, 연접필지 여부를 확인하되 국유지와 위임장 필지는 동일인 소유로 보지 않는 사례가 있습니다.</li>
+                            <li>행정구역이 다르면 합병 조건은 충족해도 행정구역으로 합병할 수 없는 경우를 가정해 수수료를 적용합니다.</li>
+                            <li>분할측량과 연계되는 경계복원은 실제 분할수수료 적용 필지 수를 함께 검토합니다.</li>
+                          </ul>
+                        </section>
+                        <section class="knowledge-law-block">
+                          <h3>지적현황·지적확정</h3>
+                          <ul>
+                            <li>지적현황은 구획, 선, 건축·구조물·점유형태 등 현황 종류를 먼저 나눕니다.</li>
+                            <li>지적확정측량은 중심점·가구점·필계점 말박기 별도 산정, 사업 종류별 적용률, 최소면적 기준을 확인합니다.</li>
+                            <li>2025년 개정 기준으로 관광농원·개간 등 일부 토지개발사업은 최소면적 5,000㎡ 기준을 확인합니다.</li>
+                          </ul>
+                        </section>
+                        <section class="knowledge-law-block">
+                          <h3>재의뢰 측량</h3>
+                          <ul>
+                            <li>지적측량 완료 후 12개월 이내 경계점 표지 재설치 요구는 기본단가의 90%~50% 감면을 검토합니다.</li>
+                            <li>분할·지적현황측량은 선현황측량 지정 130% 기본단가를 기준으로 판단합니다.</li>
+                          </ul>
+                        </section>
+                      </div>
+                      <div class="fee-education-gallery" aria-label="종목별 수수료 적용 교육자료 캡처">
+                        <figure class="fee-education-figure">
+                          <img src="assets/fee-education/fee-page-39-39.jpg" alt="분할측량 차액분할 교육자료" loading="lazy" />
+                          <figcaption>분할측량: 현황측량, 소유권 이전 분할, 차액분할 신청 흐름</figcaption>
+                        </figure>
+                        <figure class="fee-education-figure">
+                          <img src="assets/fee-education/fee-page-45-45.jpg" alt="경계복원측량 행정구역 상이 사례" loading="lazy" />
+                          <figcaption>경계복원측량: 행정구역이 다른 경우 수수료 적용 예시</figcaption>
+                        </figure>
+                        <figure class="fee-education-figure">
+                          <img src="assets/fee-education/fee-page-52-52.jpg" alt="지적확정측량 적용 기준 교육자료" loading="lazy" />
+                          <figcaption>지적확정측량: 적용률과 최소면적 기준</figcaption>
+                        </figure>
+                        <figure class="fee-education-figure">
+                          <img src="assets/fee-education/fee-page-53-53.jpg" alt="재의뢰 측량 감면 기준 교육자료" loading="lazy" />
+                          <figcaption>재의뢰 측량: 완료 후 12개월 이내 재설치 요구 감면</figcaption>
+                        </figure>
+                      </div>
+                    </article>
+                  </div>
+                </section>
+
+                <section class="knowledge-subpanel" data-knowledge-subpanel="fee-veteran" hidden>
+                  <div class="knowledge-grid knowledge-grid--fee">
+                    <article class="knowledge-item knowledge-item--wide" data-search-item>
+                      <i data-lucide="badge-check"></i>
+                      <h2>국가유공자 감면</h2>
+                      <p>
+                        토지소유자가 국가유공자 또는 그 유가족인 경우, 국가유공자증·확인서 등 증빙서류 제출 시
+                        지적측량수수료 기본단가의 30% 감면을 검토합니다.
+                      </p>
+                      <div class="fee-rule-badges fee-rule-badges--compact">
+                        <span>기본단가 30%</span>
+                        <span>개인 의뢰 한정</span>
+                        <span>증빙서류 필수</span>
+                        <span>일부 대상 제외</span>
+                      </div>
+                      <div class="knowledge-law-grid">
+                        <section class="knowledge-law-block">
+                          <h3>적용 기준</h3>
+                          <ul>
+                            <li><strong>감면율:</strong> 해당 연도 고시 수수료 중 기본단가의 30%를 감면합니다.</li>
+                            <li><strong>근거:</strong> 「지적측량수수료 산정기준 등에 관한 규정」 제23조제4항을 확인합니다.</li>
+                            <li><strong>적용업무:</strong> 국가유공자 또는 그 유가족이 신청하는 지적측량에 적용합니다.</li>
+                            <li><strong>증빙서류:</strong> 국가유공자증 또는 국가유공자 확인서, 국가유공자 유가족증 또는 유가족 확인서를 확인합니다.</li>
+                          </ul>
+                        </section>
+                        <section class="knowledge-law-block">
+                          <h3>적용 대상</h3>
+                          <ul>
+                            <li>「국가유공자 등 예우 및 지원에 관한 법률」 제4조·제5조에 따른 국가유공자와 유가족 중 배우자, 자녀, 부모를 확인합니다.</li>
+                            <li>「독립유공자예우에 관한 법률」 제5조에 따른 독립유공자와 유가족 중 배우자, 자녀, 손자녀를 확인합니다.</li>
+                            <li>감면은 확인서 발급 대상자에 한정합니다. 참전유공자는 유가족 확인서 발급이 불가하므로 본인 신청 건으로 검토합니다.</li>
+                          </ul>
+                        </section>
+                        <section class="knowledge-law-block">
+                          <h3>제외 및 유의사항</h3>
+                          <ul>
+                            <li><strong class="knowledge-danger-text">무공수훈자, 보국수훈자, 상이등급 제7급과 그 유가족은 감면 대상에서 제외합니다.</strong></li>
+                            <li>의뢰인이 개인인 경우에 한해 적용하며, 사업자나 문중 등의 대표자는 적용하지 않습니다.</li>
+                            <li>토지소유자와 신청인의 관계, 위임장 필요 여부, 증빙서류의 대상자 일치 여부를 접수 전에 확인합니다.</li>
+                          </ul>
+                        </section>
+                        <section class="knowledge-law-block knowledge-law-block--wide">
+                          <h3>제외 사유와 관련법률 기준</h3>
+                          <ul>
+                            <li>지적측량수수료 감면은 국가유공자 예우와 지원을 위해 공사가 자체적으로 국토교통부에 건의·승인을 받아 운영하는 제도입니다.</li>
+                            <li>감면대상 기준은 공사가 자체적으로 정해 운영하며, 「국가유공자 등 예우 및 지원에 관한 법률」 제29조와 같은 법 시행령 제46조의2 취업지원 대상자 기준을 준용해 상이등급 6급 이상으로 봅니다.</li>
+                            <li>「국가유공자 등 예우 및 지원에 관한 법률」 제7조는 보상 원칙에서 희생과 공헌의 정도, 생활수준과 연령 등을 고려해 보상의 정도를 달리할 수 있다고 정합니다.</li>
+                            <li>따라서 경제활동이 가능하다고 판단되는 무공수훈자, 보국수훈자, 상이등급 7급은 감면대상에서 제외하는 기준으로 안내합니다.</li>
+                          </ul>
+                        </section>
+                      </div>
+                      <div class="knowledge-law-links" aria-label="국가유공자 감면 관련 법령 바로 열기">
+                        <h3>관련법 조항 바로보기</h3>
+                        <div class="law-link-chips">
+                          <a class="law-link-chip" href="index.html?portal=law&amp;lawTitle=지적측량수수료 산정기준 등에 관한 규정 제23조&amp;lawUrl=https%3A%2F%2Fwww.law.go.kr%2FLSW%2FadmRulLsInfoP.do%3FadmRulSeq%3D2100000270280">
+                            <i data-lucide="book-open-check"></i>
+                            <span>지적측량수수료 산정기준 등에 관한 규정</span>
+                            <strong>제23조</strong>
+                            <small>감면 기준</small>
+                          </a>
+                          <a class="law-link-chip" href="index.html?portal=law&amp;lawTitle=국가유공자 등 예우 및 지원에 관한 법률 제4조&amp;lawUrl=https://www.law.go.kr/법령/국가유공자등예우및지원에관한법률/제4조">
+                            <i data-lucide="badge-check"></i>
+                            <span>국가유공자법</span>
+                            <strong>제4조</strong>
+                            <small>적용 대상</small>
+                          </a>
+                          <a class="law-link-chip" href="index.html?portal=law&amp;lawTitle=국가유공자 등 예우 및 지원에 관한 법률 제5조&amp;lawUrl=https://www.law.go.kr/법령/국가유공자등예우및지원에관한법률/제5조">
+                            <i data-lucide="users"></i>
+                            <span>국가유공자법</span>
+                            <strong>제5조</strong>
+                            <small>유족 범위</small>
+                          </a>
+                          <a class="law-link-chip" href="index.html?portal=law&amp;lawTitle=독립유공자예우에 관한 법률 제5조&amp;lawUrl=https://www.law.go.kr/법령/독립유공자예우에관한법률/제5조">
+                            <i data-lucide="landmark"></i>
+                            <span>독립유공자법</span>
+                            <strong>제5조</strong>
+                            <small>유족 범위</small>
+                          </a>
+                        </div>
+                      </div>
+                    </article>
+                  </div>
+                </section>
+
+                <section class="knowledge-subpanel" data-knowledge-subpanel="fee-cautions" hidden>
+                  <div class="knowledge-grid knowledge-grid--fee">
+                    <article class="knowledge-item knowledge-item--wide" data-search-item>
+                      <i data-lucide="triangle-alert"></i>
+                      <h2>각종 감면&유의사항</h2>
+                      <p>
+                        감면 상담은 적용 사유만 보는 것이 아니라 중복감면 가능 여부, 증빙서류, 세금계산서 발행 여부, 신청인과 소유자 관계까지 함께 확인해야 합니다.
+                      </p>
+                      <div class="fee-rule-badges fee-rule-badges--compact">
+                        <span>오적용 주의</span>
+                        <span>중복감면 확인</span>
+                        <span>증빙서류 확인</span>
+                        <span>세금계산서 발행 주의</span>
+                      </div>
+                      <div class="knowledge-law-grid">
+                        <section class="knowledge-law-block">
+                          <h3>오적용이 잦은 항목</h3>
+                          <ul>
+                            <li>비활성화된 경감사유나 삭제된 적용구분을 그대로 적용하지 않도록 접수 화면을 확인합니다.</li>
+                            <li>종전분할, 공유토지분할 등 삭제된 적용구분은 상담·접수 때 사용하지 않습니다.</li>
+                            <li>소면적, 필지체감, 연속지, 차액분할, 패키지는 서로 중복 가능 여부가 다르므로 표를 기준으로 확인합니다.</li>
+                          </ul>
+                        </section>
+                        <section class="knowledge-law-block">
+                          <h3>증빙과 발행 기준</h3>
+                          <ul>
+                            <li>장애인 등 개인 감면은 본인 소유와 신청인 관계, 위임장 제출 여부, 증빙서류를 확인합니다.</li>
+                            <li>국가유공자 감면은 좌측 메뉴의 별도 항목에서 감면율, 대상, 제외대상, 증빙서류를 확인합니다.</li>
+                            <li>세금계산서를 발행하는 경우 감면이 제한되는 항목이 있으므로 영수증 발행 명의를 먼저 정합니다.</li>
+                            <li>농업기반시설, 새뜰마을사업, 행복나눔측량, 자연재해지역은 사업대상 필지와 감면율을 분리해 안내합니다.</li>
+                          </ul>
+                        </section>
+                      </div>
+                      <div class="fee-education-gallery" aria-label="각종 감면&유의사항 교육자료 캡처">
+                        <figure class="fee-education-figure">
+                          <img src="assets/fee-education/fee-page-55-55.jpg" alt="수수료 감면 적용 철저 교육자료" loading="lazy" />
+                          <figcaption>수수료 감면 적용 철저: 상담·접수 단계 확인 흐름</figcaption>
+                        </figure>
+                        <figure class="fee-education-figure">
+                          <img src="assets/fee-education/fee-page-58-58.jpg" alt="수수료 중복감면 가능여부 확인 교육자료" loading="lazy" />
+                          <figcaption>중복감면 가능여부: 감면 항목 조합별 적용 가능 표</figcaption>
+                        </figure>
+                        <figure class="fee-education-figure">
+                          <img src="assets/fee-education/fee-page-59-59.jpg" alt="각종 감면적용 유의 교육자료" loading="lazy" />
+                          <figcaption>각종 감면적용 유의: 국가유공자, 장애인, 사업대상 필지 감면</figcaption>
+                        </figure>
+                      </div>
+                      <p class="knowledge-source">교육자료 출처: 2026년 지적측량수수료 교육.pdf</p>
+                    </article>
+                  </div>
+                </section>
+              </div>
+            </div>
+          </section>
+
+          <section class="content-panel" data-content-panel="result" hidden>
+            <div class="knowledge-grid">
+              <article class="knowledge-item" data-search-item>
+                <i data-lucide="file-check-2"></i>
+                <h2>결과부 교부</h2>
+                <p>측량성과도와 결과부는 목적에 맞게 교부하며, 허가나 토지이동 신청 자료로 활용됩니다.</p>
+              </article>
+              <article class="knowledge-item" data-search-item>
+                <i data-lucide="archive"></i>
+                <h2>보관과 재발급</h2>
+                <p>성과 자료 보관 위치와 재발급 가능 여부를 확인해 민원 안내에 활용합니다.</p>
+              </article>
+            </div>
+          </section>
+
+          <section class="content-panel" data-content-panel="receipt" hidden>
+            <div class="knowledge-grid">
+              <article class="knowledge-item" data-search-item>
+                <i data-lucide="receipt"></i>
+                <h2>영수증 발행</h2>
+                <p>납부 방식에 따라 영수증 발행 주체와 확인 경로가 달라질 수 있습니다.</p>
+              </article>
+              <article class="knowledge-item" data-search-item>
+                <i data-lucide="search-check"></i>
+                <h2>입금 확인</h2>
+                <p>가상계좌 입금은 수입일자와 접수일자를 구분해 확인하고, 누락 시 수납 내역을 재조회합니다.</p>
+              </article>
+            </div>
+          </section>
+
+          <section class="content-panel" data-content-panel="spatial" hidden>
+            <div class="knowledge-grid">
+              <article class="knowledge-item" data-search-item>
+                <i data-lucide="map"></i>
+                <h2>지도와 항공사진 대조</h2>
+                <p>연속지적도, 항공사진, 토지이음 지도는 같은 지번 기준으로 비교해야 판단 오류를 줄일 수 있습니다.</p>
+              </article>
+              <article class="knowledge-item" data-search-item>
+                <i data-lucide="crosshair"></i>
+                <h2>좌표와 경계</h2>
+                <p>지도상 위치는 참고용이며, 실제 경계 확정은 지적측량 성과를 기준으로 안내합니다.</p>
+              </article>
+            </div>
+          </section>
+
+          <section class="content-panel" data-content-panel="law" hidden>
+            <div class="knowledge-subnav-layout knowledge-subnav-layout--law" data-knowledge-subtabs>
+              <aside class="knowledge-subnav knowledge-subnav--law" aria-label="관련법령 세부 메뉴">
+                <button class="is-active" type="button" aria-selected="true" data-knowledge-subtab="law-buan-permit">부안군 인허가</button>
+                <button type="button" aria-selected="false" data-knowledge-subtab="law-base">법령·조례</button>
+              </aside>
+
+              <div class="knowledge-subpanels knowledge-subpanels--law">
+                <section class="knowledge-subpanel is-active" data-knowledge-subpanel="law-buan-permit">
+                  <div class="knowledge-grid">
+                    <article class="knowledge-item knowledge-item--wide knowledge-item--embedded" data-search-item>
+                      <i data-lucide="building-2"></i>
+                      <h2>부안군 건축인허가 가이드북</h2>
+                      <div class="embedded-guide-header">
+                        <p>사용자가 제작한 부안군 건축인허가 가이드북 웹페이지를 이 화면 안에서 바로 확인합니다.</p>
+                        <a class="button button--ghost embedded-guide-link" href="https://agent-custom.vercel.app" target="_blank" rel="noopener">
+                          <i data-lucide="external-link"></i>
+                          새창에서 열기
+                        </a>
+                      </div>
+                      <div class="embedded-guide-frame">
+                        <iframe src="https://agent-custom.vercel.app" title="부안군 건축인허가 가이드북" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                      </div>
+                      <p class="knowledge-source">연결 사이트: https://agent-custom.vercel.app</p>
+                    </article>
+                  </div>
+                </section>
+
+                <section class="knowledge-subpanel" data-knowledge-subpanel="law-base" hidden>
+                  <div class="knowledge-grid">
+                    <article class="knowledge-item" data-search-item>
+                      <i data-lucide="scale"></i>
+                      <h2>법령과 조례 확인</h2>
+                      <p>용도지역 행위제한은 법령뿐 아니라 도시계획조례와 지자체 운영 기준까지 확인합니다.</p>
+                    </article>
+                    <article class="knowledge-item" data-search-item>
+                      <i data-lucide="book-open-check"></i>
+                      <h2>근거 조항 기록</h2>
+                      <p>상담 시 확인한 법령명, 조항, 적용 사유를 기록해 후속 민원에 대비합니다.</p>
+                    </article>
+                  </div>
+                </section>
+              </div>
+            </div>
+          </section>
+
+          <section class="content-panel" data-content-panel="office" hidden>
+            <div class="knowledge-grid">
+              <article class="knowledge-item" data-search-item>
+                <i data-lucide="monitor-check"></i>
+                <h2>업무처리 시스템</h2>
+                <p>접수, 수납, 일정, 결과 교부 상태를 같은 건 기준으로 확인해 누락을 줄입니다.</p>
+              </article>
+              <article class="knowledge-item" data-search-item>
+                <i data-lucide="phone-call"></i>
+                <h2>민원 안내 기록</h2>
+                <p>전화 안내, 보완 요청, 일정 변경 내용은 상담일자와 담당자를 함께 남깁니다.</p>
+              </article>
+            </div>
+          </section>
+
+          <section class="content-panel" data-content-panel="etc" hidden>
+            <div class="knowledge-subnav-layout knowledge-subnav-layout--etc" data-knowledge-subtabs>
+              <aside class="knowledge-subnav knowledge-subnav--etc" aria-label="기타 세부 메뉴">
+                <button class="is-active" type="button" aria-selected="true" data-knowledge-subtab="etc-cemetery">묘지·자연장지</button>
+                <button type="button" aria-selected="false" data-knowledge-subtab="etc-farm-shed">농막·가설건축물</button>
+                <button type="button" aria-selected="false" data-knowledge-subtab="etc-authority-staff">소관청 담당자</button>
+                <button type="button" aria-selected="false" data-knowledge-subtab="etc-dispute">분쟁 가능성</button>
+                <button type="button" aria-selected="false" data-knowledge-subtab="etc-memo">상담 메모</button>
+              </aside>
+
+              <div class="knowledge-subpanels knowledge-subpanels--etc">
+                <section class="knowledge-subpanel is-active" data-knowledge-subpanel="etc-cemetery">
+                  <div class="knowledge-grid">
+                    <article class="knowledge-item knowledge-item--wide" data-search-item>
+                <i data-lucide="tree-pine"></i>
+                <h2>알아두어야 할 내용: 묘지(분묘)와 자연장지 허가면적</h2>
+                <p>
+                  가족장지와 종중·문중장지는 안치 대상과 설치 목적이 달라 허가면적 상한이 다릅니다.
+                  구체적인 숫자는 장사법 본문보다 같은 법 시행령 별표에 정리되어 있으며, 전통적인 묘지와
+                  자연장지, 수목장림은 서로 다른 별표를 확인해야 합니다.
+                </p>
+
+                <table class="knowledge-table" aria-label="묘지와 자연장지 설치 허가면적 비교">
+                  <thead>
+                    <tr>
+                      <th scope="col">구분</th>
+                      <th scope="col">묘지(봉분·평분)</th>
+                      <th scope="col">자연장지·수목장림</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <th scope="row">개인</th>
+                      <td>30㎡ 이하</td>
+                      <td>자연장지 30㎡, 수목장림 100㎡ 미만</td>
+                    </tr>
+                    <tr>
+                      <th scope="row">가족</th>
+                      <td>100㎡ 이하</td>
+                      <td>100㎡ 미만</td>
+                    </tr>
+                    <tr>
+                      <th scope="row">종중·문중</th>
+                      <td>1,000㎡ 이하</td>
+                      <td>2,000㎡ 이하</td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                <div class="knowledge-law-grid">
+                  <section class="knowledge-law-block">
+                    <h3>장사법에서 확인할 근거</h3>
+                    <ul>
+                      <li><strong>사설묘지:</strong> 장사법 제14조, 시행령 제15조, 시행령 별표 2를 확인합니다.</li>
+                      <li><strong>가족묘지:</strong> 가족당 1개소, 면적 100㎡ 이하가 기준입니다.</li>
+                      <li><strong>종중·문중묘지:</strong> 종중 또는 문중당 1개소, 면적 1,000㎡ 이하가 기준입니다.</li>
+                      <li><strong>사설자연장지:</strong> 장사법 제16조, 시행령 제21조제1항, 시행령 별표 4를 확인합니다.</li>
+                      <li><strong>수목장림:</strong> 시행령 제21조제2항, 시행령 별표 5를 함께 확인합니다.</li>
+                    </ul>
+                  </section>
+
+                  <section class="knowledge-law-block">
+                    <h3>국토계획법에서 확인할 근거</h3>
+                    <ul>
+                      <li><strong>개발행위허가:</strong> 국토계획법 제56조제1항제4호는 토지 분할을 개발행위허가 대상으로 규정합니다.</li>
+                      <li><strong>분할제한면적 미만:</strong> 시행령 제51조제1항제5호나목은 건축법 제57조의 분할제한면적 미만 분할을 허가 대상으로 봅니다.</li>
+                      <li><strong>묘지 예외:</strong> 시행령 제56조제1항 관련 별표 1의2 제2호 라목(2)(가)는 녹지·관리·농림·자연환경보전지역 안의 기존묘지 분할을 예외 사유로 둡니다.</li>
+                      <li><strong>운영지침:</strong> 개발행위허가운영지침의 토지분할 세부기준도 기존묘지 분할을 소규모 분할 검토 근거로 함께 확인합니다.</li>
+                    </ul>
+                  </section>
+                </div>
+
+                <div class="knowledge-law-links" aria-label="관련법 조항 바로 열기">
+                  <h3>관련법 조항 바로보기</h3>
+                  <div class="law-link-groups">
+                    <section class="law-link-group" aria-label="장사 등에 관한 법률 관련 조항">
+                      <span class="law-link-group__label">장사 등에 관한 법률</span>
+                      <div class="law-link-chips">
+                        <a class="law-link-chip" href="index.html?portal=law&amp;lawTitle=장사 등에 관한 법률 제14조 사설묘지의 설치 등&amp;lawUrl=https://www.law.go.kr/법령/장사등에관한법률/제14조">
+                          <i data-lucide="book-open"></i>
+                          <span>장사 등에 관한 법률</span>
+                          <strong>제14조</strong>
+                          <small>사설묘지 설치</small>
+                        </a>
+                        <a class="law-link-chip" href="index.html?portal=law&amp;lawTitle=장사 등에 관한 법률 제16조 자연장지의 조성 등&amp;lawUrl=https://www.law.go.kr/법령/장사등에관한법률/제16조">
+                          <i data-lucide="leaf"></i>
+                          <span>장사 등에 관한 법률</span>
+                          <strong>제16조</strong>
+                          <small>자연장지 조성</small>
+                        </a>
+                        <a class="law-link-chip" href="index.html?portal=law&amp;lawTitle=장사 등에 관한 법률 시행령 제15조 사설묘지 설치기준&amp;lawUrl=https://www.law.go.kr/법령/장사등에관한법률시행령/제15조">
+                          <i data-lucide="land-plot"></i>
+                          <span>시행령</span>
+                          <strong>제15조</strong>
+                          <small>묘지 설치기준</small>
+                        </a>
+                        <a class="law-link-chip" href="index.html?portal=law&amp;lawTitle=장사 등에 관한 법률 시행령 제21조 자연장지 조성기준&amp;lawUrl=https://www.law.go.kr/법령/장사등에관한법률시행령/제21조">
+                          <i data-lucide="tree-pine"></i>
+                          <span>시행령</span>
+                          <strong>제21조</strong>
+                          <small>자연장지 기준</small>
+                        </a>
+                        <a class="law-link-chip" href="index.html?portal=law&amp;lawTitle=장사 등에 관한 법률 시행령 별표 2 사설묘지 설치기준&amp;lawUrl=https://www.law.go.kr/법령/장사등에관한법률시행령/별표2">
+                          <i data-lucide="table-2"></i>
+                          <span>시행령</span>
+                          <strong>별표 2</strong>
+                          <small>사설묘지 면적</small>
+                        </a>
+                        <a class="law-link-chip" href="index.html?portal=law&amp;lawTitle=장사 등에 관한 법률 시행령 별표 4 사설자연장지 조성기준&amp;lawUrl=https://www.law.go.kr/법령/장사등에관한법률시행령/별표4">
+                          <i data-lucide="table-2"></i>
+                          <span>시행령</span>
+                          <strong>별표 4</strong>
+                          <small>자연장지 면적</small>
+                        </a>
+                        <a class="law-link-chip" href="index.html?portal=law&amp;lawTitle=장사 등에 관한 법률 시행령 별표 5 사설수목장림 조성기준&amp;lawUrl=https://www.law.go.kr/법령/장사등에관한법률시행령/별표5">
+                          <i data-lucide="table-2"></i>
+                          <span>시행령</span>
+                          <strong>별표 5</strong>
+                          <small>수목장림 기준</small>
+                        </a>
+                      </div>
+                    </section>
+
+                    <section class="law-link-group" aria-label="국토의 계획 및 이용에 관한 법률 관련 조항">
+                      <span class="law-link-group__label">국토의 계획 및 이용에 관한 법률</span>
+                      <div class="law-link-chips">
+                        <a class="law-link-chip" href="index.html?portal=law&amp;lawTitle=국토의 계획 및 이용에 관한 법률 제56조 개발행위의 허가&amp;lawUrl=https://www.law.go.kr/법령/국토의계획및이용에관한법률/제56조">
+                          <i data-lucide="file-check-2"></i>
+                          <span>국토의 계획 및 이용에 관한 법률</span>
+                          <strong>제56조</strong>
+                          <small>개발행위허가</small>
+                        </a>
+                        <a class="law-link-chip" href="index.html?portal=law&amp;lawTitle=국토의 계획 및 이용에 관한 법률 시행령 제51조 개발행위허가 대상&amp;lawUrl=https://www.law.go.kr/법령/국토의계획및이용에관한법률시행령/제51조">
+                          <i data-lucide="file-search"></i>
+                          <span>시행령</span>
+                          <strong>제51조</strong>
+                          <small>허가 대상</small>
+                        </a>
+                        <a class="law-link-chip" href="index.html?portal=law&amp;lawTitle=국토의 계획 및 이용에 관한 법률 시행령 제56조 개발행위허가 기준&amp;lawUrl=https://www.law.go.kr/법령/국토의계획및이용에관한법률시행령/제56조">
+                          <i data-lucide="scale"></i>
+                          <span>시행령</span>
+                          <strong>제56조</strong>
+                          <small>허가 기준</small>
+                        </a>
+                        <a class="law-link-chip" href="index.html?portal=law&amp;lawTitle=국토의 계획 및 이용에 관한 법률 시행령 별표 1의2 개발행위허가 기준&amp;lawUrl=https://www.law.go.kr/법령/국토의계획및이용에관한법률시행령/별표1의2">
+                          <i data-lucide="table-2"></i>
+                          <span>시행령</span>
+                          <strong>별표 1의2</strong>
+                          <small>기존묘지 분할</small>
+                        </a>
+                        <a class="law-link-chip" href="index.html?portal=law&amp;lawTitle=개발행위허가운영지침 토지분할 기준&amp;lawUrl=https://www.law.go.kr/행정규칙/개발행위허가운영지침">
+                          <i data-lucide="clipboard-list"></i>
+                          <span>행정규칙</span>
+                          <strong>운영지침</strong>
+                          <small>토지분할 기준</small>
+                        </a>
+                      </div>
+                    </section>
+                  </div>
+                </div>
+
+                <div class="knowledge-permit-guide">
+                  <h3>묘지 조성을 위한 토지 분할 허가 면적</h3>
+                  <p>
+                    토지 분할 민원에서 가장 자주 부딪히는 부분은 장사시설의 법정 허가면적과
+                    「건축법」 제57조의 분할제한면적이 서로 맞지 않는 경우입니다. 예를 들어 녹지지역의
+                    최소 분할제한면적은 200㎡인데, 가족묘지를 100㎡로 조성하려면 분할제한면적 미만이 되어
+                    원칙적으로는 분할이 어려워 보일 수 있습니다.
+                  </p>
+                  <p>
+                    다만 묘지와 자연장지 같은 장사시설은 목적과 허가 관계를 함께 보아 예외 검토가 필요합니다.
+                    단순히 면적만 보지 말고 기존 묘지인지, 신규 장사시설 설치인지, 장사시설 허가 또는 신고가
+                    수반되는지를 먼저 구분합니다.
+                  </p>
+
+                  <div class="permit-rule-list" aria-label="분할제한면적 미만 분할 예외 검토">
+                    <section>
+                      <span>기존 묘지의 분할</span>
+                      <p>
+                        「개발행위허가운영지침」 및 각 시·군 도시계획조례에 따라 녹지·관리·농림·자연환경보전지역 안에서
+                        기존 묘지를 분할하는 경우에는 분할제한면적 미만이라도 개발행위허가를 통해 토지 분할이 가능합니다.
+                        현장에서는 200㎡ 또는 60㎡ 등 해당 지역의 조례 기준을 함께 확인합니다.
+                      </p>
+                    </section>
+                    <section>
+                      <span>신규 장사시설 설치</span>
+                      <p>
+                        신규 가족묘지 100㎡ 또는 종중·문중묘지 조성을 위해 분할하는 경우에는 장사시설 설치 허가 또는
+                        신고가 수반될 때 해당 장사시설의 법정 허가면적에 맞춰 분할을 검토합니다. 이 경우 개발행위허가,
+                        농지·산지 전용 협의, 장사시설 허가부서 협의를 함께 거치는 복합민원으로 처리합니다.
+                      </p>
+                    </section>
+                  </div>
+                </div>
+
+                <div class="knowledge-note">
+                  <h3>실무 확인 포인트</h3>
+                  <ul>
+                    <li>가족장지는 민법상 친족관계에 있던 사람의 유골을 같은 구역에 모시는 장지입니다.</li>
+                    <li>종중·문중장지는 종중 또는 문중 구성원의 유골을 같은 구역에 모시는 장지입니다.</li>
+                    <li>토지 분할 면적은 장사시설 설치허가 또는 신고 면적과 맞춰 검토합니다.</li>
+                    <li>분할제한면적 미만 예외는 “기존묘지의 분할”이 핵심이므로 신규 조성인지 기존 묘지 정리인지 먼저 구분합니다.</li>
+                    <li>신규 가족묘지·종중묘지·자연장지 조성은 장사시설 허가 또는 신고, 개발행위허가, 지자체 도시계획조례, 농지·산지 전용 협의를 함께 확인합니다.</li>
+                    <li>접수 전 토지이음의 용도지역, 지목, 진입로, 설치제한지역 여부를 허가부서와 사전 상담합니다.</li>
+                  </ul>
+                </div>
+                <p class="knowledge-source">근거: 「장사 등에 관한 법률」 및 같은 법 시행령 별표 2·별표 4·별표 5, 「국토의 계획 및 이용에 관한 법률」 제56조와 같은 법 시행령 제51조·제56조 별표 1의2 기준. 세부 적용은 관할 지자체 조례와 허가부서 판단을 함께 확인합니다.</p>
+                    </article>
+                  </div>
+                </section>
+
+                <section class="knowledge-subpanel" data-knowledge-subpanel="etc-farm-shed" hidden>
+                  <div class="knowledge-grid">
+                    <article class="knowledge-item knowledge-item--wide" data-search-item>
+                      <i data-lucide="warehouse"></i>
+                      <h2>대지 위 농막 상담: 가설건축물 또는 건축신고로 검토</h2>
+                      <p>
+                        진입로, 전기, 수도가 갖춰진 토지라도 지목이 <strong>대지</strong>라면 농지법상 농막을 설치하는 방식으로
+                        처리할 수 없습니다. 농막은 전·답·과수원 등 농지에 농작업 편의를 위해 두는 시설이므로,
+                        대지에 컨테이너나 이동식 주택을 놓으려면 건축법 기준으로 검토합니다.
+                      </p>
+
+                      <div class="fee-rule-badges fee-rule-badges--compact">
+                        <span>대지는 농막 불가</span>
+                        <span>가설건축물 축조신고</span>
+                        <span>건축신고·허가 검토</span>
+                        <span>반입 전 신고</span>
+                      </div>
+
+                      <div class="knowledge-law-grid">
+                        <section class="knowledge-law-block">
+                          <h3>1. 가설건축물 축조신고</h3>
+                          <ul>
+                            <li>컨테이너나 조립식 패널 구조물을 콘크리트 기초에 영구 고정하지 않고 올려두는 방식입니다.</li>
+                            <li>농막처럼 작게 사용하려는 경우에도 대지에서는 농막 신고가 아니라 관할 지자체의 가설건축물 축조신고 대상 여부를 확인합니다.</li>
+                            <li>존치기간은 통상 3년 단위로 관리되며, 만료 전 연장 신고 가능 여부를 관할 건축부서와 확인합니다.</li>
+                            <li>콘크리트 타설 등 영구 기초를 시공하면 가설건축물로 보기 어려울 수 있으므로 주춧돌, 블록 등 설치방식을 사전에 협의합니다.</li>
+                          </ul>
+                        </section>
+
+                        <section class="knowledge-law-block">
+                          <h3>2. 정식 소형 건물</h3>
+                          <ul>
+                            <li>바닥에 기초를 치고 작은 주택, 창고, 사무실 등으로 짓는 경우에는 건축신고 또는 건축허가 절차로 검토합니다.</li>
+                            <li>건축신고는 바닥면적 합계 85㎡ 이내 등 건축법상 소규모 기준에 해당하는지 확인합니다.</li>
+                            <li>비도시지역에서는 연면적 200㎡ 미만이고 3층 미만인 건축물 등 별도 신고 기준을 함께 검토합니다.</li>
+                            <li>신고 기준을 초과하거나 용도지역·건축선·접도·정화조·오수처리 조건에 걸리면 건축허가 또는 보완 협의가 필요합니다.</li>
+                          </ul>
+                        </section>
+                      </div>
+
+                      <div class="knowledge-permit-guide">
+                        <h3>준비해야 할 서류</h3>
+                        <div class="permit-rule-list" aria-label="가설건축물 축조신고 준비서류">
+                          <section>
+                            <span>가설건축물 축조신고서</span>
+                            <p>군청 민원실 또는 건축부서에 비치된 서식을 사용하거나, 세움터에서 온라인으로 작성합니다.</p>
+                          </section>
+                          <section>
+                            <span>배치도</span>
+                            <p>토지이용계획확인원이나 지적도 위에 컨테이너 위치, 가로·세로 크기, 인접 경계선과의 거리를 표시합니다.</p>
+                          </section>
+                          <section>
+                            <span>평면도</span>
+                            <p>출입문, 창문, 내부 구획, 가로·세로 치수를 간단한 선 도면으로 표시합니다. 정밀도면이 필요한지는 관할 부서 기준을 확인합니다.</p>
+                          </section>
+                          <section>
+                            <span>대지사용승낙서</span>
+                            <p>타인 소유 토지에 설치하는 경우 제출합니다. 본인 소유 대지라면 일반적으로 필요하지 않습니다.</p>
+                          </section>
+                        </div>
+                      </div>
+
+                      <div class="knowledge-permit-guide">
+                        <h3>행정 처리 절차</h3>
+                        <ol class="manual-procedure">
+                          <li>
+                            <strong>서류 접수</strong>
+                            <span>민원실 또는 세움터로 신고서, 배치도, 평면도, 필요 서류를 제출합니다. 구조물 반입 전에 먼저 신고해야 합니다.</span>
+                          </li>
+                          <li>
+                            <strong>군청 심사 및 등록면허세 납부</strong>
+                            <span>담당 부서가 지적도상 위치, 경계, 용도지역, 접도, 건축 제한 사항을 검토하고 등록면허세 고지 여부를 안내합니다.</span>
+                          </li>
+                          <li>
+                            <strong>신고필증 교부</strong>
+                            <span>신고필증을 받은 뒤 컨테이너나 이동식 구조물을 반입해야 불법 건축물 단속 위험을 줄일 수 있습니다.</span>
+                          </li>
+                          <li>
+                            <strong>안착 및 기반시설 연결</strong>
+                            <span>전기, 수도, 정화조, 오수처리시설 연결은 각 담당 부서와 별도로 확인합니다. 정화조 설치가 필요하면 환경부서 신고도 함께 검토합니다.</span>
+                          </li>
+                        </ol>
+                      </div>
+
+                      <div class="knowledge-law-links" aria-label="농막과 가설건축물 관련 법령 바로 열기">
+                        <h3>관련법 조항 바로보기</h3>
+                        <div class="law-link-groups">
+                          <section class="law-link-group" aria-label="농지법 관련 조항">
+                            <span class="law-link-group__label">농지법</span>
+                            <div class="law-link-chips">
+                              <a class="law-link-chip" href="index.html?portal=law&amp;lawTitle=농지법 시행규칙 제3조의2 농막 등의 범위&amp;lawUrl=https://www.law.go.kr/법령/농지법시행규칙/제3조의2">
+                                <i data-lucide="sprout"></i>
+                                <span>농지법 시행규칙</span>
+                                <strong>제3조의2</strong>
+                                <small>농막 범위</small>
+                              </a>
+                            </div>
+                          </section>
+
+                          <section class="law-link-group" aria-label="건축법 관련 조항">
+                            <span class="law-link-group__label">건축법</span>
+                            <div class="law-link-chips">
+                              <a class="law-link-chip" href="index.html?portal=law&amp;lawTitle=건축법 제20조 가설건축물&amp;lawUrl=https://www.law.go.kr/법령/건축법/제20조">
+                                <i data-lucide="warehouse"></i>
+                                <span>건축법</span>
+                                <strong>제20조</strong>
+                                <small>가설건축물</small>
+                              </a>
+                              <a class="law-link-chip" href="index.html?portal=law&amp;lawTitle=건축법 시행령 제15조 가설건축물&amp;lawUrl=https://www.law.go.kr/법령/건축법시행령/제15조">
+                                <i data-lucide="file-check-2"></i>
+                                <span>건축법 시행령</span>
+                                <strong>제15조</strong>
+                                <small>축조신고</small>
+                              </a>
+                              <a class="law-link-chip" href="index.html?portal=law&amp;lawTitle=건축법 제14조 건축신고&amp;lawUrl=https://www.law.go.kr/법령/건축법/제14조">
+                                <i data-lucide="clipboard-check"></i>
+                                <span>건축법</span>
+                                <strong>제14조</strong>
+                                <small>건축신고</small>
+                              </a>
+                              <a class="law-link-chip" href="index.html?portal=law&amp;lawTitle=건축법 시행령 제11조 건축신고&amp;lawUrl=https://www.law.go.kr/법령/건축법시행령/제11조">
+                                <i data-lucide="ruler"></i>
+                                <span>건축법 시행령</span>
+                                <strong>제11조</strong>
+                                <small>신고 대상</small>
+                              </a>
+                            </div>
+                          </section>
+                        </div>
+                      </div>
+
+                      <div class="knowledge-note">
+                        <h3>상담 핵심 요약</h3>
+                        <ul>
+                          <li>지목이 대지인 경우 농지법상 농막이 아니라 건축법상 가설건축물 또는 건축물로 상담합니다.</li>
+                          <li>가볍게 올려두는 컨테이너는 가설건축물 축조신고를 먼저 검토합니다.</li>
+                          <li>콘크리트 기초를 치고 정식으로 짓는 경우에는 건축신고 또는 건축허가 대상인지 확인합니다.</li>
+                          <li>신고필증을 받기 전 구조물을 먼저 반입하면 불법 건축물 문제가 생길 수 있으므로 접수 순서를 꼭 안내합니다.</li>
+                          <li>설치 후 취득세 신고·납부, 존치기간 연장, 정화조·전기·수도 연결 신고 여부를 별도로 확인합니다.</li>
+                        </ul>
+                      </div>
+                      <p class="knowledge-source">근거: 「농지법 시행규칙」 제3조의2, 「건축법」 제14조·제20조, 「건축법 시행령」 제11조·제15조 기준. 세부 적용은 관할 지자체 조례와 건축부서 판단을 함께 확인합니다.</p>
+                    </article>
+                  </div>
+                </section>
+
+                <section class="knowledge-subpanel" data-knowledge-subpanel="etc-authority-staff" hidden>
+                  <div class="knowledge-grid">
+                    <article class="knowledge-item knowledge-item--wide authority-staff-card" data-search-item>
+                      <i data-lucide="users-round"></i>
+                      <h2>소관청 담당자 현황</h2>
+                      <p>
+                        지적측량 상담 중 소관청 협의가 필요할 때 민원과, 지적계, 지적재조사, 토지관리, 공간주소 담당자를
+                        빠르게 확인할 수 있도록 첨부 표를 상담용 요약표로 정리했습니다.
+                      </p>
+
+                      <div class="authority-staff-summary" aria-label="담당부서 빠른 분류">
+                        <span>민원과</span>
+                        <span>지적계</span>
+                        <span>지적재조사</span>
+                        <span>토지관리</span>
+                        <span>공간주소</span>
+                        <span>부동산평가</span>
+                      </div>
+
+                      <div class="authority-staff-table-wrap" role="region" aria-label="소관청 담당자 요약표" tabindex="0">
+                        <table class="authority-staff-table">
+                          <thead>
+                            <tr>
+                              <th scope="col">소관청</th>
+                              <th scope="col">민원과</th>
+                              <th scope="col">지적계</th>
+                              <th scope="col">지적재조사</th>
+                              <th scope="col">토지관리·지가</th>
+                              <th scope="col">공간주소·기타</th>
+                              <th scope="col">비고</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr>
+                              <th scope="row">전주 완산구</th>
+                              <td><strong>한종희</strong><small>과장 변경 7.3주 예정</small></td>
+                              <td>김수진<br>민유미, 송은아, 송미라</td>
+                              <td>슬기경<br>이종익, 김의진, 정다혜</td>
+                              <td>이수영<br>박수빈, 최소영, 김가람</td>
+                              <td class="authority-note">원본표 확인</td>
+                              <td>완산구 구간</td>
+                            </tr>
+                            <tr>
+                              <th scope="row">전주 덕진구</th>
+                              <td><strong>김태훈</strong><small>과장 변경 7.3주 예정</small></td>
+                              <td>김성훈<br>정재훈, 김정훈</td>
+                              <td>손길돈<br>전수일, 권재탁, 안지연</td>
+                              <td>김윤정<br>민은경, 문영익, 이경환, 김수범</td>
+                              <td class="authority-note">원본표 확인</td>
+                              <td>덕진구 구간</td>
+                            </tr>
+                            <tr>
+                              <th scope="row">완주군청</th>
+                              <td><strong>김형진</strong><small class="authority-date">과장 변경 7.7 완료</small></td>
+                              <td>박성훈<br>이동훈, 우승, 이재순, 권승환, 박가영</td>
+                              <td>임미선<br>이신호, 최요한</td>
+                              <td>어윤중, 송피애<br>권상일, 최민진, 이혜진, 유지영, 이진희</td>
+                              <td>임종률<br>이윤주, 서효지, 이대부, 정수아, 소은선</td>
+                              <td>부동산평가계 별도 기재</td>
+                            </tr>
+                            <tr>
+                              <th scope="row">군산시</th>
+                              <td><strong>이홍구</strong><small>과장 변경 7.3주 예정</small></td>
+                              <td>이혁주<br>김명호, 이종원, 장소정</td>
+                              <td>김윤정<br>최용태, 박장수, 박보라</td>
+                              <td>정욱현<br>서정빈, 최혜원, 류다원</td>
+                              <td>오덕호<br>김창현, 김영노, 김혜진</td>
+                              <td>군산시 구간</td>
+                            </tr>
+                            <tr>
+                              <th scope="row">익산시</th>
+                              <td><strong>이형대</strong><small>인사발령 예정 / 현재 기준</small></td>
+                              <td>김홍<br>홍재인, 안현지, 박소연, 최자연</td>
+                              <td>신상우<br>박기원, 차승민, 정성수, 최지선, 김은구</td>
+                              <td>손숙경<br>이서림, 신가영, 박재희, 최란</td>
+                              <td>김병오<br>이지현, 손기창, 김병두</td>
+                              <td>공간정보계 표기</td>
+                            </tr>
+                            <tr>
+                              <th scope="row">익산 함열</th>
+                              <td class="authority-note">원본표 확인</td>
+                              <td>최성용<br>이상민, 정도윤, 윤찬우</td>
+                              <td class="authority-note">원본표 확인</td>
+                              <td class="authority-note">원본표 확인</td>
+                              <td class="authority-note">원본표 확인</td>
+                              <td>함열출장소 별도 구간</td>
+                            </tr>
+                            <tr>
+                              <th scope="row">정읍시</th>
+                              <td><strong>강민석</strong><small class="authority-date">과장 변경 7.6 완료</small></td>
+                              <td>최진홍<br>최경현, 황수석, 이하성, 정보, 정미선, 오희옥</td>
+                              <td>이성훈<br>이명숙, 송광명, 이현규, 강우희, 장소희</td>
+                              <td>최윤<br>윤지홍, 정재홍, 신강덕, 고경은, 박영화, 하철정</td>
+                              <td>송용훈<br>양준석, 이정은, 주민영, 송미리</td>
+                              <td>공간정보계 표기</td>
+                            </tr>
+                            <tr>
+                              <th scope="row">남원시</th>
+                              <td><strong>김종표</strong><small>과장 변경 7.3주 예정</small></td>
+                              <td>윤희정<br>김성민, 이유비, 양예린, 김형희</td>
+                              <td>류소영<br>김국한, 이대림, 노시준, 이승원</td>
+                              <td>오미자<br>김가희, 박예서, 김민수, 김숙영, 긴신</td>
+                              <td>김미선<br>김찬란, 김호원, 조수영, 서현주</td>
+                              <td>공간정보계 표기</td>
+                            </tr>
+                            <tr>
+                              <th scope="row">김제시</th>
+                              <td><strong>최미화</strong><small class="authority-date">과장 변경 7.14 완료 / 변동없음</small></td>
+                              <td>임미화<br>마승일, 최가연, 임재국</td>
+                              <td>이송환<br>이하늘, 이용희, 오영욱, 이상아, 구아름, 김승연</td>
+                              <td>도선덕<br>정지영, 이랑호, 이정화</td>
+                              <td>박진호<br>김정남, 김용권(형)</td>
+                              <td>일부 담당명 원본표 대조</td>
+                            </tr>
+                            <tr>
+                              <th scope="row">진안군</th>
+                              <td><strong>권사률</strong><small>8월 예정</small></td>
+                              <td>최진표<br>강남이, 김주연</td>
+                              <td>최춘식<br>김진국, 이소영, 손유진</td>
+                              <td>최성병<br>문대섭, 이지웅, 이포호</td>
+                              <td class="authority-note">원본표 확인</td>
+                              <td>진안군 구간</td>
+                            </tr>
+                            <tr>
+                              <th scope="row">무주군</th>
+                              <td><strong>김일중</strong><small>인사 완료 표기</small></td>
+                              <td>김민진<br>최선호, 이윤정, 최우정, 안서연, 전순희</td>
+                              <td>손규랑<br>손예민, 손지구, 염예빈</td>
+                              <td>갈종호<br>조준선, 박승귀, 김준아, 박승이</td>
+                              <td class="authority-note">원본표 확인</td>
+                              <td>무주군 구간</td>
+                            </tr>
+                            <tr>
+                              <th scope="row">장수군</th>
+                              <td><strong>장복기</strong><small>9월 예정</small></td>
+                              <td>정용태<br>박용태, 김재영, 최보미, 김희주</td>
+                              <td>탁용근<br>최광식, 김정민, 정진선, 박민서</td>
+                              <td>박현진<br>김현, 이윤호, 이진경</td>
+                              <td class="authority-note">원본표 확인</td>
+                              <td>장수군 구간</td>
+                            </tr>
+                            <tr>
+                              <th scope="row">임실군</th>
+                              <td><strong>최경진</strong><small class="authority-date">전자계무라 / 7.20 완료 표기</small></td>
+                              <td>오명구<br>공명진, 최연재</td>
+                              <td>고기정<br>강훈, 전성도</td>
+                              <td>오태경<br>주성현, 최하진, 주슬기, 김상은, 김예림</td>
+                              <td class="authority-note">원본표 확인</td>
+                              <td>전자계무 표기 확인</td>
+                            </tr>
+                            <tr>
+                              <th scope="row">순창군</th>
+                              <td><strong>하성길</strong><small class="authority-date">과장 변경 7.13 완료</small></td>
+                              <td>박윤옥<br>정하나, 문수영</td>
+                              <td>김일정<br>오성은, 심병창</td>
+                              <td>오용호<br>김태우, 전소현</td>
+                              <td class="authority-note">원본표 확인</td>
+                              <td>순창군 구간</td>
+                            </tr>
+                            <tr>
+                              <th scope="row">고창군</th>
+                              <td><strong>양미숙</strong><small>7월 예정</small></td>
+                              <td>김남중<br>정윤규, 최빙호, 김태영</td>
+                              <td>간문철<br>박현석, 허지웅, 이재호</td>
+                              <td>문용<br>임정민, 석다현</td>
+                              <td class="authority-note">원본표 확인</td>
+                              <td>고창군 구간</td>
+                            </tr>
+                            <tr>
+                              <th scope="row">부안군</th>
+                              <td><strong>허진상</strong><small class="authority-date">과장 변경 7.6 완료</small></td>
+                              <td>조용환<br>최선숙, 박서진, 양아름, 박공일</td>
+                              <td>문동일<br>장혜성, 권형우, 김승재, 김완수, 김순주</td>
+                              <td>변금이<br>황윤성, 이현민, 박환희, 박경인</td>
+                              <td>공간주소 별도 기재</td>
+                              <td>부안군 담당자 우선 확인</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+
+                      <div class="knowledge-note">
+                        <h3>사용 방법</h3>
+                        <ul>
+                          <li>담당자 변경 일정은 붉은 글씨 또는 비고란을 먼저 확인하고, 실제 전화 연결 전 최신 인사발령 여부를 한 번 더 확인합니다.</li>
+                          <li>지적측량 접수·성과·토지이동 상담은 지적계, 지적재조사 사업지는 지적재조사 담당, 지가·부동산 자료는 토지관리 담당을 우선 확인합니다.</li>
+                          <li>도로명주소, 공간정보, 건물번호 관련 상담은 공간주소 담당 또는 원본표의 공간정보계 표기를 확인합니다.</li>
+                        </ul>
+                      </div>
+
+                      <details class="authority-staff-source">
+                        <summary>첨부 원본표 확인</summary>
+                        <a href="assets/authority-staff-source.png" target="_blank" rel="noopener">
+                          <img src="assets/authority-staff-source.png" alt="소관청 담당자 원본표" loading="lazy">
+                        </a>
+                        <p>작은 글자 또는 겹친 칸은 원본표를 확대해서 확인합니다.</p>
+                      </details>
+
+                      <p class="knowledge-source">자료 기준: 첨부된 소관청 담당자 현황표 판독 기준. 담당자·인사일자는 소관청 최신 공문 또는 연락망으로 최종 확인합니다.</p>
+                    </article>
+                  </div>
+                </section>
+
+                <section class="knowledge-subpanel" data-knowledge-subpanel="etc-dispute" hidden>
+                  <div class="knowledge-grid">
+                    <article class="knowledge-item" data-search-item>
+                      <i data-lucide="triangle-alert"></i>
+                      <h2>분쟁 가능성</h2>
+                      <p>인접 토지 경계, 진입로, 현장 출입 문제는 사전에 안내하고 현장 확인 사항으로 기록합니다.</p>
+                    </article>
+                  </div>
+                </section>
+
+                <section class="knowledge-subpanel" data-knowledge-subpanel="etc-memo" hidden>
+                  <div class="knowledge-grid">
+                    <article class="knowledge-item" data-search-item>
+                      <i data-lucide="notebook-pen"></i>
+                      <h2>상담 메모</h2>
+                      <p>확실한 내용과 확인이 필요한 내용을 구분해 메모하면 후속 처리 품질이 좋아집니다.</p>
+                    </article>
+                  </div>
+                </section>
+              </div>
+            </div>
+          </section>
         </div>
       </section>
     </main>

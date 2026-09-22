@@ -37,7 +37,7 @@ test("private site requires a password for pages, assets and APIs", async (t) =>
   assert.match(setCookie, /Max-Age=28800/);
   const cookie = setCookie.split(";")[0];
 
-  for (const route of ["/", "/manual.html", "/styles.css", "/script.js", "/assets/survey-checks.png"]) {
+  for (const route of ["/", "/manual.html", "/styles.css", "/script.js", "/vworld-config.js", "/vworld-parcel.js", "/assets/land-info-logo.png", "/assets/jeonbuk-town-village-map.js", "/assets/survey-checks.png"]) {
     const response = await get(route, { headers: { cookie } });
     assert.equal(response.status, 200, route);
     assert.match(response.headers.get("cache-control"), /no-store/);
@@ -46,9 +46,14 @@ test("private site requires a password for pages, assets and APIs", async (t) =>
   const range = await get("/assets/survey-checks.png", { headers: { cookie, Range: "bytes=0-7" } });
   assert.equal(range.status, 206);
   assert.equal((await range.arrayBuffer()).byteLength, 8);
-  assert.equal((await get("/api/vworld/parcel?pnu=bad", { headers: { cookie } })).status, 404);
+  assert.equal((await get("/api/vworld/parcel?pnu=bad", { headers: { cookie } })).status, 400);
+  assert.equal((await get("/api/farmland/info?pnu=bad", { headers: { cookie } })).status, 400);
+  const restoredHome = await (await get("/", { headers: { cookie } })).text();
+  assert.deepEqual([...restoredHome.matchAll(/data-portal="([^"]+)"/g)].map((match) => match[1]), ["eum", "map", "aerial", "farmland", "law"]);
+  assert.match(restoredHome, /assets\/land-info-logo\.png/);
+  assert.match(restoredHome, /data-site-search/);
 
-  for (const route of ["/server.cjs", "/access-control.mjs", "/middleware.ts", "/.git/config", "/.env", "/package.json", "/server-out.log", "/api/vworld/parcel.js", "/assets/%2e%2e%2faccess-control.mjs"]) {
+  for (const route of ["/server.cjs", "/access-control.mjs", "/middleware.ts", "/.git/config", "/.env", "/.recovery/latest-v11.3-89d9245.zip", "/farmland-service.cjs", "/vworld-service.cjs", "/package.json", "/server-out.log", "/api/vworld/parcel.js", "/assets/%2e%2e%2faccess-control.mjs"]) {
     assert.equal((await get(route, { headers: { cookie } })).status, 404, route);
   }
   const logout = await get("/logout", { method: "POST", headers: { cookie } });

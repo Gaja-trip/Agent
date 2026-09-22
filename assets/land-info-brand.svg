@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="430" height="86" viewBox="0 0 430 86" role="img" aria-labelledby="title desc">
+  <title id="title">토지정보 통합 안내</title>
+  <desc id="desc">지도 핀, 필지 격자, 정보 연결선을 결합한 토지정보 통합 안내 로고</desc>
+  <defs>
+    <linearGradient id="brandMark" x1="13" y1="8" x2="77" y2="78" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#8bcf67"/>
+      <stop offset="0.48" stop-color="#35b9b2"/>
+      <stop offset="1" stop-color="#2476b8"/>
+    </linearGradient>
+    <linearGradient id="brandLine" x1="17" y1="65" x2="78" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#8bcf67"/>
+      <stop offset="0.55" stop-color="#37bbb1"/>
+      <stop offset="1" stop-color="#3aa2d0"/>
+    </linearGradient>
+    <filter id="markShadow" x="-24%" y="-24%" width="148%" height="158%">
+      <feDropShadow dx="0" dy="8" stdDeviation="7" flood-color="#0e332b" flood-opacity="0.18"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#markShadow)">
+    <rect x="7" y="7" width="72" height="72" rx="20" fill="#fff"/>
+  </g>
+  <g transform="translate(7 7)">
+    <path d="M36 8c15.7 0 28.5 12.4 28.5 27.7 0 18.8-20.8 32.7-26.2 36a4.3 4.3 0 0 1-4.6 0c-5.4-3.3-26.2-17.2-26.2-36C7.5 20.4 20.3 8 36 8z" fill="url(#brandMark)"/>
+    <circle cx="36" cy="34" r="18.2" fill="rgba(255,255,255,0.14)" stroke="#fff" stroke-width="4"/>
+    <path d="M19.2 34h33.6M36 16.4v35.2M26 21.4c5.7 4.2 14.3 4.2 20 0M26 46.6c5.7-4.2 14.3-4.2 20 0" fill="none" stroke="#fff" stroke-width="2.9" stroke-linecap="round"/>
+    <circle cx="36" cy="34" r="4.3" fill="#fff"/>
+    <path d="M16 62.5 29.7 55l18.2 9.2 16.4-8.8" fill="none" stroke="url(#brandLine)" stroke-width="4.1" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="16" cy="62.5" r="4.1" fill="#8bcf67" stroke="#fff" stroke-width="1.5"/>
+    <circle cx="29.7" cy="55" r="4.1" fill="#5fc48a" stroke="#fff" stroke-width="1.5"/>
+    <circle cx="47.9" cy="64.2" r="4.1" fill="#36bab2" stroke="#fff" stroke-width="1.5"/>
+    <circle cx="64.3" cy="55.4" r="4.1" fill="#3aa2d0" stroke="#fff" stroke-width="1.5"/>
+  </g>
+
+  <g>
+    <text x="96" y="38" fill="#14263a" font-family="Pretendard, 'Noto Sans KR', 'Malgun Gothic', Arial, sans-serif" font-size="28" font-weight="900" letter-spacing="0">토지정보 통합 안내</text>
+    <text x="98" y="62" fill="#506861" font-family="Pretendard, 'Noto Sans KR', 'Malgun Gothic', Arial, sans-serif" font-size="13.5" font-weight="800" letter-spacing="0.15">Land Information Guide</text>
+    <path d="M96 70h206" fill="none" stroke="#d9e6df" stroke-width="2" stroke-linecap="round"/>
+    <path d="M96 70h72" fill="none" stroke="#31b7ae" stroke-width="2" stroke-linecap="round"/>
+  </g>
+</svg>

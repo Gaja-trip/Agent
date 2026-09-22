@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg?v=3" />
     <meta name="description" content="토지 허가 상담부터 등기촉탁까지 토지 정리 진행 절차 안내" />
     <title>진행 절차 | 토지정보 통합 안내</title>
     <link rel="stylesheet" href="styles.css" />
@@ -13,10 +14,25 @@
     <header class="site-header">
       <a class="brand" href="index.html" aria-label="토지정보 통합 안내 첫 화면">
         <span class="brand__mark" aria-hidden="true">
-          <i data-lucide="land-plot"></i>
+          <img src="assets/land-info-logo.png" alt="" />
         </span>
         <strong>토지정보 통합 안내</strong>
       </a>
+      <form class="site-search" role="search" data-site-search>
+        <label class="visually-hidden" for="site-search-input">통합 자료 찾기</label>
+        <div class="site-search__row">
+          <i data-lucide="search"></i>
+          <input
+            id="site-search-input"
+            type="search"
+            placeholder="진행절차·안내자료·매뉴얼·상담지식 찾기"
+            autocomplete="off"
+            data-site-search-input
+          />
+          <button type="submit">찾기</button>
+        </div>
+        <div class="site-search__results" data-site-search-results hidden></div>
+      </form>
       <nav class="main-nav" aria-label="주요 메뉴">
         <a class="main-nav__home" href="index.html" aria-label="홈">
           <i data-lucide="house"></i>
@@ -30,13 +46,9 @@
     </header>
 
     <main class="page-main">
-      <section class="page-title" aria-labelledby="page-title">
+      <section class="page-title page-title--process" aria-labelledby="page-title">
         <p class="eyebrow">Land Arrangement Process</p>
         <h1 id="page-title">진행 절차</h1>
-        <p>
-          허가 가능성 검토부터 지적공부 정리와 등기촉탁까지, 현재 어느 단계에 있는지 바로
-          파악할 수 있도록 구성했습니다.
-        </p>
       </section>
 
       <section class="section section--process section--compact">

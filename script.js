@@ -12,7 +12,15 @@ const portalData = {
   },
   aerial: {
     title: "항공사진",
+    url: "https://map.vworld.kr/map/dtkmap.do?mapmode=raster",
+    frameTitle: "브이월드 항공사진 및 주제도",
     type: "aerial",
+  },
+  farmland: {
+    title: "농지공간정보",
+    url: "https://njy.mafra.go.kr/map/mapMain.do#n",
+    frameTitle: "농지공간포털 지도서비스",
+    type: "farmland",
   },
   law: {
     title: "법령정보",
@@ -23,25 +31,144 @@ const portalData = {
 
 const parcelStorageKey = "landInfoPortal.parcelAddress";
 const parcelStateStorageKey = "landInfoPortal.parcelState";
-const vworldApiKey = "39B6F1DE-2D35-3582-9008-A537EF6A6BC4";
+const parcelProvinceStorageKey = "landInfoPortal.parcelProvince";
+const parcelCityStorageKey = "landInfoPortal.parcelCity";
+const jeonbukCityNames = [
+  "전주시",
+  "군산시",
+  "익산시",
+  "정읍시",
+  "남원시",
+  "김제시",
+  "완주군",
+  "진안군",
+  "무주군",
+  "장수군",
+  "임실군",
+  "순창군",
+  "고창군",
+  "부안군",
+];
+const duplicateParcelVillageCandidates = {
+  "부안군": {
+    "장신리": ["줄포면", "하서면"],
+  },
+};
+const vworldApiKey = window.VworldConfig?.key || "";
+const vworldParcelDataId = "LP_PA_CBND_BUBUN";
+const vworldParcelWfsDataIds = ["lp_pa_cbnd_bubun", "lt_c_landinfobasemap"];
+const vworldBuildingDataIds = ["LT_C_SPBD"];
+const vworldBuildingWfsDataIds = ["lt_c_spbd"];
+const vworldAdminTownDataId = "LT_C_ADEMD_INFO";
+const vworldAdminVillageDataId = "LT_C_ADRI_INFO";
+const jeonbukSigunguCodes = {
+  "전주시": ["52111", "52113", "45111", "45113"],
+  "군산시": ["52130", "45130"],
+  "익산시": ["52140", "45140"],
+  "정읍시": ["52180", "45180"],
+  "남원시": ["52190", "45190"],
+  "김제시": ["52210", "45210"],
+  "완주군": ["52710", "45710"],
+  "진안군": ["52720", "45720"],
+  "무주군": ["52730", "45730"],
+  "장수군": ["52740", "45740"],
+  "임실군": ["52750", "45750"],
+  "순창군": ["52770", "45770"],
+  "고창군": ["52790", "45790"],
+  "부안군": ["52800", "45800"],
+};
+const vworldParcelRadiusMeters = 80;
+const vworldBuildingQueryRadiusMeters = 24;
+const vworldPoiQueryRadiusMeters = 180;
+const eumDefaultScale = "1200";
+const vworldLotNumberMinZoom = 18;
+const vworldLotNumberMinScale = 0.68;
+const vworldLotNumberMaxScale = 1.18;
+const vworldMapMaxZoom = 21;
+const vworldTileNativeMaxZoom = 19;
+const vworldParcelDetailZoom = 20;
+const landCategoryCodeLabels = {
+  "01": "전",
+  "02": "답",
+  "03": "과수원",
+  "04": "목장용지",
+  "05": "임야",
+  "06": "광천지",
+  "07": "염전",
+  "08": "대",
+  "09": "공장용지",
+  "10": "학교용지",
+  "11": "주차장",
+  "12": "주유소용지",
+  "13": "창고용지",
+  "14": "도로",
+  "15": "철도용지",
+  "16": "제방",
+  "17": "하천",
+  "18": "구거",
+  "19": "유지",
+  "20": "양어장",
+  "21": "수도용지",
+  "22": "공원",
+  "23": "체육용지",
+  "24": "유원지",
+  "25": "종교용지",
+  "26": "사적지",
+  "27": "묘지",
+  "28": "잡종지",
+};
 const defaultAerialCenter = [37.5665, 126.978];
-const localCadastralShpPath = "cadastral/AL_52800_LAND_INFO_BASE_MAP_202604/52800.shp";
-const localCadastralIndexPath = "cadastral/AL_52800_LAND_INFO_BASE_MAP_202604/52800.index.bin";
-const localCadastralRadiusMeters = 50;
-const maxLocalCadastralFeatures = 800;
+// V-World 도시계획시설도 WMS. 도로는 다른 시설보다 위에 표시합니다.
+const vworldUrbanPlanningLayers = [
+  { id: "lt_c_upisuq151", title: "도시계획도로" },
+  { id: "lt_c_upisuq159", title: "기타 기반시설" },
+];
+const vworldUrbanPlanningVisible = new Set(["lt_c_upisuq151"]);
+const vworldUrbanPlanningOverlays = new Map();
+const vworldUrbanPlanningStates = new Map();
+let vworldUrbanPlanningOpacity = 0.75;
+let parcelDetailsRequestId = 0;
+let parcelDetailsState = { label: "필지를 선택해 주세요." };
+const parcelDetailsCache = new Map();
+let aerialParcelDetailsRequestId = 0;
+let aerialParcelDetailsState = { label: "필지를 선택해 주세요." };
+const aerialParcelDetailsCache = new Map();
+// Registered service domain for this project's V-World NED API key.
+const vworldAttributeDomain = window.VworldConfig?.domain || window.location.origin;
+let farmlandMap = null;
+let farmlandMapPromise = null;
+let farmlandSelectionLayer = null;
+let farmlandMarker = null;
+let farmlandLastPointKey = "";
+let farmlandFocusPoint = null;
+let farmlandCadastralLayer = null;
+const farmlandParcelRadiusMeters = 100;
+const farmlandParcelDetailZoom = 13;
 let vworldMap = null;
 let vworldMarker = null;
 let vworldBaseLayer = null;
 let vworldHybridLayer = null;
 let vworldParcelLayer = null;
 let vworldRadiusLayer = null;
+let vworldCadastralLayer = null;
+let vworldLotNumberLayer = null;
+let vworldLotNumberLabels = [];
+let vworldPoiLayer = null;
 let vworldCurrentLayer = "satellite";
 let vworldCurrentPoint = null;
+let vworldSearchResults = [];
+let vworldLabelRequestId = 0;
+let vworldInfoRequestId = 0;
+let vworldPoiMarkerRequestId = 0;
 let vworldMarkerVisible = true;
+let vworldCadastralVisible = true;
+let vworldInfoMarker = null;
 let vworldMeasureMode = "";
 let vworldMeasurePoints = [];
 let vworldMeasureLayer = null;
-let localCadastralDatasetPromise = null;
+let vworldCompletedMeasureLayers = [];
+const vworldAdminTownCache = new Map();
+const vworldAdminVillageCache = new Map();
 
 const processSteps = {
   consult: {
@@ -127,6 +254,206 @@ const readyMessages = [
   },
 ];
 
+const siteSearchIndex = [
+  {
+    title: "허가부서 상담",
+    section: "진행절차",
+    url: "process.html#consult",
+    summary: "용도지역, 행위제한, 개발행위허가 대상 여부를 허가부서와 먼저 확인하는 단계입니다.",
+    keywords: "허가부서 상담 개발행위허가 토지허가 가능성 검토 사전상담",
+  },
+  {
+    title: "지적측량 신청 및 현장측량",
+    section: "진행절차",
+    url: "process.html#survey",
+    summary: "분할, 경계복원, 지적현황 등 측량 신청과 현장 입회 과정을 안내합니다.",
+    keywords: "지적측량 신청 현장측량 경계복원 분할 지적현황 입회",
+  },
+  {
+    title: "토지허가 진행",
+    section: "진행절차",
+    url: "process.html#permit",
+    summary: "허가 신청서, 관계부서 협의, 보완 요청, 허가 완료까지의 흐름입니다.",
+    keywords: "토지허가 개발행위 관계부서 협의 보완 허가증",
+  },
+  {
+    title: "토지이동신청",
+    section: "진행절차",
+    url: "process.html#movement",
+    summary: "허가 완료 후 분할, 합병, 지목변경 등 지적공부 정리를 신청합니다.",
+    keywords: "토지이동신청 분할 합병 지목변경 등록전환 지적공부",
+  },
+  {
+    title: "등기촉탁",
+    section: "진행절차",
+    url: "process.html#registry",
+    summary: "지적공부 정리 후 등기부 반영과 최종 완료 확인을 안내합니다.",
+    keywords: "등기촉탁 등기부 토지대장 지적공부 완료",
+  },
+  {
+    title: "종합 안내 및 확인 사항",
+    section: "안내자료",
+    url: "checklist.html#survey-checks",
+    summary: "지적측량 상담 전 국민에게 안내할 기본 확인 사항입니다.",
+    keywords: "종합 안내 확인 사항 지적측량 필수 확인",
+  },
+  {
+    title: "후속 조치 안내",
+    section: "안내자료",
+    url: "checklist.html#survey-followup",
+    summary: "지적측량 완료 후 토지 정리와 후속 행정절차를 안내합니다.",
+    keywords: "후속 조치 안내 측량 완료 토지정리 행정절차",
+  },
+  {
+    title: "사전체크리스트",
+    section: "안내자료",
+    url: "checklist.html#prechecklist",
+    summary: "주소, 목적, 토지이음 확인 내용, 지도 여건, 소유자 동의 등 상담 전 준비사항입니다.",
+    keywords: "사전체크리스트 주소 지번 목적 토지이음 지도 소유자 동의",
+  },
+  {
+    title: "분할측량 안내자료",
+    section: "안내자료",
+    url: "checklist.html#prechecklist",
+    summary: "건축물에 의한 분할제한면적, 용도지역별 건폐율, 자연취락지구 60% 기준을 표로 확인합니다.",
+    keywords:
+      "분할측량 안내자료 건축법 건축물 대지 분할제한면적 건폐율 주거지역 상업지역 공업지역 녹지지역 관리지역 농림지역 자연환경보전지역 자연취락지구 60%",
+  },
+  {
+    title: "측량성과도 예시",
+    section: "안내자료",
+    url: "checklist.html#result-examples",
+    summary: "경계복원, 지적현황, 분할, 등록전환 측량성과도 예시를 확인합니다.",
+    keywords: "측량성과도 예시 경계복원 지적현황 분할 등록전환",
+  },
+  {
+    title: "등록사항정정",
+    section: "안내자료",
+    url: "checklist.html#registration-correction",
+    summary: "정단무보 계산, 연호 변환, 면적증감대비표 작성 기능을 모아 둔 자료입니다.",
+    keywords: "등록사항정정 정단무보 대정 소화 단기 면적증감대비표",
+  },
+  {
+    title: "지적측량수수료 계산",
+    section: "안내자료",
+    url: "checklist.html#survey-fee",
+    summary: "일사편리 지적측량 수수료 간편 계산 화면 이용 방법을 안내합니다.",
+    keywords: "지적측량수수료 계산 일사편리 경계복원 지적현황 분할 등록전환",
+  },
+  {
+    title: "출근 후 할일",
+    section: "매뉴얼",
+    url: "manual.html#morning",
+    summary: "가상계좌 수입, 전날 입금 확인, 접수일 변경 기준을 정리했습니다.",
+    keywords: "출근 후 할일 가상계좌 수입 입금 접수일 공휴일",
+  },
+  {
+    title: "공문 발송",
+    section: "매뉴얼",
+    url: "manual.html#official-letter",
+    summary: "지적측량 수행계획서와 성과검사요청서 발송 절차를 설명합니다.",
+    keywords: "공문 발송 지적측량 수행 변경 계획서 성과검사요청서 전자결재",
+  },
+  {
+    title: "측량상담 및 접수",
+    section: "매뉴얼",
+    url: "manual.html#survey-request",
+    summary: "측량 상담과 접수 단계에서 확인할 내용을 정리합니다.",
+    keywords: "측량상담 접수 상담 접수창 의뢰",
+  },
+  {
+    title: "소유자 확인",
+    section: "매뉴얼",
+    url: "manual.html#owner-check",
+    summary: "소유자, 대리인, 위임 여부를 확인하는 절차입니다.",
+    keywords: "소유자 확인 대리인 위임",
+  },
+  {
+    title: "수수료청구",
+    section: "매뉴얼",
+    url: "manual.html#fee-claim",
+    summary: "측량 수수료 청구와 정산 관련 업무 흐름입니다.",
+    keywords: "수수료청구 수수료 정산 청구",
+  },
+  {
+    title: "일정배정",
+    section: "매뉴얼",
+    url: "manual.html#schedule",
+    summary: "측량 일정 배정과 출장 관리 흐름을 확인합니다.",
+    keywords: "일정배정 출장 측량일정",
+  },
+  {
+    title: "지적측량일반",
+    section: "상담지식",
+    url: "knowledge.html#survey-general",
+    summary: "경계, 분할, 지적현황, 등록전환 상담 시 자주 확인하는 기본 지식입니다.",
+    keywords: "지적측량일반 경계 분할 지적현황 등록전환",
+  },
+  {
+    title: "측량의뢰 및 절차",
+    section: "상담지식",
+    url: "knowledge.html#request-process",
+    summary: "측량 의뢰부터 접수, 일정, 성과 안내까지의 절차입니다.",
+    keywords: "측량의뢰 절차 접수 일정 성과",
+  },
+  {
+    title: "수수료",
+    section: "상담지식",
+    url: "knowledge.html#fee",
+    summary: "지적측량수수료 산정기준, 감면, 체감계수, 유의사항을 정리했습니다.",
+    keywords: "수수료 산정기준 감면 체감계수 동일지번 패키지 필지체감 국가유공자",
+  },
+  {
+    title: "결과부",
+    section: "상담지식",
+    url: "knowledge.html#result",
+    summary: "측량 결과부와 성과물 안내에 필요한 상담 지식입니다.",
+    keywords: "결과부 성과도 측량 결과 성과물",
+  },
+  {
+    title: "영수증",
+    section: "상담지식",
+    url: "knowledge.html#receipt",
+    summary: "영수증 발급, 수입, 정산 상담에 필요한 내용을 찾습니다.",
+    keywords: "영수증 발급 수입 정산",
+  },
+  {
+    title: "공간정보",
+    section: "상담지식",
+    url: "knowledge.html#spatial",
+    summary: "공간정보와 지적 관련 데이터 확인에 필요한 내용을 정리합니다.",
+    keywords: "공간정보 지도 지적 데이터 좌표",
+  },
+  {
+    title: "관련법령",
+    section: "상담지식",
+    url: "knowledge.html#law",
+    summary: "관련 법령과 부안군 건축인허가 가이드북 연결 자료입니다.",
+    keywords: "관련법령 법령 부안군 건축인허가 가이드북",
+  },
+  {
+    title: "공사업무일반",
+    section: "상담지식",
+    url: "knowledge.html#office",
+    summary: "공사 업무 처리와 상담에 필요한 일반 지식입니다.",
+    keywords: "공사업무일반 업무처리 상담",
+  },
+  {
+    title: "소관청 담당자",
+    section: "상담지식",
+    url: "knowledge.html#etc",
+    summary: "시군별 민원과, 지적계, 지적재조사, 토지관리, 공간주소 담당자를 표로 정리했습니다.",
+    keywords: "소관청 담당자 민원과 지적계 지적재조사 토지관리 공간주소 부동산평가 시군 담당자",
+  },
+  {
+    title: "기타",
+    section: "상담지식",
+    url: "knowledge.html#etc",
+    summary: "묘지, 자연장지, 농막, 가설건축물, 소관청 담당자 등 기타 상담 자료입니다.",
+    keywords: "기타 묘지 자연장지 농막 가설건축물 대지 컨테이너 소관청 담당자",
+  },
+];
+
 function refreshIcons() {
   if (window.lucide) {
     window.lucide.createIcons();
@@ -183,19 +510,137 @@ function initPortalTabs() {
   const portalPanel = document.querySelector("[data-portal-panel]");
   const parcelForm = document.querySelector("[data-parcel-form]");
   const parcelInput = document.querySelector("[data-parcel-input]");
+  const parcelProvince = document.querySelector("[data-parcel-province]");
+  const parcelCity = document.querySelector("[data-parcel-city]");
+  const parcelStatus = document.querySelector("[data-parcel-status]");
+  const parcelCandidateBox = document.createElement("div");
+  let parcelCandidateResults = [];
   let activePortalKey = "eum";
+  const portalViews = new Map();
+  const initialParams = new URLSearchParams(window.location.search);
+  let selectedLaw = readSelectedLaw(initialParams);
+  let eumWarmupTimer = 0;
+  const vworldParseResponseQueue = [];
+  let vworldOriginalParseResponse = null;
 
   if (!portalTabs.length || !portalPanel) {
     return;
   }
 
-  function getParcelAddress() {
-    return parcelInput ? parcelInput.value.trim() : readStoredValue(parcelStorageKey);
+  parcelCandidateBox.className = "parcel-search__choices";
+  parcelCandidateBox.hidden = true;
+  parcelCandidateBox.setAttribute("data-parcel-candidates", "");
+  parcelCandidateBox.setAttribute("aria-live", "polite");
+
+  if (parcelForm) {
+    parcelForm.appendChild(parcelCandidateBox);
   }
 
-  function saveParcelAddress() {
-    const address = getParcelAddress();
+  portalPanel.replaceChildren();
+
+  function getParcelAddress() {
+    return (parcelInput ? parcelInput.value : readStoredValue(parcelStorageKey)).trim();
+  }
+
+  function getParcelProvince() {
+    return (parcelProvince?.value || readStoredValue(parcelProvinceStorageKey) || "전북특별자치도").trim();
+  }
+
+  function getParcelCity() {
+    return (parcelCity?.value || readStoredValue(parcelCityStorageKey)).trim();
+  }
+
+  function saveParcelRegion() {
+    writeStoredValue(parcelProvinceStorageKey, getParcelProvince());
+    writeStoredValue(parcelCityStorageKey, getParcelCity());
+  }
+
+  function normalizeMountainLotAddress(rawAddress) {
+    return String(rawAddress || "")
+      .trim()
+      .replace(/\s+/g, " ")
+      .replace(/(\d+(?:-\d+)?)\s*번지(?=\s|$)/g, "$1")
+      .replace(/([가-힣]+(?:리|동|가|읍|면))\s*산\s*(\d+(?:-\d+)?)/g, "$1 산 $2")
+      .replace(/([가-힣]+(?:리|동|가))\s+(\d+(?:-\d+)?)/g, "$1 $2")
+      .replace(/(^|\s)산\s*(\d+(?:-\d+)?)/g, "$1산 $2")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function hasProvinceToken(address) {
+    return /(특별자치도|특별시|광역시|특별자치시|도)\s/.test(address) || /^(전북|전라북도|전북특별자치도)\b/.test(address);
+  }
+
+  function buildContextualParcelAddress(rawAddress = getParcelAddress()) {
+    const address = normalizeMountainLotAddress(rawAddress);
+    const province = getParcelProvince();
+    const city = getParcelCity();
+
+    if (!address) {
+      return "";
+    }
+
+    const parts = [];
+
+    if (province && !hasProvinceToken(address)) {
+      parts.push(province);
+    }
+
+    if (city && !address.includes(city) && !jeonbukCityNames.some((cityName) => address.includes(cityName))) {
+      parts.push(city);
+    }
+
+    parts.push(address);
+
+    return normalizeMountainLotAddress(parts.join(" "));
+  }
+
+  function hasTownToken(address) {
+    return /[가-힣]+(?:읍|면|동)\b/.test(String(address || ""));
+  }
+
+  function getDuplicateVillageSearches(address) {
+    const normalizedAddress = normalizeMountainLotAddress(address);
+    const city = getParcelCity() || Object.keys(duplicateParcelVillageCandidates).find((cityName) => normalizedAddress.includes(cityName));
+    const cityCandidates = duplicateParcelVillageCandidates[city];
+
+    if (!cityCandidates || !normalizedAddress || hasTownToken(normalizedAddress)) {
+      return [];
+    }
+
+    for (const [village, towns] of Object.entries(cityCandidates)) {
+      const villageIndex = normalizedAddress.indexOf(village);
+
+      if (villageIndex === -1) {
+        continue;
+      }
+
+      const suffix = normalizedAddress.slice(villageIndex + village.length).trim();
+
+      return towns.map((town) => ({
+        town,
+        village,
+        query: normalizeMountainLotAddress([getParcelProvince(), city, town, village, suffix].filter(Boolean).join(" ")),
+      }));
+    }
+
+    return [];
+  }
+
+  function resultContainsTownVillage(result, town, village) {
+    const text = [result?.title, result?.subtitle, result?.parcelAddress, result?.roadAddress, result?.rawTitle]
+      .filter(Boolean)
+      .join(" ");
+    return text.includes(town) && text.includes(village);
+  }
+
+  function saveParcelAddress(nextAddress = getParcelAddress(), options = {}) {
+    const address = options.preserveTyping ? String(nextAddress || "").replace(/\s+/g, " ") : String(nextAddress || "").trim().replace(/\s+/g, " ");
     const savedState = readStoredJson(parcelStateStorageKey);
+
+    if (parcelInput && options.updateInput !== false && parcelInput.value !== address) {
+      parcelInput.value = address;
+    }
 
     writeStoredValue(parcelStorageKey, address);
 
@@ -228,30 +673,80 @@ function initPortalTabs() {
     return portalData.map.url;
   }
 
-  function getEumUrl() {
+  function getPnuParts(pnu) {
+    const normalized = normalizePnu(pnu);
+
+    if (normalized.length !== 19) {
+      return null;
+    }
+
+    const mainNumber = Number(normalized.slice(11, 15));
+    const subNumber = Number(normalized.slice(15, 19));
+
+    return {
+      selSido: normalized.slice(0, 2),
+      selSgg: normalized.slice(2, 5),
+      selUmd: normalized.slice(5, 8),
+      selRi: normalized.slice(8, 10),
+      landGbn: normalized.slice(10, 11),
+      bobn: mainNumber ? normalized.slice(11, 15) : "",
+      bubn: subNumber ? String(subNumber) : "",
+      sggcd: normalized.slice(0, 5),
+    };
+  }
+
+  function getEumUrl(options = {}) {
     const state = getParcelState();
 
     if (state.pnu) {
       const url = new URL(portalData.eum.landUseUrl);
+      const pnuParts = getPnuParts(state.pnu);
+
+      url.searchParams.set("selSido", pnuParts?.selSido || "");
+      url.searchParams.set("selSgg", pnuParts?.selSgg || "");
+      url.searchParams.set("selUmd", pnuParts?.selUmd || "");
+      url.searchParams.set("selRi", pnuParts?.selRi || "");
       url.searchParams.set("pnu", state.pnu);
+      url.searchParams.set("bobn", pnuParts?.bobn || "");
+      url.searchParams.set("bubn", pnuParts?.bubn || "");
+      url.searchParams.set("landGbn", pnuParts?.landGbn || "");
+      url.searchParams.set("sggcd", pnuParts?.sggcd || "");
+      url.searchParams.set("chk", "0");
+      url.searchParams.set("scale", eumDefaultScale);
+      url.searchParams.set("scaleFlag", "");
       url.searchParams.set("isNoScr", "script");
       url.searchParams.set("mode", "search");
       url.searchParams.set("selGbn", "umd");
       url.searchParams.set("s_type", "1");
       url.searchParams.set("add", "land");
+
+      if (state.title || state.query || state.subtitle) {
+        url.searchParams.set("fullAddress", state.title || state.query || state.subtitle);
+      }
+
+      if (options.refresh) {
+        url.searchParams.set("_refresh", String(Date.now()));
+      }
+
       return url.toString();
     }
 
     return portalData.eum.url;
   }
 
-  function renderSharedParcel() {
+  function getEumWarmupUrl() {
+    const url = new URL(portalData.eum.url);
+    url.searchParams.set("_warmup", String(Date.now()));
+    return url.toString();
+  }
+
+  function renderSharedParcel(label = "토지이음 검색 주소") {
     const parcelAddress = escapeHtml(getParcelAddress());
     const displayText = parcelAddress || "아직 입력 전";
 
     return `
       <div class="portal-context">
-        <span>토지이음 검색 주소</span>
+        <span>${escapeHtml(label)}</span>
         <strong data-shared-parcel>${displayText}</strong>
       </div>
     `;
@@ -264,21 +759,500 @@ function initPortalTabs() {
     });
   }
 
-  function renderEmbeddedPortal(portal, options = {}) {
-    const iframeUrl = portal === portalData.map ? getMapUrl() : portal === portalData.eum ? getEumUrl() : portal.url;
+  function updateParcelStatus(message) {
+    if (parcelStatus) {
+      parcelStatus.textContent = message;
+    }
+  }
+
+  function readSelectedLaw(params) {
+    const lawUrl = params.get("lawUrl");
+
+    if (!lawUrl) {
+      return null;
+    }
+
+    try {
+      const parsedUrl = new URL(lawUrl, window.location.href);
+      const isLawCenter = parsedUrl.hostname === "law.go.kr" || parsedUrl.hostname.endsWith(".law.go.kr");
+
+      if (!isLawCenter || !/^https?:$/.test(parsedUrl.protocol)) {
+        return null;
+      }
+
+      return {
+        title: params.get("lawTitle") || "선택한 법령 조항",
+        url: parsedUrl.toString(),
+      };
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function getLawUrl() {
+    return selectedLaw?.url || portalData.law.url;
+  }
+
+  function renderLawContext() {
+    if (!selectedLaw) {
+      return "";
+    }
 
     return `
-      <div class="embedded-site">
-        ${options.showParcelContext ? renderSharedParcel() : ""}
+      <div class="portal-context portal-context--law">
+        <span>선택한 법령 조항</span>
+        <strong>${escapeHtml(selectedLaw.title)}</strong>
+      </div>
+    `;
+  }
+
+  function renderEumRecoveryTools() {
+    const state = getParcelState();
+
+    if (!state.pnu) {
+      return "";
+    }
+
+    return `
+      <div class="embedded-site__tools" aria-label="토지이음 도면 복구 도구">
+        <span>확인도면·범례는 토지이음 내부 이미지라 깨질 수 있습니다. 안정 도면 보기는 항공사진에서 확인하세요.</span>
+        <button type="button" data-eum-action="reload">
+          <i data-lucide="refresh-cw"></i>
+          도면 다시 불러오기
+        </button>
+        <button type="button" data-eum-action="reset">
+          <i data-lucide="rotate-ccw"></i>
+          토지이음 초기화 후 다시 열기
+        </button>
+        <button type="button" data-eum-action="stable-map">
+          <i data-lucide="satellite"></i>
+          안정 도면 보기
+        </button>
+      </div>
+    `;
+  }
+
+  async function fetchFarmlandJson(path, params = {}) {
+    const url = new URL(`/api/farmland/${path}`, window.location.href);
+    Object.entries(params).forEach(([key, value]) => url.searchParams.set(key, String(value)));
+    const response = await fetch(url, { signal: AbortSignal.timeout(15000) });
+    if (!(response.headers.get("content-type") || "").includes("json")) {
+      throw new Error(response.status === 404 ? "지도 조회 API가 배포되지 않았습니다. Vercel에 api 폴더와 vercel.json을 포함해 다시 배포해 주세요." : "지도 연동 서버에서 올바른 응답을 받지 못했습니다.");
+    }
+    const data = await response.json();
+    if (!response.ok || data.error) throw new Error(data.error || "필지정보 조회에 실패했습니다.");
+    return data;
+  }
+
+  function formatParcelArea(area) {
+    const raw = String(area ?? "").replace(/,/g, "").trim();
+    const squareMeters = raw ? Number(raw) : NaN;
+    if (!Number.isFinite(squareMeters) || squareMeters < 0) return "조회된 정보 없음";
+    return `${formatNumber(squareMeters, 2)} ㎡ (${formatNumber(squareMeters * 0.3025, 2)}평)`;
+  }
+
+  function setFarmlandInfoTab(key) {
+    const view = portalViews.get("farmland");
+    if (!view || !["parcel", "plan", "building"].includes(key)) return;
+    view.querySelectorAll("[data-farmland-info-tab]").forEach((button) => {
+      const active = button.dataset.farmlandInfoTab === key;
+      button.setAttribute("aria-selected", String(active));
+      button.tabIndex = active ? 0 : -1;
+    });
+    view.querySelectorAll("[data-farmland-info-panel]").forEach((panel) => {
+      panel.hidden = panel.dataset.farmlandInfoPanel !== key;
+    });
+  }
+
+  function renderParcelDetails() {
+    const { label, pnu, data, loading, error } = parcelDetailsState;
+    const value = (kind) => {
+      if (loading) return "조회 중…";
+      if (error) return "조회 실패";
+      if (!data) return "—";
+      const zones = data.zones.filter((zone) => zone.kind === kind);
+      return zones.length ? zones.map((zone) => `${zone.name}${zone.relation ? ` (${zone.relation})` : ""}`).join(", ") : "조회된 정보 없음";
+    };
+    const lotNumber = getLotNumberFromPnu(pnu) || "—";
+    const area = loading ? "조회 중…" : error ? "조회 실패" : data ? formatParcelArea(data.parcel.area) : "—";
+    document.querySelectorAll(".farmland-portal [data-parcel-zoning]").forEach((node) => {
+      node.innerHTML = `
+        <h3>선택 필지 용도지역·지구</h3>
+        <strong>${escapeHtml(label)}</strong>
+        ${pnu ? `<small>PNU ${escapeHtml(pnu)}</small>` : ""}
+        <dl><dt>지번</dt><dd>${escapeHtml(lotNumber)}</dd><dt>용도지역</dt><dd>${escapeHtml(value("region"))}</dd><dt>용도지구</dt><dd>${escapeHtml(value("district"))}</dd></dl>
+        ${error ? `<p role="alert">${escapeHtml(error)}</p>` : ""}
+        ${data ? '<small>자료: 농지공간포털</small>' : ""}
+      `;
+    });
+    const target = document.querySelector("[data-farmland-attributes]");
+    const plan = document.querySelector("[data-farmland-plan]");
+    const building = document.querySelector("[data-farmland-buildings]");
+    if (!target || !plan || !building) return;
+    if (!data) {
+      const message = `<p>${loading ? "필지 속성정보를 조회하는 중입니다." : error ? "속성정보를 불러오지 못했습니다. 필지를 다시 선택해 주세요." : "지도에서 필지를 클릭하면 속성정보가 표시됩니다."}</p>`;
+      [target, plan, building].forEach((node) => { node.innerHTML = message; });
+      return;
+    }
+    const rows = [["지목", data.parcel.category], ["면적", area], ["토지이동일", data.parcel.changeDate], ["변동사유", data.parcel.changeReason]];
+    const table = (items) => `<dl class="farmland-attributes">${items.map(([key, val]) => `<dt>${escapeHtml(key)}</dt><dd>${escapeHtml(val || "조회된 정보 없음")}</dd>`).join("")}</dl>`;
+    target.innerHTML = `<h3>필지 속성정보</h3>${table(rows)}`;
+    plan.innerHTML = `<h3>토지이용계획</h3>${data.zones.length ? `<ul>${data.zones.map((zone) => `<li>${escapeHtml(zone.name)}${zone.relation ? ` · ${escapeHtml(zone.relation)}` : ""}</li>`).join("")}</ul>` : "<p>조회된 정보 없음</p>"}
+      <h3>개별공시지가</h3>${data.prices.length ? table(data.prices.map((row) => [`${row.year}년`, row.price])) : "<p>조회된 정보 없음</p>"}`;
+    building.innerHTML = `<h3>건축물정보</h3>${data.buildings.length ? data.buildings.map((row) => table([["용도", row.use], ["구조", row.structure], ["건축면적", row.area], ["용적률 산정 연면적", row.totalArea], ["사용승인일", row.approvalDate]])).join("") : "<p>조회된 정보 없음</p>"}`;
+  }
+
+  async function selectParcelDetails(point) {
+    const requestId = ++parcelDetailsRequestId;
+    const pnu = normalizePnu(point?.pnu);
+    parcelDetailsState = { label: point?.title || "선택한 필지", pnu, loading: true, point };
+    renderParcelDetails();
+    try {
+      let selectedPnu = pnu, feature = point?.feature;
+      if (!selectedPnu) {
+        if (!Number.isFinite(point?.latitude) || !Number.isFinite(point?.longitude)) throw new Error("주소를 검색하거나 지도에서 필지를 선택해 주세요.");
+        const collection = await fetchFarmlandJson("parcel", { lat: point.latitude, lon: point.longitude });
+        if (requestId !== parcelDetailsRequestId) return;
+        feature = collection.features?.[0];
+        selectedPnu = normalizePnu(feature?.properties?.pnu);
+        if (!selectedPnu) throw new Error("선택 지점에서 필지를 찾지 못했습니다.");
+      }
+      const cached = parcelDetailsCache.get(selectedPnu);
+      const data = cached && Date.now() - cached.time < 60000 ? cached.data : await fetchFarmlandJson("info", { pnu: selectedPnu });
+      if (requestId !== parcelDetailsRequestId) return;
+      if (data.pnu !== selectedPnu || !Array.isArray(data.zones)) throw new Error("필지정보를 확인할 수 없습니다.");
+      if (parcelDetailsCache.size >= 50) parcelDetailsCache.delete(parcelDetailsCache.keys().next().value);
+      parcelDetailsCache.set(selectedPnu, { time: Date.now(), data });
+      const selectedPoint = { ...point, pnu: selectedPnu, feature, title: feature?.properties?.addr || data.address || point.title || `필지 ${selectedPnu}` };
+      parcelDetailsState = { label: selectedPoint.title, pnu: selectedPnu, data, point: selectedPoint };
+      if (activePortalKey === "farmland") highlightFarmlandParcel(selectedPoint);
+    } catch (error) {
+      if (requestId !== parcelDetailsRequestId) return;
+      parcelDetailsState = { label: point?.title || "선택한 필지", pnu, point, error: error.name === "TimeoutError" ? "조회 시간이 초과되었습니다. 다시 선택해 주세요." : error.message };
+    }
+    renderParcelDetails();
+  }
+
+  function renderAerialParcelDetails() {
+    const { pnu, data, loading, error } = aerialParcelDetailsState;
+    const value = (kind) => {
+      if (loading) return "조회 중…";
+      if (error || data?.errors?.[kind]) return "조회 실패";
+      if (!data) return "—";
+      if (kind === "area") return formatParcelArea(data.parcel.area);
+      const zones = data.zones.filter((zone) => zone.kind === kind);
+      return zones.length ? zones.map((zone) => `${zone.name}${zone.relation ? ` (${zone.relation})` : ""}`).join(", ") : "조회된 정보 없음";
+    };
+    const errors = [...new Set([error, ...Object.values(data?.errors || {})].filter(Boolean))];
+    document.querySelectorAll(".aerial-portal [data-parcel-zoning]").forEach((node) => {
+      node.innerHTML = `<dl><dt>지번</dt><dd>${escapeHtml(getLotNumberFromPnu(pnu) || "—")}</dd>
+        <dt>면적</dt><dd>${escapeHtml(value("area"))}</dd><dt>용도지역</dt><dd>${escapeHtml(value("region"))}</dd><dt>용도지구</dt><dd>${escapeHtml(value("district"))}</dd></dl>
+        ${errors.map((message) => `<p role="alert">${escapeHtml(message)}</p>`).join("")}
+        ${data ? `<small>자료: V-World${data.year ? ` · 토지특성 ${escapeHtml(data.year)}년` : ""}</small>` : ""}`;
+    });
+  }
+
+  async function selectAerialParcelDetails(point) {
+    const requestId = ++aerialParcelDetailsRequestId;
+    let pnu = normalizePnu(point?.pnu);
+    aerialParcelDetailsState = { label: point?.title || "선택한 필지", pnu, loading: true };
+    renderAerialParcelDetails();
+    try {
+      let feature = point?.feature;
+      if (!pnu) {
+        if (!Number.isFinite(point?.latitude) || !Number.isFinite(point?.longitude)) throw new Error("주소를 검색하거나 지도에서 필지를 선택해 주세요.");
+        const url = createVworldParcelDataUrl();
+        url.searchParams.set("geomFilter", `POINT(${point.longitude} ${point.latitude})`);
+        url.searchParams.set("size", "1");
+        feature = extractVworldFeatures(await requestVworldJson(url))[0];
+        pnu = normalizePnu(feature?.properties?.pnu);
+        if (!pnu) throw new Error("V-World에서 선택 지점의 필지를 찾지 못했습니다.");
+      }
+      if (requestId !== aerialParcelDetailsRequestId) return;
+      const cached = aerialParcelDetailsCache.get(pnu);
+      const data = cached && Date.now() - cached.time < 60000 ? cached.data : await fetchAerialParcelDetails(pnu);
+      if (requestId !== aerialParcelDetailsRequestId) return;
+      if (!Object.values(data.errors).some(Boolean)) {
+        if (aerialParcelDetailsCache.size >= 50) aerialParcelDetailsCache.delete(aerialParcelDetailsCache.keys().next().value);
+        aerialParcelDetailsCache.set(pnu, { time: Date.now(), data });
+      }
+      aerialParcelDetailsState = { label: feature?.properties?.addr || data.address || point?.title || `필지 ${pnu}`, pnu, data };
+    } catch (error) {
+      if (requestId !== aerialParcelDetailsRequestId) return;
+      aerialParcelDetailsState = { label: point?.title || "선택한 필지", pnu, error: error.name === "TimeoutError" ? "V-World 조회 시간이 초과되었습니다. 다시 선택해 주세요." : error.message };
+    }
+    renderAerialParcelDetails();
+  }
+
+  async function fetchAerialParcelDetails(pnu) {
+    // Same-origin proxy avoids browser CORS/JSONP restrictions while using V-World only.
+    const url = new URL("/api/vworld/parcel", window.location.href);
+    url.searchParams.set("pnu", pnu);
+    let response;
+    try { response = await fetch(url, { signal: AbortSignal.timeout(15000) }); } catch { /* Try the public API directly below. */ }
+    if (response && response.status !== 404 && (response.headers.get("content-type") || "").includes("json")) {
+      const data = await response.json();
+      if (!response.ok || data.error) throw new Error(data.error || "V-World 속성 조회에 실패했습니다.");
+      if (data.pnu !== pnu || !Array.isArray(data.zones)) throw new Error("V-World 필지 응답을 확인할 수 없습니다.");
+      return data;
+    }
+    return window.VworldParcel.load(pnu, { key: vworldApiKey, domain: vworldAttributeDomain, requestJson: requestVworldJson });
+  }
+
+  function highlightFarmlandParcel(point) {
+    if (!farmlandMap) return;
+    if (farmlandSelectionLayer) farmlandMap.removeLayer(farmlandSelectionLayer);
+    if (farmlandMarker) farmlandMap.removeLayer(farmlandMarker);
+    farmlandSelectionLayer = null;
+    farmlandMarker = null;
+    if (point.feature?.geometry) {
+      farmlandSelectionLayer = window.L.geoJSON(point.feature, { pane: "farmlandCadastral", interactive: false, style: { color: "#ffdf6b", weight: 3, fillOpacity: 0.18 } }).addTo(farmlandMap);
+    }
+    if (Number.isFinite(point.latitude) && Number.isFinite(point.longitude)) {
+      farmlandMarker = window.L.circleMarker([point.latitude, point.longitude], { radius: 6, color: "#fff", fillColor: "#b82424", fillOpacity: 1, interactive: false }).addTo(farmlandMap);
+      const lotNumber = getLotNumberFromPnu(point.pnu);
+      const selected = wgs84ToEpsg5186(point.latitude, point.longitude);
+      const center = farmlandFocusPoint && wgs84ToEpsg5186(farmlandFocusPoint.latitude, farmlandFocusPoint.longitude);
+      const withinRadius = !center || Math.hypot(selected.x - center.x, selected.y - center.y) <= farmlandParcelRadiusMeters;
+      if (lotNumber && withinRadius) farmlandMarker.bindTooltip(escapeHtml(lotNumber), {
+        permanent: true, direction: "top", offset: [0, -8], className: "farmland-selected-lot",
+      });
+    }
+  }
+
+  function syncFarmlandCadastralClip() {
+    if (!farmlandMap) return;
+    const pane = farmlandMap.getPane("farmlandCadastral");
+    if (!pane) return;
+    if (!farmlandFocusPoint) {
+      pane.style.clipPath = "circle(0px at 0px 0px)";
+      return;
+    }
+    const center = farmlandMap.latLngToLayerPoint([farmlandFocusPoint.latitude, farmlandFocusPoint.longitude]);
+    // EPSG:5186 uses metres, so the clip remains 100 m at every zoom level.
+    const radius = farmlandParcelRadiusMeters * farmlandMap.options.crs.scale(farmlandMap.getZoom());
+    pane.style.clipPath = `circle(${radius}px at ${center.x}px ${center.y}px)`;
+  }
+
+  function refreshFarmlandCadastral() {
+    if (!farmlandMap || !farmlandCadastralLayer) return;
+    syncFarmlandCadastralClip();
+    const enabled = portalViews.get("farmland")?.querySelector("[data-farmland-cadastral]")?.checked;
+    if (!farmlandFocusPoint || !enabled) {
+      farmlandMap.removeLayer(farmlandCadastralLayer);
+      return;
+    }
+    const center = wgs84ToEpsg5186(farmlandFocusPoint.latitude, farmlandFocusPoint.longitude);
+    const southwest = epsg5186ToWgs84(center.x - farmlandParcelRadiusMeters, center.y - farmlandParcelRadiusMeters);
+    const northeast = epsg5186ToWgs84(center.x + farmlandParcelRadiusMeters, center.y + farmlandParcelRadiusMeters);
+    farmlandCadastralLayer.options.bounds = window.L.latLngBounds(
+      [southwest.latitude, southwest.longitude], [northeast.latitude, northeast.longitude]
+    );
+    if (farmlandMap.hasLayer(farmlandCadastralLayer)) farmlandCadastralLayer.redraw();
+    else farmlandCadastralLayer.addTo(farmlandMap);
+  }
+
+  function focusFarmlandPoint(point, force = false) {
+    if (!farmlandMap || !Number.isFinite(point?.latitude) || !Number.isFinite(point?.longitude)) return;
+    const key = `${point.pnu || ""}:${point.latitude}:${point.longitude}`;
+    if (!force && farmlandLastPointKey === key) return;
+    farmlandLastPointKey = key;
+    farmlandFocusPoint = { ...point };
+    farmlandMap.setView([point.latitude, point.longitude], farmlandParcelDetailZoom, { animate: false });
+    refreshFarmlandCadastral();
+    highlightFarmlandParcel(point);
+    const status = portalViews.get("farmland")?.querySelector("[data-farmland-status]");
+    if (status) status.textContent = "검색 지번 주변 반경 100m의 연속지적도와 지번을 표시합니다.";
+    if (parcelDetailsState.pnu !== normalizePnu(point.pnu) || !parcelDetailsState.data) selectParcelDetails(point);
+  }
+
+  async function initFarmlandMap() {
+    if (farmlandMapPromise) return farmlandMapPromise;
+    if (farmlandMap) {
+      window.requestAnimationFrame(() => {
+        farmlandMap.invalidateSize({ pan: false });
+        focusFarmlandPoint(getParcelState());
+        syncFarmlandCadastralClip();
+      });
+      return;
+    }
+    const view = portalViews.get("farmland");
+    if (!view) return;
+    const status = view.querySelector("[data-farmland-status]");
+    const retry = view.querySelector("[data-farmland-retry]");
+    retry.hidden = true;
+    status.textContent = "농지공간포털 항공영상을 준비 중입니다.";
+    farmlandMapPromise = (async () => {
+      try {
+        if (!window.L) throw new Error("지도 라이브러리를 불러오지 못했습니다.");
+        const config = await fetchFarmlandJson("config");
+        const L = window.L;
+        // Match the portal's EPSG:5186 WMTS grid; Web Mercator tile numbers do not align.
+        const crs = L.extend({}, L.CRS.Earth, {
+          code: "EPSG:5186", infinite: true, wrapLng: undefined,
+          projection: {
+            project(latlng) { const point = wgs84ToEpsg5186(latlng.lat, latlng.lng); return L.point(point.x, point.y); },
+            unproject(point) { const result = epsg5186ToWgs84(point.x, point.y); return L.latLng(result.latitude, result.longitude); },
+          },
+          transformation: new L.Transformation(1, -config.origin[0], -1, config.origin[1]),
+          scale(zoom) { return 2 ** zoom / config.baseResolution; },
+          zoom(scale) { return Math.log2(scale * config.baseResolution); },
+        });
+        farmlandMap = L.map(view.querySelector("#farmland-map"), { crs, minZoom: 3, maxZoom: 14 }).setView([35.7315, 126.733], 8);
+        const PortalTiles = L.TileLayer.extend({
+          _isValidTile(coords) {
+            const limit = this.options.portalLimits[coords.z];
+            return Boolean(limit && coords.x >= limit.minX && coords.x <= limit.maxX && coords.y >= limit.minY && coords.y <= limit.maxY);
+          },
+        });
+        config.layers.forEach((layer) => {
+          const zooms = Object.keys(layer.limits).map(Number);
+          new PortalTiles(`/api/farmland/tile?layer=${encodeURIComponent(layer.id)}&z={z}&x={x}&y={y}`, {
+            portalLimits: layer.limits, minZoom: Math.min(...zooms), maxZoom: 14,
+            maxNativeZoom: Math.max(...zooms), noWrap: true, keepBuffer: 1,
+            attribution: `농림축산식품부 농지공간포털 · ${config.year} 항공영상`,
+          }).on("tileerror", () => { status.textContent = "일부 항공영상을 불러오지 못했습니다. 지도를 이동하거나 잠시 후 다시 열어 주세요."; }).addTo(farmlandMap);
+        });
+        const cadastralPane = farmlandMap.createPane("farmlandCadastral");
+        cadastralPane.classList.add("farmland-cadastral-pane");
+        cadastralPane.style.zIndex = "350";
+        farmlandCadastralLayer = L.tileLayer.wms("/api/farmland/wms", { layers: config.cadastralLayer, format: "image/png", transparent: true, version: "1.1.1", crs, minZoom: 9, maxZoom: 14, pane: "farmlandCadastral" });
+        farmlandCadastralLayer.on("tileerror", () => { status.textContent = "연속지적도를 불러오지 못했습니다. 항공영상의 필지를 클릭해 속성을 조회할 수 있습니다."; });
+        view.querySelector("[data-farmland-cadastral]").onchange = refreshFarmlandCadastral;
+        farmlandMap.on("move zoomend viewreset resize", syncFarmlandCadastralClip);
+        farmlandMap.on("zoomstart", () => { cadastralPane.style.visibility = "hidden"; });
+        farmlandMap.on("zoomend", () => { syncFarmlandCadastralClip(); cadastralPane.style.visibility = ""; });
+        farmlandMap.on("click", (event) => {
+          const point = { latitude: event.latlng.lat, longitude: event.latlng.lng, title: "선택한 필지" };
+          if (!farmlandFocusPoint) {
+            farmlandFocusPoint = point;
+            refreshFarmlandCadastral();
+          }
+          highlightFarmlandParcel(point);
+          selectParcelDetails(point);
+        });
+        view.querySelector("[data-farmland-source]").textContent = `농지공간포털 · ${config.year}년 항공영상`;
+        status.textContent = "지도에서 필지를 클릭하면 속성정보를 확인할 수 있습니다.";
+        const searchedPoint = getParcelState();
+        focusFarmlandPoint(Number.isFinite(searchedPoint.latitude) && Number.isFinite(searchedPoint.longitude) ? searchedPoint : parcelDetailsState.point, true);
+      } catch (error) {
+        if (farmlandMap) { farmlandMap.remove(); farmlandMap = null; }
+        status.textContent = error.name === "TimeoutError" ? "항공영상 연결 시간이 초과되었습니다." : error.message;
+        retry.hidden = false;
+      }
+    })().finally(() => { farmlandMapPromise = null; });
+    return farmlandMapPromise;
+  }
+
+  // Render the portal's public imagery and JSON attributes without embedding its page.
+  function renderFarmlandPortal() {
+    return `
+      <div class="farmland-portal">
+        <aside class="farmland-portal__sidebar">
+          <h2>농지공간정보</h2>
+          <p data-farmland-source>농지공간포털 항공영상</p>
+          <div class="farmland-portal__tools">
+            <button type="button" data-farmland-center>검색한 지번으로 이동</button>
+            <label><input type="checkbox" data-farmland-cadastral checked />연속지적도·지번 (반경 100m)</label>
+          </div>
+          <div class="farmland-info-tabs" role="tablist" aria-label="농지공간정보 상세 메뉴">
+            <button id="farmland-tab-parcel" type="button" role="tab" aria-selected="true" aria-controls="farmland-panel-parcel" data-farmland-info-tab="parcel">필지정보</button>
+            <button id="farmland-tab-plan" type="button" role="tab" aria-selected="false" aria-controls="farmland-panel-plan" tabindex="-1" data-farmland-info-tab="plan">토지이용계획</button>
+            <button id="farmland-tab-building" type="button" role="tab" aria-selected="false" aria-controls="farmland-panel-building" tabindex="-1" data-farmland-info-tab="building">건축물정보</button>
+          </div>
+          <section id="farmland-panel-parcel" role="tabpanel" aria-labelledby="farmland-tab-parcel" tabindex="0" data-farmland-info-panel="parcel">
+            <section class="parcel-zoning" data-parcel-zoning aria-live="polite"></section>
+            <section data-farmland-attributes aria-live="polite"></section>
+          </section>
+          <section id="farmland-panel-plan" role="tabpanel" aria-labelledby="farmland-tab-plan" tabindex="0" data-farmland-info-panel="plan" hidden>
+            <div data-farmland-plan aria-live="polite"></div>
+          </section>
+          <section id="farmland-panel-building" role="tabpanel" aria-labelledby="farmland-tab-building" tabindex="0" data-farmland-info-panel="building" hidden>
+            <div data-farmland-buildings aria-live="polite"></div>
+          </section>
+          <a href="${escapeHtml(portalData.farmland.url)}" target="_blank" rel="noopener noreferrer">농지공간포털 원문</a>
+        </aside>
+        <div class="farmland-portal__map-shell">
+          <div id="farmland-map" aria-label="농지공간포털 항공영상 지도"></div>
+          <p class="farmland-portal__status" data-farmland-status role="status">항공영상을 준비 중입니다.</p>
+          <button class="farmland-portal__retry" type="button" data-farmland-retry hidden>지도 다시 불러오기</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderVworldInfoPanel() {
+    return `
+      <aside class="vworld-info-panel" data-vworld-info-panel hidden>
+        <div class="vworld-info-panel__header">
+          <div class="vworld-info-tabs" role="tablist" aria-label="V-World 클릭 정보">
+            <button class="is-active" type="button" role="tab" aria-selected="true" data-vworld-info-tab="building">건축물정보</button>
+            <button type="button" role="tab" aria-selected="false" data-vworld-info-tab="poi">POI정보</button>
+          </div>
+          <button class="vworld-info-panel__close" type="button" data-vworld-info-close aria-label="정보 패널 닫기">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+        <div class="vworld-info-panel__body">
+          <section class="vworld-info-content is-active" data-vworld-info-content="building">
+            <p class="vworld-info-empty">항공사진에서 건물 또는 지점을 클릭하면 건축물정보를 조회합니다.</p>
+          </section>
+          <section class="vworld-info-content" data-vworld-info-content="poi" hidden>
+            <p class="vworld-info-empty">항공사진에서 지점을 클릭하면 주변 POI 정보를 조회합니다.</p>
+          </section>
+        </div>
+      </aside>
+    `;
+  }
+
+  function renderEmbeddedPortal(portal) {
+    const iframeUrl =
+      portal === portalData.map
+        ? getMapUrl()
+        : portal === portalData.eum
+          ? getEumUrl()
+          : portal === portalData.law
+            ? getLawUrl()
+            : portal.url;
+    const isEumPortal = portal === portalData.eum;
+    const isLawPortal = portal === portalData.law;
+    const isEumDetail = isEumPortal && Boolean(getParcelState().pnu);
+    const initialIframeUrl = isEumDetail ? "about:blank" : iframeUrl;
+
+    return `
+      <div class="embedded-site${isEumPortal ? " embedded-site--eum" : ""}${isLawPortal ? " embedded-site--law" : ""}">
+        ${isEumPortal ? renderEumRecoveryTools() : ""}
+        ${isLawPortal ? renderLawContext() : ""}
+        ${isEumPortal ? `<iframe class="embedded-site__warmup" title="토지이음 연결 준비" src="${escapeHtml(getEumWarmupUrl())}" aria-hidden="true" tabindex="-1"></iframe>` : ""}
         <iframe
           class="embedded-site__frame"
           title="${portal.frameTitle}"
-          src="${iframeUrl}"
-          loading="lazy"
-          referrerpolicy="no-referrer-when-downgrade"
+          src="${escapeHtml(initialIframeUrl)}"
+          data-current-src="${escapeHtml(initialIframeUrl)}"
+          loading="eager"
+          allow="geolocation; fullscreen"
+          referrerpolicy="strict-origin-when-cross-origin"
         ></iframe>
       </div>
     `;
+  }
+
+  function renderOptionList(options, selectedValue = "", placeholder = "") {
+    const normalizedSelected = String(selectedValue || "").trim();
+    const entries = placeholder ? [`<option value="">${escapeHtml(placeholder)}</option>`] : [];
+
+    entries.push(
+      ...options.map((option) => {
+        const value = typeof option === "string" ? option : option.value;
+        const label = typeof option === "string" ? option : option.label;
+        const code = typeof option === "string" ? "" : option.code || "";
+        const selected = value === normalizedSelected ? " selected" : "";
+        const codeAttribute = code ? ` data-admin-code="${escapeHtml(code)}"` : "";
+        return `<option value="${escapeHtml(value)}"${selected}${codeAttribute}>${escapeHtml(label)}</option>`;
+      })
+    );
+
+    return entries.join("");
   }
 
   function renderAerialPortal() {
@@ -304,7 +1278,7 @@ function initPortalTabs() {
             </button>
           </form>
           <div class="vworld-tools" aria-label="V-World 지도 기능">
-            <div class="vworld-tool-group">
+            <div class="vworld-tool-group vworld-tool-group--map">
               <strong>지도</strong>
               <div class="vworld-segment" role="group" aria-label="배경지도 선택">
                 <button type="button" class="is-active" data-vworld-layer="satellite">항공</button>
@@ -349,10 +1323,277 @@ function initPortalTabs() {
             <strong>${parcelAddress || "주소를 입력하세요"}</strong>
             <span>토지이음에서 마지막으로 저장한 주소 기준으로 항공사진 위치를 표시합니다.</span>
           </div>
+          ${renderVworldInfoPanel()}
           <p class="aerial-status" data-aerial-status>항공사진을 준비 중입니다.</p>
         </div>
       </div>
     `;
+  }
+
+  function renderAerialPortalConnected() {
+    const rawParcelAddress = getParcelAddress();
+    const parcelAddress = escapeHtml(rawParcelAddress);
+    const selectedCity = getParcelCity() || "부안군";
+    const townOptions = getLocalAerialTownOptions(selectedCity);
+    const initialTown = townOptions.find((town) => rawParcelAddress.includes(town)) || "";
+    const initialVillages = getLocalAerialVillageOptions(selectedCity, initialTown);
+    const initialVillage = initialVillages.find((village) => rawParcelAddress.includes(village)) || "";
+
+    return `
+      <div class="aerial-portal aerial-portal--connected">
+        <button class="aerial-panel-toggle" type="button" data-aerial-panel-toggle aria-expanded="true" aria-label="패널 접기" title="패널 접기">
+          <i data-lucide="chevron-left"></i>
+        </button>
+        <aside class="aerial-portal__panel" data-aerial-panel>
+          <form class="aerial-search" data-aerial-parcel-form>
+            <label>지번 검색</label>
+            <div class="aerial-search__parcel" data-aerial-parcel-fields>
+              <div class="aerial-search__region">
+              <select aria-label="시군 선택" data-aerial-city>
+                ${renderOptionList(jeonbukCityNames, selectedCity, "시군 선택")}
+              </select>
+              <select aria-label="읍면 선택" data-aerial-town>
+                ${renderOptionList(townOptions, initialTown, "읍면 선택")}
+              </select>
+              <select aria-label="리 선택" data-aerial-village>
+                ${renderOptionList(initialVillages, initialVillage, "리 선택")}
+              </select>
+              </div>
+              <div class="aerial-search__lot-row">
+              <input
+                type="search"
+                name="aerialLot"
+                data-aerial-lot
+                placeholder="번지"
+                autocomplete="off"
+                aria-label="번지 입력"
+              />
+              <button class="button button--primary" type="submit" data-aerial-submit="parcel">
+                <i data-lucide="search"></i>
+                검색
+              </button>
+              </div>
+            </div>
+            <label for="aerial-parcel-address">도로명·명칭 검색</label>
+            <div class="aerial-search__modes" role="radiogroup" aria-label="검색 방식">
+              <label>
+                <input type="radio" name="vworldSearchMode" value="address" checked />
+                <span>도로명</span>
+              </label>
+              <label>
+                <input type="radio" name="vworldSearchMode" value="place" />
+                <span>명칭</span>
+              </label>
+            </div>
+            <div class="aerial-search__row">
+              <input
+                id="aerial-parcel-address"
+                type="search"
+                name="aerialParcel"
+                data-aerial-parcel-input
+                value="${parcelAddress}"
+                placeholder="예: 매창로 76 또는 현대오일뱅크"
+                autocomplete="street-address"
+              />
+              <button class="button button--primary" type="submit" data-aerial-submit="text">
+                <i data-lucide="search"></i>
+                검색
+              </button>
+            </div>
+          </form>
+          <div class="aerial-results" data-aerial-results></div>
+          <div class="vworld-tools" aria-label="항공사진 지도 도구">
+            <div class="vworld-tool-group vworld-tool-group--map">
+              <strong>지도</strong>
+              <div class="vworld-segment" role="group" aria-label="배경지도 선택">
+                <button type="button" class="is-active" data-vworld-layer="satellite">항공</button>
+                <button type="button" data-vworld-layer="base">일반</button>
+                <button type="button" data-vworld-layer="hybrid">라벨</button>
+              </div>
+            </div>
+            ${renderVworldUrbanPlanningTools()}
+            <div class="vworld-tool-group vworld-tool-group--inline vworld-tool-group--measure">
+              <strong>측정</strong>
+              <button type="button" data-vworld-action="distance">
+                <i data-lucide="ruler"></i>
+                거리
+              </button>
+              <button type="button" data-vworld-action="area">
+                <i data-lucide="pentagon"></i>
+                면적
+              </button>
+              <button type="button" data-vworld-action="clear">
+                <i data-lucide="eraser"></i>
+                초기화
+              </button>
+            </div>
+            <output class="vworld-measure" data-vworld-measure>거리 또는 면적을 선택한 뒤 도면을 클릭하세요.</output>
+            <div class="vworld-tool-group vworld-tool-group--inline vworld-tool-group--view">
+              <strong>보기</strong>
+              <button type="button" data-vworld-action="center">
+                <i data-lucide="crosshair"></i>
+                검색위치
+              </button>
+              <button type="button" data-vworld-action="toggle-marker">
+                <i data-lucide="map-pin"></i>
+                마커
+              </button>
+              <button type="button" class="is-active" data-vworld-action="toggle-cadastral" aria-pressed="true">
+                <i data-lucide="map"></i>
+                편집지적도
+              </button>
+            </div>
+          </div>
+        </aside>
+        <div class="vworld-map-shell">
+          <div class="vworld-map" id="vworld-map" aria-label="V-World 항공사진과 연속지적도"></div>
+          <div class="vworld-map__empty" data-vworld-empty>
+            <i data-lucide="satellite"></i>
+            <strong>지도를 준비 중입니다.</strong>
+            <span>주소 또는 명칭을 검색해 주세요.</span>
+          </div>
+          ${renderVworldInfoPanel()}
+          <p class="aerial-status" data-aerial-status>항공사진과 연속지적도를 준비 중입니다.</p>
+        </div>
+      </div>
+    `;
+  }
+
+  function getEmbeddedPortalUrl(portal) {
+    if (portal === portalData.map) {
+      return getMapUrl();
+    }
+
+    if (portal === portalData.eum) {
+      return getEumUrl();
+    }
+
+    if (portal === portalData.law) {
+      return getLawUrl();
+    }
+
+    return portal.url;
+  }
+
+  function getEumIframe() {
+    return portalViews.get("eum")?.querySelector(".embedded-site__frame") || null;
+  }
+
+  function scheduleEumDetailLoad(view, detailUrl, options = {}) {
+    const iframe = view?.querySelector(".embedded-site__frame");
+    const warmupFrame = view?.querySelector(".embedded-site__warmup");
+
+    if (!iframe || !detailUrl || !getParcelState().pnu) {
+      return;
+    }
+
+    window.clearTimeout(eumWarmupTimer);
+
+    let navigated = false;
+    const navigateToDetail = () => {
+      if (navigated || !iframe.isConnected) {
+        return;
+      }
+
+      navigated = true;
+      iframe.src = detailUrl;
+      iframe.dataset.currentSrc = detailUrl;
+    };
+
+    if (warmupFrame) {
+      warmupFrame.addEventListener(
+        "load",
+        () => {
+          window.setTimeout(navigateToDetail, options.afterWarmupDelay ?? 250);
+        },
+        { once: true }
+      );
+      warmupFrame.src = getEumWarmupUrl();
+    }
+
+    eumWarmupTimer = window.setTimeout(navigateToDetail, options.delay ?? 1100);
+  }
+
+  function refreshEumIframe(options = {}) {
+    const iframe = getEumIframe();
+    const state = getParcelState();
+
+    if (!iframe || !state.pnu) {
+      updateParcelStatus("먼저 주소를 검색한 뒤 토지이음 도면을 다시 불러올 수 있습니다.");
+      return;
+    }
+
+    const detailUrl = getEumUrl({ refresh: true });
+    const view = portalViews.get("eum");
+
+    if (options.resetSession) {
+      updateParcelStatus("토지이음 기본 화면을 다시 연결한 뒤 확인도면을 재요청합니다.");
+      scheduleEumDetailLoad(view, detailUrl, { delay: 1300, afterWarmupDelay: 420 });
+      return;
+    }
+
+    scheduleEumDetailLoad(view, detailUrl, { delay: 900, afterWarmupDelay: 250 });
+    updateParcelStatus("토지이음 확인도면과 범례를 다시 요청했습니다.");
+  }
+
+  function ensurePortalView(portalKey) {
+    const portal = portalData[portalKey];
+    let view = portalViews.get(portalKey);
+
+    if (!view) {
+      view = document.createElement("div");
+      view.className = "portal-view";
+      view.dataset.portalView = portalKey;
+      view.hidden = true;
+      view.innerHTML =
+        portal.type === "aerial"
+          ? renderAerialPortalConnected()
+          : portal.type === "farmland"
+            ? renderFarmlandPortal()
+            : renderEmbeddedPortal(portal);
+      portalPanel.append(view);
+      portalViews.set(portalKey, view);
+
+      if (portal === portalData.eum && getParcelState().pnu) {
+        scheduleEumDetailLoad(view, getEumUrl(), { delay: 1100, afterWarmupDelay: 250 });
+      }
+
+      return { view, isNew: true };
+    }
+
+    if (portal.type !== "farmland" && portal.type !== "aerial") {
+      if (portal === portalData.eum) {
+        const wrapper = view.querySelector(".embedded-site");
+        const tools = view.querySelector(".embedded-site__tools");
+        const nextTools = renderEumRecoveryTools();
+
+        if (tools) {
+          tools.remove();
+        }
+
+        if (wrapper && nextTools) {
+          wrapper.insertAdjacentHTML("afterbegin", nextTools);
+        }
+      }
+
+      const iframe = view.querySelector(".embedded-site__frame");
+      const nextUrl = getEmbeddedPortalUrl(portal);
+
+      if (portal === portalData.eum && getParcelState().pnu) {
+        if (iframe && iframe.dataset.currentSrc !== nextUrl) {
+          scheduleEumDetailLoad(view, nextUrl, { delay: 1100, afterWarmupDelay: 250 });
+        }
+
+        return { view, isNew: false };
+      }
+
+      if (iframe && iframe.dataset.currentSrc !== nextUrl) {
+        iframe.src = nextUrl;
+        iframe.dataset.currentSrc = nextUrl;
+      }
+    }
+
+    return { view, isNew: false };
   }
 
   function requestVworldJsonp(url) {
@@ -360,29 +1601,92 @@ function initPortalTabs() {
       const callbackName = `vworldCallback_${Date.now()}_${Math.random().toString(36).slice(2)}`;
       const script = document.createElement("script");
       const jsonpUrl = new URL(url.toString());
+      const expectsParseResponse =
+        jsonpUrl.searchParams.get("output") === "text/javascript" || /\/req\/wfs/i.test(jsonpUrl.pathname);
+      let finished = false;
+      let timeoutId = 0;
 
       jsonpUrl.searchParams.set("callback", callbackName);
 
-      window[callbackName] = (data) => {
-        script.remove();
-        delete window[callbackName];
-        resolve(data);
+      const ensureParseResponseHandler = () => {
+        if (window.__landInfoVworldParseResponseHandler) {
+          return;
+        }
+
+        vworldOriginalParseResponse = window.parseResponse;
+        window.__landInfoVworldParseResponseHandler = true;
+        window.parseResponse = (data) => {
+          const handler = vworldParseResponseQueue.shift();
+
+          if (handler) {
+            handler(data);
+            return;
+          }
+
+          if (typeof vworldOriginalParseResponse === "function") {
+            vworldOriginalParseResponse(data);
+          }
+        };
       };
 
-      script.onerror = () => {
+      const removeParseResponseHandler = (handler) => {
+        const handlerIndex = vworldParseResponseQueue.indexOf(handler);
+
+        if (handlerIndex >= 0) {
+          vworldParseResponseQueue.splice(handlerIndex, 1);
+        }
+      };
+
+      const cleanup = () => {
+        window.clearTimeout(timeoutId);
         script.remove();
         delete window[callbackName];
-        reject(new Error("V-World address search failed"));
+      };
+
+      const complete = (data) => {
+        if (finished) {
+          return;
+        }
+
+        finished = true;
+        removeParseResponseHandler(complete);
+        resolve(data);
+        window.setTimeout(cleanup, 0);
+      };
+
+      window[callbackName] = complete;
+
+      if (expectsParseResponse) {
+        ensureParseResponseHandler();
+        vworldParseResponseQueue.push(complete);
+      }
+
+      script.onerror = () => {
+        if (finished) {
+          return;
+        }
+
+        finished = true;
+        removeParseResponseHandler(complete);
+        cleanup();
+        reject(new Error("V-World API에 연결하지 못했습니다. 잠시 후 다시 선택해 주세요."));
       };
 
       script.src = jsonpUrl.toString();
+      timeoutId = window.setTimeout(() => {
+        if (finished) return;
+        finished = true;
+        removeParseResponseHandler(complete);
+        cleanup();
+        reject(new Error("V-World 조회 시간이 초과되었습니다. 다시 선택해 주세요."));
+      }, 12000);
       document.head.appendChild(script);
     });
   }
 
   async function requestVworldJson(url) {
     try {
-      const response = await fetch(url.toString());
+      const response = await fetch(url.toString(), { signal: AbortSignal.timeout(8000) });
 
       if (response.ok) {
         return await response.json();
@@ -426,16 +1730,924 @@ function initPortalTabs() {
       const pnu = String(item?.id || "").match(/^\d{19}$/) ? String(item.id) : "";
 
       if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
+        const roadAddress = item?.address?.road || "";
+        const parcelAddress = item?.address?.parcel || "";
+
+        const title = parcelAddress || item.title || roadAddress || query;
+
         return {
           latitude,
           longitude,
           pnu,
-          title: item.title || item.address?.parcel || item.address?.road || query,
+          title,
+          subtitle: [roadAddress, parcelAddress, item?.category].filter(Boolean).join(" · "),
+          roadAddress,
+          parcelAddress,
+          rawTitle: item.title || "",
         };
       }
     }
 
     return null;
+  }
+
+  function toVworldSearchResult(item, searchType, fallbackQuery) {
+    const longitude = Number(item?.point?.x);
+    const latitude = Number(item?.point?.y);
+
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+      return null;
+    }
+
+    const pnu = String(item?.id || "").match(/^\d{19}$/) ? String(item.id) : "";
+    const roadAddress = item?.address?.road || "";
+    const parcelAddress = item?.address?.parcel || "";
+    const title =
+      searchType === "address"
+        ? parcelAddress || item?.title || roadAddress || fallbackQuery
+        : item?.title || parcelAddress || roadAddress || fallbackQuery;
+    const subtitle = [roadAddress, parcelAddress, item?.category].filter(Boolean).join(" · ");
+
+    return {
+      latitude,
+      longitude,
+      pnu,
+      title,
+      subtitle,
+      roadAddress,
+      parcelAddress,
+      rawTitle: item?.title || "",
+      searchType,
+    };
+  }
+
+  function getPreferredParcelAddress(result, fallbackQuery = "") {
+    return result?.parcelAddress || result?.title || result?.roadAddress || fallbackQuery;
+  }
+
+  function setSharedParcelAddress(address) {
+    const nextAddress = String(address || "").trim();
+
+    if (!nextAddress) {
+      return;
+    }
+
+    if (parcelInput && parcelInput.value !== nextAddress) {
+      parcelInput.value = nextAddress;
+    }
+
+    const aerialInput = document.querySelector("[data-aerial-parcel-input]");
+
+    if (aerialInput && aerialInput.value !== nextAddress) {
+      aerialInput.value = nextAddress;
+    }
+
+    writeStoredValue(parcelStorageKey, nextAddress);
+    syncSharedParcelText();
+  }
+
+  async function reverseGeocodeParcelAddress(latitude, longitude) {
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+      return "";
+    }
+
+    const url = new URL("https://api.vworld.kr/req/address");
+    url.searchParams.set("service", "address");
+    url.searchParams.set("request", "getAddress");
+    url.searchParams.set("version", "2.0");
+    url.searchParams.set("crs", "EPSG:4326");
+    url.searchParams.set("point", `${longitude},${latitude}`);
+    url.searchParams.set("type", "PARCEL");
+    url.searchParams.set("format", "json");
+    url.searchParams.set("errorformat", "json");
+    url.searchParams.set("key", vworldApiKey);
+
+    try {
+      const data = await requestVworldJson(url);
+      const result = data?.response?.result;
+      const items = Array.isArray(result) ? result : result ? [result] : [];
+      const parcelItem = items.find((item) => item?.text || item?.address?.parcel);
+
+      return parcelItem?.text || parcelItem?.address?.parcel || "";
+    } catch (error) {
+      return "";
+    }
+  }
+
+  async function ensureResultParcelAddress(result, fallbackQuery = "") {
+    if (!result) {
+      return String(fallbackQuery || "").trim();
+    }
+
+    let parcelAddress = String(result.parcelAddress || "").trim();
+
+    if (!parcelAddress) {
+      parcelAddress = await reverseGeocodeParcelAddress(Number(result.latitude), Number(result.longitude));
+    }
+
+    if (parcelAddress) {
+      result.parcelAddress = parcelAddress;
+      result.title = parcelAddress;
+      result.subtitle = [result.roadAddress, parcelAddress, result.searchType].filter(Boolean).join(" · ");
+      return parcelAddress;
+    }
+
+    return getPreferredParcelAddress(result, fallbackQuery);
+  }
+
+  async function createParcelStateFromResult(result, address) {
+    const resolvedAddress = await ensureResultParcelAddress(result, address);
+
+    return {
+      query: resolvedAddress || address,
+      originalQuery: resolvedAddress && resolvedAddress !== address ? address : "",
+      ...result,
+      title: resolvedAddress || result.title,
+    };
+  }
+
+  function clearParcelCandidateChoices() {
+    parcelCandidateResults = [];
+    parcelCandidateBox.hidden = true;
+    parcelCandidateBox.innerHTML = "";
+  }
+
+  function renderParcelCandidateChoices(results, originalAddress) {
+    parcelCandidateResults = Array.isArray(results) ? results : [];
+
+    if (!parcelCandidateResults.length) {
+      clearParcelCandidateChoices();
+      return;
+    }
+
+    parcelCandidateBox.hidden = false;
+    parcelCandidateBox.innerHTML = `
+      <strong>${escapeHtml(originalAddress)} 검색 후보를 선택해 주세요.</strong>
+      <div class="parcel-search__choice-list">
+        ${parcelCandidateResults
+          .map((result, index) => {
+            const title = result.parcelAddress || result.title || result.searchQuery || originalAddress;
+            const meta = [result.disambiguationTown, result.roadAddress, result.pnu ? `PNU ${result.pnu}` : ""].filter(Boolean).join(" · ");
+
+            return `
+              <button type="button" data-parcel-candidate="${index}">
+                <span>${escapeHtml(title)}</span>
+                ${meta ? `<small>${escapeHtml(meta)}</small>` : ""}
+              </button>
+            `;
+          })
+          .join("")}
+      </div>
+    `;
+  }
+
+  async function searchDuplicateParcelCandidates(address) {
+    const searches = getDuplicateVillageSearches(address);
+
+    if (!searches.length) {
+      return [];
+    }
+
+    const results = [];
+    const seen = new Set();
+
+    for (const search of searches) {
+      const matches = await searchVworldIntegrated(search.query, "address");
+      const filteredMatches = matches.filter((result) => resultContainsTownVillage(result, search.town, search.village));
+      const townMatches = filteredMatches.slice(0, 3);
+
+      for (const result of townMatches) {
+        const key = result.pnu || `${result.title}:${result.latitude.toFixed(7)}:${result.longitude.toFixed(7)}`;
+
+        if (seen.has(key)) {
+          continue;
+        }
+
+        seen.add(key);
+        results.push({
+          ...result,
+          disambiguationTown: search.town,
+          disambiguationVillage: search.village,
+          searchQuery: search.query,
+        });
+      }
+    }
+
+    return results;
+  }
+
+  async function searchVworldIntegrated(query, searchMode) {
+    const requests =
+      searchMode === "place"
+        ? [{ type: "place" }]
+        : [
+            { type: "address", category: "parcel" },
+            { type: "address", category: "road" },
+          ];
+    const results = [];
+    const seen = new Set();
+
+    for (const request of requests) {
+      const url = new URL("https://api.vworld.kr/req/search");
+      url.searchParams.set("service", "search");
+      url.searchParams.set("request", "search");
+      url.searchParams.set("version", "2.0");
+      url.searchParams.set("crs", "EPSG:4326");
+      url.searchParams.set("size", "10");
+      url.searchParams.set("page", "1");
+      url.searchParams.set("type", request.type);
+      url.searchParams.set("format", "json");
+      url.searchParams.set("errorformat", "json");
+      url.searchParams.set("key", vworldApiKey);
+      url.searchParams.set("query", query);
+
+      if (request.category) {
+        url.searchParams.set("category", request.category);
+      }
+
+      let data;
+
+      try {
+        data = await requestVworldJson(url);
+      } catch (error) {
+        continue;
+      }
+
+      const items = data?.response?.result?.items || [];
+
+      for (const item of items) {
+        const result = toVworldSearchResult(item, request.type, query);
+
+        if (!result) {
+          continue;
+        }
+
+        const key = result.pnu || `${result.title}:${result.latitude.toFixed(7)}:${result.longitude.toFixed(7)}`;
+
+        if (seen.has(key)) {
+          continue;
+        }
+
+        seen.add(key);
+        results.push(result);
+      }
+    }
+
+    return results;
+  }
+
+  function formatVworldCoordinate(latitude, longitude) {
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+      return "";
+    }
+
+    return `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
+  }
+
+  function createVworldDataFeatureUrl(dataId, latitude, longitude, radiusMeters, size = 20) {
+    const bbox = getRadiusBbox(latitude, longitude, radiusMeters);
+    const url = new URL("https://api.vworld.kr/req/data");
+
+    url.searchParams.set("service", "data");
+    url.searchParams.set("request", "GetFeature");
+    url.searchParams.set("version", "2.0");
+    url.searchParams.set("data", dataId);
+    url.searchParams.set("format", "json");
+    url.searchParams.set("errorformat", "json");
+    url.searchParams.set("crs", "EPSG:4326");
+    url.searchParams.set("geomFilter", `BOX(${bbox.join(",")})`);
+    url.searchParams.set("size", String(size));
+    url.searchParams.set("page", "1");
+    url.searchParams.set("key", vworldApiKey);
+    url.searchParams.set("domain", window.location.origin);
+
+    return url;
+  }
+
+  function createVworldGenericWfsUrl(layerName, latitude, longitude, radiusMeters, size = 20) {
+    const bbox = getRadiusBbox(latitude, longitude, radiusMeters);
+    const url = new URL("https://api.vworld.kr/req/wfs");
+
+    url.searchParams.set("service", "WFS");
+    url.searchParams.set("request", "GetFeature");
+    url.searchParams.set("version", "1.1.0");
+    url.searchParams.set("typename", layerName);
+    url.searchParams.set("srsname", "EPSG:4326");
+    url.searchParams.set("bbox", bbox.join(","));
+    url.searchParams.set("maxfeatures", String(size));
+    url.searchParams.set("output", "text/javascript");
+    url.searchParams.set("key", vworldApiKey);
+    url.searchParams.set("domain", window.location.origin);
+
+    return url;
+  }
+
+  async function searchVworldFeaturesByLayers(dataIds, wfsLayerNames, latitude, longitude, radiusMeters, size = 20) {
+    const errors = [];
+
+    for (const dataId of dataIds) {
+      try {
+        const data = await requestVworldJson(createVworldDataFeatureUrl(dataId, latitude, longitude, radiusMeters, size));
+        const features = extractVworldFeatures(data);
+
+        if (features.length) {
+          return features;
+        }
+      } catch (error) {
+        errors.push(error);
+      }
+    }
+
+    for (const layerName of wfsLayerNames) {
+      try {
+        const data = await requestVworldJson(createVworldGenericWfsUrl(layerName, latitude, longitude, radiusMeters, size));
+        const features = extractVworldFeatures(data);
+
+        if (features.length) {
+          return features;
+        }
+      } catch (error) {
+        errors.push(error);
+      }
+    }
+
+    if (errors.length) {
+      throw errors[0];
+    }
+
+    return [];
+  }
+
+  function sortFeaturesByClickPoint(features = [], point) {
+    return [...features].sort((first, second) => {
+      const firstContains = isPointInParcelFeature(point, first) ? 0 : 1;
+      const secondContains = isPointInParcelFeature(point, second) ? 0 : 1;
+
+      if (firstContains !== secondContains) {
+        return firstContains - secondContains;
+      }
+
+      const firstPoint = getFeatureLabelPoint(first);
+      const secondPoint = getFeatureLabelPoint(second);
+
+      return getPointDistanceMeters(point, firstPoint) - getPointDistanceMeters(point, secondPoint);
+    });
+  }
+
+  async function searchVworldBuildingInfo(latitude, longitude) {
+    const point = { latitude, longitude };
+    let features = [];
+
+    try {
+      features = await searchVworldFeaturesByLayers(
+        vworldBuildingDataIds,
+        vworldBuildingWfsDataIds,
+        latitude,
+        longitude,
+        vworldBuildingQueryRadiusMeters,
+        12
+      );
+    } catch (error) {
+      return [];
+    }
+
+    return sortFeaturesByClickPoint(features, point).slice(0, 3);
+  }
+
+  async function searchVworldBuildingInfoForParcel(parcelContext, latitude, longitude) {
+    if (!parcelContext?.feature) {
+      return searchVworldBuildingInfo(latitude, longitude);
+    }
+
+    const queryPoint = parcelContext.queryPoint || parcelContext.clickPoint || { latitude, longitude };
+    let features = [];
+
+    try {
+      features = await searchVworldFeaturesByLayers(
+        vworldBuildingDataIds,
+        vworldBuildingWfsDataIds,
+        queryPoint.latitude,
+        queryPoint.longitude,
+        Math.max(vworldBuildingQueryRadiusMeters, 80),
+        24
+      );
+    } catch (error) {
+      return [];
+    }
+    const parcelPnu = normalizePnu(parcelContext.pnu);
+    const parcelFeature = parcelContext.feature;
+    const filteredFeatures = features.filter((feature) => {
+      const featurePnu = getFeaturePnu(feature);
+      const featurePoint = getFeatureLabelPoint(feature);
+
+      if (parcelPnu && featurePnu && featurePnu === parcelPnu) {
+        return true;
+      }
+
+      return Boolean(featurePoint && isPointInParcelFeature(featurePoint, parcelFeature));
+    });
+
+    return sortFeaturesByClickPoint(filteredFeatures, parcelContext.clickPoint || queryPoint).slice(0, 3);
+  }
+
+  function getPoiSearchQueries(pointAddress = "") {
+    const addressText = String(pointAddress || getParcelAddress() || getParcelState().title || "").trim();
+    const addressTokens = addressText
+      .split(/\s+/)
+      .filter((token) => /[가-힣]/.test(token) && !/\d/.test(token))
+      .filter((token) => token.length >= 2)
+      .slice(-3);
+    const categoryTokens = ["식당", "카페", "편의점", "마트", "학교", "병원", "은행", "주유소", "자동차", "마을회관", "경로당"];
+
+    return [...new Set([...addressTokens, ...categoryTokens])].slice(0, 14);
+  }
+
+  async function searchVworldNearbyPois(latitude, longitude, pointAddress = "") {
+    const bbox = getRadiusBbox(latitude, longitude, vworldPoiQueryRadiusMeters);
+    const queries = getPoiSearchQueries(pointAddress);
+    const seen = new Set();
+    const results = [];
+
+    for (const query of queries) {
+      const url = new URL("https://api.vworld.kr/req/search");
+
+      url.searchParams.set("service", "search");
+      url.searchParams.set("request", "search");
+      url.searchParams.set("version", "2.0");
+      url.searchParams.set("crs", "EPSG:4326");
+      url.searchParams.set("bbox", bbox.join(","));
+      url.searchParams.set("size", "20");
+      url.searchParams.set("page", "1");
+      url.searchParams.set("type", "place");
+      url.searchParams.set("format", "json");
+      url.searchParams.set("errorformat", "json");
+      url.searchParams.set("key", vworldApiKey);
+      url.searchParams.set("query", query);
+
+      let data;
+
+      try {
+        data = await requestVworldJson(url);
+      } catch (error) {
+        continue;
+      }
+
+      const items = data?.response?.result?.items || [];
+
+      for (const item of items) {
+        const result = toVworldSearchResult(item, "place", query);
+
+        if (!result) {
+          continue;
+        }
+
+        const distance = getPointDistanceMeters({ latitude, longitude }, result);
+
+        if (distance > vworldPoiQueryRadiusMeters) {
+          continue;
+        }
+
+        const key = `${result.title}:${result.latitude.toFixed(6)}:${result.longitude.toFixed(6)}`;
+
+        if (seen.has(key)) {
+          continue;
+        }
+
+        seen.add(key);
+        results.push({
+          ...result,
+          distance,
+          keyword: query,
+        });
+      }
+    }
+
+    return results.sort((first, second) => first.distance - second.distance).slice(0, 8);
+  }
+
+  function pickVworldProperty(properties = {}, names = []) {
+    return getFeatureProperty(properties, names);
+  }
+
+  function formatVworldInfoValue(label, value) {
+    const text = String(value ?? "").trim();
+
+    if (!text || text === "-") {
+      return text || "-";
+    }
+
+    if (/층수$/.test(label) && /^\d+$/.test(text)) {
+      return `${Number(text)}층`;
+    }
+
+    if (/면적$|연면적|대지면적/.test(label) && /^\d+(?:\.\d+)?$/.test(text)) {
+      return `${Number(text).toLocaleString("ko-KR")}㎡`;
+    }
+
+    if (/높이$/.test(label) && /^\d+(?:\.\d+)?$/.test(text)) {
+      return `${Number(text).toLocaleString("ko-KR")}m`;
+    }
+
+    if (/용적률|건폐율/.test(label) && /^\d+(?:\.\d+)?$/.test(text)) {
+      return `${Number(text).toLocaleString("ko-KR")}%`;
+    }
+
+    if (/일자$/.test(label) && /^\d{8}$/.test(text)) {
+      return `${text.slice(0, 4)}-${text.slice(4, 6)}-${text.slice(6, 8)}`;
+    }
+
+    return text;
+  }
+
+  function getBuildingDisplayValue(properties = {}, keys = [], label = "") {
+    const foundKey = keys.find((key) => properties[key] !== undefined && properties[key] !== null && properties[key] !== "");
+    const value = foundKey ? properties[foundKey] : "";
+
+    if (value === undefined || value === null || String(value).trim() === "") {
+      return "-";
+    }
+
+    return formatVworldInfoValue(label, value);
+  }
+
+  function getBuildingAddressItems(feature, pointAddress = "") {
+    const properties = feature?.properties || {};
+    const roadAddress = getBuildingDisplayValue(properties, [
+      "road_addr",
+      "rn_addr",
+      "roadAddr",
+      "road_address",
+      "rds_man_no",
+      "rn",
+      "road_nm",
+      "rd_nm",
+      "newPlatPlc",
+      "NEW_PLAT_PLC",
+    ]);
+    const parcelAddress =
+      pointAddress ||
+      getBuildingDisplayValue(properties, [
+        "jibun_addr",
+        "jibun",
+        "lot_no",
+        "addr",
+        "platPlc",
+        "PLAT_PLC",
+        "pnu",
+      ]);
+
+    return [
+      roadAddress && roadAddress !== "-" ? ["도로명", roadAddress] : null,
+      parcelAddress && parcelAddress !== "-" ? ["지번", parcelAddress] : null,
+    ].filter(Boolean);
+  }
+
+  function getBuildingInfoRows(feature) {
+    const properties = feature?.properties || {};
+
+    return [
+      ["건물명칭", getBuildingDisplayValue(properties, ["buld_nm", "bld_nm", "bd_nm", "pos_bul_nm", "building_nm", "name", "bldNm", "BLD_NM"], "건물명칭")],
+      ["건물용도", getBuildingDisplayValue(properties, ["main_purps_cd_nm", "mainPurpsCdNm", "use_nm", "bdtyp_cd_nm", "buld_use", "용도"], "건물용도")],
+      ["건물동명칭", getBuildingDisplayValue(properties, ["buld_nm_dc", "dong_nm", "bld_dong_nm", "dongNm", "동명칭"], "건물동명칭")],
+      ["구조", getBuildingDisplayValue(properties, ["strct_cd_nm", "strctCdNm", "strct_nm", "structure", "구조"], "구조")],
+      ["지상층수", getBuildingDisplayValue(properties, ["gro_flo_co", "grnd_flr_cnt", "grndFlrCnt", "ground_flr", "지상층수"], "지상층수")],
+      ["지하층수", getBuildingDisplayValue(properties, ["und_flo_co", "ugrnd_flr_cnt", "ugrndFlrCnt", "underground_flr", "지하층수"], "지하층수")],
+      ["건물면적", getBuildingDisplayValue(properties, ["archarea", "arch_area", "archArea", "bd_ar", "building_area", "건물면적"], "건물면적")],
+      ["건물높이", getBuildingDisplayValue(properties, ["heit", "hgt", "height", "건물높이"], "건물높이")],
+      ["용적률", getBuildingDisplayValue(properties, ["vl_rat", "vlRat", "vlrat", "far", "용적률"], "용적률")],
+      ["건폐율", getBuildingDisplayValue(properties, ["bc_rat", "bcRat", "bcrat", "bld_coverage", "건폐율"], "건폐율")],
+      ["연면적", getBuildingDisplayValue(properties, ["totarea", "tot_ar", "totArea", "gfa", "연면적"], "연면적")],
+      ["대지면적", getBuildingDisplayValue(properties, ["plot_ar", "plat_area", "platArea", "platarea", "site_area", "대지면적"], "대지면적")],
+      ["사용승인일자", getBuildingDisplayValue(properties, ["use_apr_day", "useAprDay", "use_confm_de", "apprv_de", "사용승인일자"], "사용승인일자")],
+    ];
+  }
+
+  function renderVworldInfoTable(rows = []) {
+    if (!rows.length) {
+      return `<p class="vworld-info-empty">표시할 속성 정보가 없습니다.</p>`;
+    }
+
+    const rowPairs = [
+      [rows[0], rows[1]],
+      [rows[2], rows[3]],
+      [rows[4], rows[5]],
+      [rows[6], rows[7]],
+      [rows[8], rows[9]],
+      [rows[10], null],
+      [rows[11], null],
+      [rows[12], null],
+    ];
+
+    return `
+      <table class="vworld-info-table vworld-info-table--building">
+        <tbody>
+          ${rowPairs
+            .map(
+              ([first, second]) => `
+                <tr>
+                  <th>${escapeHtml(first?.[0] || "")}</th>
+                  <td${second ? "" : ' colspan="3"'}>${escapeHtml(first?.[1] || "-")}</td>
+                  ${
+                    second
+                      ? `
+                        <th>${escapeHtml(second[0])}</th>
+                        <td>${escapeHtml(second[1] || "-")}</td>
+                      `
+                      : ""
+                  }
+                </tr>
+              `
+            )
+            .join("")}
+        </tbody>
+      </table>
+    `;
+  }
+
+  function renderBuildingAddressList(items = []) {
+    if (!items.length) {
+      return "";
+    }
+
+    return `
+      <div class="vworld-building-addresses">
+        ${items
+          .map(
+            ([label, value]) => `
+              <div class="vworld-building-address">
+                <span>${escapeHtml(label)}</span>
+                <strong>${escapeHtml(value)}</strong>
+              </div>
+            `
+          )
+          .join("")}
+      </div>
+    `;
+  }
+
+  function renderBuildingInfo(features = [], pointAddress = "", latitude, longitude) {
+    if (!features.length) {
+      const fallbackAddresses = pointAddress ? [["지번", pointAddress]] : [];
+
+      return `
+        ${renderBuildingAddressList(fallbackAddresses)}
+        <p class="vworld-info-empty">해당 필지에서 등재된 건축물정보를 찾지 못했습니다.</p>
+        <small class="vworld-info-note">좌표: ${escapeHtml(formatVworldCoordinate(latitude, longitude))}</small>
+      `;
+    }
+
+    return features
+      .map((feature, index) => {
+        const addressItems = getBuildingAddressItems(feature, pointAddress);
+        const rows = getBuildingInfoRows(feature);
+
+        return `
+          <article class="vworld-info-card">
+            <h4>${index === 0 ? "건축물정보" : `건축물정보 ${index + 1}`}</h4>
+            ${renderBuildingAddressList(addressItems)}
+            ${renderVworldInfoTable(rows)}
+            <p class="vworld-info-note vworld-info-note--building">
+              건축물 대장 조회 시 일부 건축물은 여러건이 조회될 수 있습니다. 일부 건축물 대장 조회가 안될 경우, 건축물 상담(속성) 공지사항을 확인하시기 바랍니다.
+            </p>
+          </article>
+        `;
+      })
+      .join("");
+  }
+
+  function renderPoiInfo(pois = [], latitude, longitude) {
+    if (!pois.length) {
+      return `
+        <p class="vworld-info-empty">클릭한 지점 반경 ${vworldPoiQueryRadiusMeters}m 안에서 POI 정보를 찾지 못했습니다.</p>
+        <small class="vworld-info-note">좌표: ${escapeHtml(formatVworldCoordinate(latitude, longitude))}</small>
+      `;
+    }
+
+    return `
+      <ul class="vworld-poi-list">
+        ${pois
+          .map(
+            (poi) => `
+              <li>
+                <strong>${escapeHtml(poi.title)}</strong>
+                <span>${escapeHtml([poi.subtitle, `${Math.round(poi.distance)}m`, poi.keyword].filter(Boolean).join(" · "))}</span>
+              </li>
+            `
+          )
+          .join("")}
+      </ul>
+    `;
+  }
+
+  function getVworldPoiKind(poi = {}) {
+    const text = [poi.title, poi.subtitle, poi.keyword, poi.rawTitle].filter(Boolean).join(" ");
+
+    if (/주유|오일|현대오일|GS칼텍스|에쓰오일|S-OIL|SK에너지|LPG|충전소/i.test(text)) {
+      return "fuel";
+    }
+
+    if (/자동차|정비|수리|카센터|카젠|오토큐|블루핸즈|타이어|세차/i.test(text)) {
+      return "repair";
+    }
+
+    if (/식당|음식|한식|분식|중식|일식|치킨|피자|고기|갈비|국밥|식육/i.test(text)) {
+      return "food";
+    }
+
+    if (/카페|커피|다방|제과|빵|베이커리/i.test(text)) {
+      return "cafe";
+    }
+
+    if (/은행|농협|신협|새마을|우체국|금고/i.test(text)) {
+      return "bank";
+    }
+
+    if (/편의점|마트|슈퍼|상회|매장|판매|상가/i.test(text)) {
+      return "shop";
+    }
+
+    if (/병원|의원|약국|보건|치과|한의원/i.test(text)) {
+      return "medical";
+    }
+
+    if (/학교|관공서|주민센터|읍사무소|면사무소|마을회관|경로당|공공/i.test(text)) {
+      return "public";
+    }
+
+    if (/숙박|모텔|호텔|펜션|여관/i.test(text)) {
+      return "lodging";
+    }
+
+    return "place";
+  }
+
+  function getVworldPoiIcon(kind) {
+    return (
+      {
+        fuel: "fuel",
+        repair: "wrench",
+        food: "utensils",
+        cafe: "coffee",
+        bank: "landmark",
+        shop: "shopping-bag",
+        medical: "cross",
+        public: "building-2",
+        lodging: "bed",
+        place: "map-pin",
+      }[kind] || "map-pin"
+    );
+  }
+
+  function getVworldPoiMarkerHtml(poi) {
+    const kind = getVworldPoiKind(poi);
+    const icon = getVworldPoiIcon(kind);
+
+    return `<span class="vworld-poi-marker__bubble vworld-poi-marker__bubble--${kind}"><i data-lucide="${icon}"></i></span>`;
+  }
+
+  function clearVworldPoiMarkers() {
+    vworldPoiMarkerRequestId += 1;
+
+    if (vworldPoiLayer && vworldMap) {
+      vworldMap.removeLayer(vworldPoiLayer);
+    }
+
+    vworldPoiLayer = null;
+  }
+
+  async function loadVworldPoiMarkerInfo(poi) {
+    const latitude = Number(poi?.latitude);
+    const longitude = Number(poi?.longitude);
+
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+      return;
+    }
+
+    const requestId = ++vworldInfoRequestId;
+    const loadingHtml = `
+      <p class="vworld-info-empty">마커 위치의 POI정보와 건축물정보를 조회하는 중입니다.</p>
+      <small class="vworld-info-note">좌표: ${escapeHtml(formatVworldCoordinate(latitude, longitude))}</small>
+    `;
+
+    showVworldInfoPanel();
+    setVworldInfoTab("poi");
+    setVworldInfoContent("poi", renderPoiInfo([poi], latitude, longitude));
+    setVworldInfoContent("building", loadingHtml);
+    syncVworldInfoMarker({ lat: latitude, lng: longitude });
+    updateAerialStatus(`${poi.title || "선택한 마커"} 기준으로 POI정보와 건축물정보를 조회하는 중입니다.`);
+
+    const parcelContext = await getClickedParcelContext(latitude, longitude);
+    const queryPoint = parcelContext.queryPoint || { latitude, longitude };
+    let pointAddress = parcelContext.address || poi.parcelAddress || poi.subtitle || "";
+
+    if (!pointAddress) {
+      try {
+        pointAddress = await reverseGeocodeParcelAddress(latitude, longitude);
+      } catch (error) {
+        pointAddress = "";
+      }
+    }
+
+    if (requestId !== vworldInfoRequestId) {
+      return;
+    }
+
+    const buildingFeatures = await searchVworldBuildingInfoForParcel(parcelContext, queryPoint.latitude, queryPoint.longitude);
+
+    if (requestId !== vworldInfoRequestId) {
+      return;
+    }
+
+    setVworldInfoContent("poi", renderPoiInfo([poi], latitude, longitude));
+    setVworldInfoContent("building", renderBuildingInfo(buildingFeatures, pointAddress, queryPoint.latitude, queryPoint.longitude));
+    updateAerialStatus(
+      buildingFeatures.length
+        ? `${poi.title || "선택한 마커"} POI정보와 해당 필지 건축물정보 ${buildingFeatures.length}건을 표시했습니다.`
+        : `${poi.title || "선택한 마커"} POI정보를 표시했습니다. 해당 필지의 건축물정보는 찾지 못했습니다.`
+    );
+    refreshIcons();
+  }
+
+  function renderVworldPoiMarkers(pois = []) {
+    if (!vworldMap || !window.L) {
+      return 0;
+    }
+
+    clearVworldPoiMarkers();
+
+    const markers = pois
+      .map((poi) => {
+        if (!Number.isFinite(poi.latitude) || !Number.isFinite(poi.longitude)) {
+          return null;
+        }
+
+        const marker = window.L.marker([poi.latitude, poi.longitude], {
+          title: poi.title || "POI",
+          keyboard: false,
+          zIndexOffset: 760,
+          icon: window.L.divIcon({
+            className: "vworld-poi-marker",
+            html: getVworldPoiMarkerHtml(poi),
+            iconSize: [34, 34],
+            iconAnchor: [17, 17],
+          }),
+        });
+
+        marker.on("click", (event) => {
+          if (event?.originalEvent && window.L?.DomEvent) {
+            window.L.DomEvent.stopPropagation(event.originalEvent);
+          }
+
+          loadVworldPoiMarkerInfo(poi);
+        });
+
+        return marker;
+      })
+      .filter(Boolean);
+
+    if (!markers.length) {
+      return 0;
+    }
+
+    vworldPoiLayer = window.L.layerGroup(markers).addTo(vworldMap);
+    refreshIcons();
+    return markers.length;
+  }
+
+  async function loadVworldPoiLogoMarkers(point) {
+    if (!vworldMap || !window.L || !point) {
+      return;
+    }
+
+    const latitude = Number(point.latitude);
+    const longitude = Number(point.longitude);
+
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+      return;
+    }
+
+    const requestId = ++vworldPoiMarkerRequestId;
+
+    try {
+      const pois = await searchVworldNearbyPois(latitude, longitude, point.title || point.query || "");
+
+      if (requestId !== vworldPoiMarkerRequestId) {
+        return;
+      }
+
+      renderVworldPoiMarkers(pois);
+    } catch (error) {
+      if (requestId === vworldPoiMarkerRequestId) {
+        clearVworldPoiMarkers();
+      }
+    }
+  }
+
+  function renderVworldInfoError(title, latitude, longitude) {
+    return `
+      <p class="vworld-info-empty">${escapeHtml(title)} 조회 권한 또는 네트워크 상태를 확인해 주세요.</p>
+      <small class="vworld-info-note">좌표: ${escapeHtml(formatVworldCoordinate(latitude, longitude))}</small>
+    `;
   }
 
   function getRadiusBbox(latitude, longitude, radiusMeters) {
@@ -616,7 +2828,7 @@ function initPortalTabs() {
     const shapeType = view.getInt32(32, true);
 
     if (fileCode !== 9994 || (shapeType !== 5 && shapeType !== 15)) {
-      throw new Error("Unsupported cadastral shapefile");
+      throw new Error("Unsupported cadastral geometry file");
     }
 
     const records = [];
@@ -652,95 +2864,8 @@ function initPortalTabs() {
     return { view, records };
   }
 
-  function parseLocalCadastralIndex(arrayBuffer) {
-    const view = new DataView(arrayBuffer);
-    const decoder = new TextDecoder("ascii");
-    const magic = decoder.decode(new Uint8Array(arrayBuffer, 0, 4));
-
-    if (magic !== "CDX1") {
-      throw new Error("Unsupported cadastral index");
-    }
-
-    const count = view.getUint32(4, true);
-    const records = [];
-    let offset = 16;
-
-    for (let index = 0; index < count; index += 1) {
-      if (offset + 40 > view.byteLength) {
-        break;
-      }
-
-      records.push({
-        contentOffset: view.getUint32(offset, true),
-        contentLengthBytes: view.getUint32(offset + 4, true),
-        bbox: {
-          minX: view.getFloat64(offset + 8, true),
-          minY: view.getFloat64(offset + 16, true),
-          maxX: view.getFloat64(offset + 24, true),
-          maxY: view.getFloat64(offset + 32, true),
-        },
-      });
-      offset += 40;
-    }
-
-    return { records };
-  }
-
   async function getLocalCadastralDataset() {
-    if (!localCadastralDatasetPromise) {
-      localCadastralDatasetPromise = (async () => {
-        try {
-          const indexResponse = await fetch(localCadastralIndexPath);
-
-          if (indexResponse.ok) {
-            return parseLocalCadastralIndex(await indexResponse.arrayBuffer());
-          }
-        } catch (error) {
-          // Fall back to reading the SHP below.
-        }
-
-        const response = await fetch(localCadastralShpPath);
-
-        if (!response.ok) {
-          throw new Error("Local cadastral shapefile fetch failed");
-        }
-
-        return parseLocalCadastralShp(await response.arrayBuffer());
-      })();
-    }
-
-    return localCadastralDatasetPromise;
-  }
-
-  async function fetchLocalCadastralRecord(record) {
-    const rangeEnd = record.contentOffset + record.contentLengthBytes - 1;
-    const response = await fetch(localCadastralShpPath, {
-      headers: {
-        Range: `bytes=${record.contentOffset}-${rangeEnd}`,
-      },
-    });
-
-    if (!response.ok && response.status !== 206) {
-      throw new Error("Local cadastral record fetch failed");
-    }
-
-    const buffer = await response.arrayBuffer();
-
-    if (response.status === 206 || buffer.byteLength === record.contentLengthBytes) {
-      return {
-        view: new DataView(buffer),
-        record: {
-          ...record,
-          contentOffset: 0,
-          contentLengthBytes: buffer.byteLength,
-        },
-      };
-    }
-
-    return {
-      view: new DataView(buffer),
-      record,
-    };
+    return { view: null, records: [] };
   }
 
   function parseLocalCadastralFeature(view, record, center, radiusMeters) {
@@ -813,57 +2938,95 @@ function initPortalTabs() {
     };
   }
 
-  async function searchLocalCadastralFeatures(point, radiusMeters = localCadastralRadiusMeters) {
-    const dataset = await getLocalCadastralDataset();
-    const center = wgs84ToEpsg5186(point.latitude, point.longitude);
-    const extent = {
-      minX: center.x - radiusMeters,
-      minY: center.y - radiusMeters,
-      maxX: center.x + radiusMeters,
-      maxY: center.y + radiusMeters,
-    };
-    const features = [];
-    const candidates = dataset.records.filter((record) => bboxIntersects(record.bbox, extent));
-
-    for (const record of candidates) {
-      const recordSource = dataset.view ? { view: dataset.view, record } : await fetchLocalCadastralRecord(record);
-      const feature = parseLocalCadastralFeature(recordSource.view, recordSource.record, center, radiusMeters);
-
-      if (feature) {
-        features.push(feature);
-      }
-
-      if (features.length >= maxLocalCadastralFeatures) {
-        break;
-      }
-    }
-
-    return features;
+  async function searchLocalCadastralFeatures() {
+    return [];
   }
 
-  function createVworldParcelWfsUrl() {
-    const url = new URL("https://api.vworld.kr/req/wfs");
+  function createVworldParcelDataUrl() {
+    const url = new URL("https://api.vworld.kr/req/data");
 
-    url.searchParams.set("key", vworldApiKey);
-    url.searchParams.set("SERVICE", "WFS");
-    url.searchParams.set("version", "1.1.0");
+    url.searchParams.set("service", "data");
     url.searchParams.set("request", "GetFeature");
-    url.searchParams.set("TYPENAME", "lt_c_landinfobasemap");
-    url.searchParams.set("OUTPUT", "text/javascript");
-    url.searchParams.set("SRSNAME", "EPSG:4326");
+    url.searchParams.set("version", "2.0");
+    url.searchParams.set("data", vworldParcelDataId);
+    url.searchParams.set("format", "json");
+    url.searchParams.set("errorformat", "json");
+    url.searchParams.set("crs", "EPSG:4326");
+    url.searchParams.set("key", vworldApiKey);
+    url.searchParams.set("domain", window.location.origin);
 
     return url;
   }
 
-  async function searchVworldParcels(latitude, longitude, radiusMeters = 50) {
+  function createVworldParcelWfsUrl(layerName, latitude, longitude, radiusMeters) {
     const bbox = getRadiusBbox(latitude, longitude, radiusMeters);
-    const url = createVworldParcelWfsUrl();
+    const url = new URL("https://api.vworld.kr/req/wfs");
 
-    url.searchParams.set("BBOX", bbox.join(","));
-    url.searchParams.set("MAXFEATURES", "120");
+    url.searchParams.set("service", "WFS");
+    url.searchParams.set("request", "GetFeature");
+    url.searchParams.set("version", "1.1.0");
+    url.searchParams.set("typename", layerName);
+    url.searchParams.set("srsname", "EPSG:4326");
+    url.searchParams.set("bbox", bbox.join(","));
+    url.searchParams.set("maxfeatures", "200");
+    url.searchParams.set("output", "text/javascript");
+    url.searchParams.set("key", vworldApiKey);
+    url.searchParams.set("domain", window.location.origin);
 
-    const data = await requestVworldJson(url);
-    return data?.features || [];
+    return url;
+  }
+
+  function extractVworldFeatures(data) {
+    if (data?.response?.status === "ERROR") {
+      throw new Error(data.response?.error?.text || "V-World data API error");
+    }
+
+    return data?.response?.result?.featureCollection?.features || data?.response?.result?.features || data?.features || [];
+  }
+
+  async function searchVworldParcels(latitude, longitude, radiusMeters = vworldParcelRadiusMeters) {
+    const bbox = getRadiusBbox(latitude, longitude, radiusMeters);
+    const url = createVworldParcelDataUrl();
+
+    url.searchParams.set("geomFilter", `BOX(${bbox.join(",")})`);
+    url.searchParams.set("size", "300");
+    url.searchParams.set("page", "1");
+
+    try {
+      const data = await requestVworldJson(url);
+      return extractVworldFeatures(data);
+    } catch (dataApiError) {
+      const wfsFeatures = await searchVworldParcelWfsFeatures(latitude, longitude, radiusMeters);
+
+      if (wfsFeatures.length) {
+        return wfsFeatures;
+      }
+
+      throw dataApiError;
+    }
+  }
+
+  async function searchVworldParcelWfsFeatures(latitude, longitude, radiusMeters = vworldParcelRadiusMeters) {
+    const errors = [];
+
+    for (const layerName of vworldParcelWfsDataIds) {
+      try {
+        const data = await requestVworldJson(createVworldParcelWfsUrl(layerName, latitude, longitude, radiusMeters));
+        const features = extractVworldFeatures(data);
+
+        if (features.length) {
+          return features;
+        }
+      } catch (error) {
+        errors.push(error);
+      }
+    }
+
+    if (errors.length) {
+      throw errors[0];
+    }
+
+    return [];
   }
 
   async function searchVworldParcelByPnu(pnu) {
@@ -873,21 +3036,45 @@ function initPortalTabs() {
       return [];
     }
 
-    const url = createVworldParcelWfsUrl();
+    const url = createVworldParcelDataUrl();
 
-    url.searchParams.set("CQL_FILTER", `pnu='${selectedPnu}'`);
-    url.searchParams.set("MAXFEATURES", "20");
+    url.searchParams.set("attrFilter", `pnu:=:${selectedPnu}`);
+    url.searchParams.set("size", "20");
+    url.searchParams.set("page", "1");
 
     const data = await requestVworldJson(url);
-    return data?.features || [];
+    return extractVworldFeatures(data);
   }
 
   async function resolveParcelAddress() {
-    const address = getParcelAddress();
+    const rawAddress = getParcelAddress();
+    const address = buildContextualParcelAddress(rawAddress);
 
     if (!address) {
       writeStoredJson(parcelStateStorageKey, { query: "" });
       return null;
+    }
+
+    if (address !== rawAddress) {
+      saveParcelAddress(address);
+    }
+
+    const duplicateCandidates = await searchDuplicateParcelCandidates(address);
+
+    if (duplicateCandidates.length > 1) {
+      writeStoredJson(parcelStateStorageKey, { query: address, ambiguous: true });
+      return {
+        query: address,
+        ambiguous: true,
+        candidates: duplicateCandidates,
+      };
+    }
+
+    if (duplicateCandidates.length === 1) {
+      const nextState = await createParcelStateFromResult(duplicateCandidates[0], address);
+      writeStoredJson(parcelStateStorageKey, nextState);
+      setSharedParcelAddress(nextState.query);
+      return nextState;
     }
 
     const state = getParcelState();
@@ -903,39 +3090,610 @@ function initPortalTabs() {
       return null;
     }
 
-    const nextState = {
-      query: address,
-      ...point,
-    };
+    const nextState = await createParcelStateFromResult(point, address);
 
     writeStoredJson(parcelStateStorageKey, nextState);
+    setSharedParcelAddress(nextState.query);
     return nextState;
+  }
+
+  function renderAerialResults(results, message = "") {
+    const resultsNode = document.querySelector("[data-aerial-results]");
+
+    if (!resultsNode) {
+      return;
+    }
+
+    if (!results.length) {
+      resultsNode.innerHTML = `<p>${escapeHtml(message || "검색 결과가 없습니다.")}</p>`;
+      return;
+    }
+
+    resultsNode.innerHTML = `
+      <strong>검색 결과</strong>
+      <ul>
+        ${results
+          .map(
+            (result, index) => `
+              <li>
+                <button type="button" data-vworld-result="${index}">
+                  <span>${escapeHtml(result.title)}</span>
+                  ${result.subtitle ? `<small>${escapeHtml(result.subtitle)}</small>` : ""}
+                </button>
+              </li>
+            `
+          )
+          .join("")}
+      </ul>
+    `;
+  }
+
+  function moveVworldToResult(result) {
+    if (!vworldMap || !window.L || !result) {
+      return;
+    }
+
+    const title = result.title || result.query || "선택 위치";
+    vworldCurrentPoint = { ...result, title };
+    vworldMarkerVisible = true;
+    vworldMap.setView([result.latitude, result.longitude], result.pnu ? vworldParcelDetailZoom : 18);
+    syncVworldMarker();
+    clearVworldParcels();
+    clearVworldPoiMarkers();
+    syncVworldLotNumberLabel(vworldCurrentPoint);
+    setVworldCadastralLayer();
+
+    if (vworldMarker) {
+      vworldMarker.openPopup();
+    }
+
+    updateAerialStatus(`${title} 위치로 이동했습니다. 반경 ${vworldParcelRadiusMeters}m 이내 지번과 지목을 불러오는 중입니다.`);
+    loadNearbyParcelNumberLabels(vworldCurrentPoint);
+    loadVworldPoiLogoMarkers(vworldCurrentPoint);
+    selectAerialParcelDetails(vworldCurrentPoint);
+  }
+
+  function bindAerialSearchFormConnected() {
+    const aerialForm = document.querySelector("[data-aerial-parcel-form]");
+    const aerialInput = document.querySelector("[data-aerial-parcel-input]");
+    const aerialCitySelect = document.querySelector("[data-aerial-city]");
+    const aerialTownSelect = document.querySelector("[data-aerial-town]");
+    const aerialVillageSelect = document.querySelector("[data-aerial-village]");
+    const aerialLotInput = document.querySelector("[data-aerial-lot]");
+    const resultsNode = document.querySelector("[data-aerial-results]");
+    const parcelSubmitButton = aerialForm?.querySelector('[data-aerial-submit="parcel"]');
+    const textSubmitButton = aerialForm?.querySelector('[data-aerial-submit="text"]');
+
+    if (!aerialForm || !resultsNode) {
+      return;
+    }
+
+    function requestAerialSubmit(button) {
+      if (!button || button.disabled) {
+        return;
+      }
+
+      if (typeof aerialForm.requestSubmit === "function") {
+        aerialForm.requestSubmit(button);
+        return;
+      }
+
+      button.click();
+    }
+
+    function bindEnterSearch(input, button) {
+      if (!input || !button) {
+        return;
+      }
+
+      input.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter" || event.isComposing) {
+          return;
+        }
+
+        event.preventDefault();
+        requestAerialSubmit(button);
+      });
+    }
+
+    bindEnterSearch(aerialLotInput, parcelSubmitButton);
+    bindEnterSearch(aerialInput, textSubmitButton);
+
+    function fillAerialSelect(select, options, placeholder, selectedValue = "") {
+      if (!select) {
+        return;
+      }
+
+      const selected = String(selectedValue || "").trim();
+      const normalizedOptions = options
+        .map((option) => ({
+          value: String(typeof option === "string" ? option : option.value || "").trim(),
+          label: String(typeof option === "string" ? option : option.label || option.value || "").trim(),
+          code: String(typeof option === "string" ? "" : option.code || "").trim(),
+        }))
+        .filter((option) => option.value);
+
+      select.replaceChildren();
+
+      if (placeholder) {
+        select.append(new Option(placeholder, ""));
+      }
+
+      normalizedOptions.forEach((option) => {
+        const optionElement = new Option(option.label, option.value);
+        optionElement.selected = option.value === selected;
+        if (option.code) {
+          optionElement.dataset.adminCode = option.code;
+        }
+        select.append(optionElement);
+      });
+
+      select.disabled = normalizedOptions.length === 0;
+    }
+
+    function toAdminOption(name, code = "") {
+      const value = String(name || "").trim();
+
+      if (!value) {
+        return null;
+      }
+
+      return {
+        value,
+        label: value,
+        code: String(code || "").trim(),
+      };
+    }
+
+    function uniqueAdminOptions(options) {
+      const seen = new Set();
+      const result = [];
+
+      options.forEach((option) => {
+        const normalized = typeof option === "string" ? toAdminOption(option) : toAdminOption(option.value || option.label, option.code);
+
+        if (!normalized || seen.has(normalized.value)) {
+          return;
+        }
+
+        seen.add(normalized.value);
+        result.push(normalized);
+      });
+
+      return result;
+    }
+
+    function readVworldAdminProperties(feature) {
+      return feature?.properties || feature?.attributes || feature?.attribute || feature || {};
+    }
+
+    function readVworldAdminValue(properties, keys) {
+      const entries = Object.entries(properties || {});
+
+      for (const key of keys) {
+        if (properties?.[key] != null) {
+          return String(properties[key]).trim();
+        }
+
+        const match = entries.find(([entryKey]) => entryKey.toLowerCase() === key.toLowerCase());
+
+        if (match?.[1] != null) {
+          return String(match[1]).trim();
+        }
+      }
+
+      return "";
+    }
+
+    function cleanAdminName(rawName, suffixPattern) {
+      const text = String(rawName || "").trim().replace(/\s+/g, " ");
+
+      if (!text) {
+        return "";
+      }
+
+      const parts = text.split(" ");
+      const lastPart = parts[parts.length - 1];
+
+      if (suffixPattern.test(lastPart)) {
+        return lastPart;
+      }
+
+      const match = text.match(suffixPattern);
+      return match ? match[0] : lastPart || text;
+    }
+
+    function createVworldAdminDataUrl(dataId, attrFilter) {
+      const url = new URL("https://api.vworld.kr/req/data");
+
+      url.searchParams.set("service", "data");
+      url.searchParams.set("request", "GetFeature");
+      url.searchParams.set("version", "2.0");
+      url.searchParams.set("data", dataId);
+      url.searchParams.set("format", "json");
+      url.searchParams.set("errorformat", "json");
+      url.searchParams.set("geometry", "false");
+      url.searchParams.set("size", "1000");
+      url.searchParams.set("page", "1");
+      url.searchParams.set("key", vworldApiKey);
+      url.searchParams.set("domain", window.location.origin);
+
+      if (attrFilter) {
+        url.searchParams.set("attrFilter", attrFilter);
+      }
+
+      return url;
+    }
+
+    async function fetchVworldAdminFeatures(dataId, attrFilter) {
+      try {
+        const data = await requestVworldJson(createVworldAdminDataUrl(dataId, attrFilter));
+        return extractVworldFeatures(data);
+      } catch (error) {
+        return [];
+      }
+    }
+
+    function makeLocalTownOptions(city) {
+      return getLocalAerialTownOptions(city).map((town) => toAdminOption(town)).filter(Boolean);
+    }
+
+    function makeLocalVillageOptions(city, town) {
+      return getLocalAerialVillageOptions(city, town).map((village) => toAdminOption(village)).filter(Boolean);
+    }
+
+    function findOptionByCurrentAddress(options) {
+      const address = getParcelAddress();
+      return options.find((option) => option?.value && address.includes(option.value))?.value || "";
+    }
+
+    async function getAerialTownOptions(city = aerialCitySelect?.value || "") {
+      const localOptions = makeLocalTownOptions(city);
+
+      if (!city) {
+        return localOptions;
+      }
+
+      if (localOptions.length) {
+        vworldAdminTownCache.set(city, localOptions);
+        return localOptions;
+      }
+
+      if (vworldAdminTownCache.has(city)) {
+        return vworldAdminTownCache.get(city);
+      }
+
+      const fetchedOptions = [];
+
+      for (const sigunguCode of jeonbukSigunguCodes[city] || []) {
+        const features = await fetchVworldAdminFeatures(vworldAdminTownDataId, `sig_cd:=:${sigunguCode}`);
+
+        features.forEach((feature) => {
+          const properties = readVworldAdminProperties(feature);
+          const name = cleanAdminName(
+            readVworldAdminValue(properties, ["emd_kor_nm", "emd_nm", "emd_name", "emd_kor_name", "adm_nm", "full_nm", "name"]),
+            /[가-힣0-9]+(?:읍|면|동|가)$/
+          );
+          const code = readVworldAdminValue(properties, ["emd_cd", "adm_cd", "code"]);
+          const option = toAdminOption(name, code);
+
+          if (option) {
+            fetchedOptions.push(option);
+          }
+        });
+      }
+
+      const mergedOptions = uniqueAdminOptions(fetchedOptions.length ? fetchedOptions : localOptions);
+      vworldAdminTownCache.set(city, mergedOptions);
+      return mergedOptions;
+    }
+
+    async function getAerialVillageOptions(city, town, townCode = "") {
+      const localOptions = makeLocalVillageOptions(city, town);
+
+      if (!city || !town) {
+        return localOptions;
+      }
+
+      if (localOptions.length) {
+        return localOptions;
+      }
+
+      let emdCode = townCode;
+
+      if (!emdCode) {
+        const towns = await getAerialTownOptions(city);
+        emdCode = towns.find((option) => option.value === town)?.code || "";
+      }
+
+      if (!emdCode) {
+        return localOptions;
+      }
+
+      const cacheKey = `${city}:${town}:${emdCode}`;
+
+      if (vworldAdminVillageCache.has(cacheKey)) {
+        return vworldAdminVillageCache.get(cacheKey);
+      }
+
+      const features = await fetchVworldAdminFeatures(vworldAdminVillageDataId, `emd_cd:=:${emdCode}`);
+      const fetchedOptions = features
+        .map((feature) => {
+          const properties = readVworldAdminProperties(feature);
+          const name = cleanAdminName(
+            readVworldAdminValue(properties, ["li_kor_nm", "li_nm", "li_name", "li_kor_name", "adm_nm", "full_nm", "name"]),
+            /[가-힣0-9]+리$/
+          );
+          const code = readVworldAdminValue(properties, ["li_cd", "adm_cd", "code"]);
+          return toAdminOption(name, code);
+        })
+        .filter(Boolean);
+      const villages = uniqueAdminOptions(fetchedOptions.length ? fetchedOptions : localOptions);
+
+      vworldAdminVillageCache.set(cacheKey, villages);
+      return villages;
+    }
+
+    async function syncAerialVillageOptions(resetVillage = false) {
+      const city = aerialCitySelect?.value || "";
+      const town = aerialTownSelect?.value || "";
+      const townCode = aerialTownSelect?.selectedOptions?.[0]?.dataset.adminCode || "";
+      const localVillages = makeLocalVillageOptions(city, town);
+      const selectedVillage = resetVillage ? "" : aerialVillageSelect?.value || findOptionByCurrentAddress(localVillages);
+
+      fillAerialSelect(aerialVillageSelect, localVillages, "리 선택", selectedVillage);
+
+      if (!town) {
+        return;
+      }
+
+      const villages = await getAerialVillageOptions(city, town, townCode);
+
+      if (aerialCitySelect?.value !== city || aerialTownSelect?.value !== town) {
+        return;
+      }
+
+      const nextSelectedVillage = resetVillage ? "" : aerialVillageSelect?.value || findOptionByCurrentAddress(villages) || selectedVillage;
+      fillAerialSelect(aerialVillageSelect, villages, "리 선택", nextSelectedVillage);
+    }
+
+    async function syncAerialTownOptions(resetTown = false) {
+      const city = aerialCitySelect?.value || "";
+      const localTowns = makeLocalTownOptions(city);
+      const selectedTown = resetTown ? "" : aerialTownSelect?.value || "";
+      fillAerialSelect(aerialTownSelect, localTowns, "읍면 선택", selectedTown);
+      syncAerialVillageOptions(resetTown);
+
+      const towns = await getAerialTownOptions(city);
+
+      if (aerialCitySelect?.value !== city) {
+        return;
+      }
+
+      const nextSelectedTown = resetTown ? "" : aerialTownSelect?.value || findOptionByCurrentAddress(towns) || selectedTown;
+      fillAerialSelect(aerialTownSelect, towns, "읍면 선택", nextSelectedTown);
+      syncAerialVillageOptions(resetTown);
+    }
+
+    function buildAerialAddressQuery(rawQuery) {
+      const address = normalizeMountainLotAddress(rawQuery);
+      const city = aerialCitySelect?.value || getParcelCity();
+
+      if (!address) {
+        return "";
+      }
+
+      const parts = [];
+
+      if (!hasProvinceToken(address)) {
+        parts.push("전북특별자치도");
+      }
+
+      if (city && !address.includes(city) && !jeonbukCityNames.some((cityName) => address.includes(cityName))) {
+        parts.push(city);
+      }
+
+      parts.push(address);
+      return normalizeMountainLotAddress(parts.join(" "));
+    }
+
+    function buildAerialPlaceQuery(rawQuery) {
+      const query = String(rawQuery || "").trim().replace(/\s+/g, " ");
+      const city = aerialCitySelect?.value || getParcelCity();
+
+      if (!query) {
+        return "";
+      }
+
+      return ["전북특별자치도", city, query].filter((part) => part && !query.includes(part)).concat(query).join(" ").replace(/\s+/g, " ").trim();
+    }
+
+    function buildAerialParcelQuery() {
+      const town = aerialTownSelect?.value || "";
+      const village = aerialVillageSelect?.value || "";
+      const lot = aerialLotInput?.value || "";
+
+      return buildAerialAddressQuery([town, village, lot].filter(Boolean).join(" "));
+    }
+
+    if (aerialCitySelect) {
+      aerialCitySelect.addEventListener("change", () => {
+        writeStoredValue(parcelCityStorageKey, aerialCitySelect.value);
+        syncAerialTownOptions(true);
+        updateAerialStatus(`${aerialCitySelect.value || "선택한 시군"} 기준으로 항공사진 검색을 진행합니다.`);
+      });
+    }
+
+    if (aerialTownSelect) {
+      aerialTownSelect.addEventListener("change", () => {
+        syncAerialVillageOptions(true);
+      });
+    }
+
+    syncAerialTownOptions(false);
+
+    resultsNode.addEventListener("click", async (event) => {
+      const button = event.target.closest("[data-vworld-result]");
+
+      if (!button) {
+        return;
+      }
+
+      const result = vworldSearchResults[Number(button.dataset.vworldResult)];
+
+      if (!result) {
+        return;
+      }
+
+      updateAerialStatus("선택한 위치의 지번주소를 확인하는 중입니다.");
+      const query = await ensureResultParcelAddress(result, result.title);
+      setSharedParcelAddress(query);
+      writeStoredJson(parcelStateStorageKey, {
+        query,
+        originalQuery: result.roadAddress || result.rawTitle || "",
+        latitude: result.latitude,
+        longitude: result.longitude,
+        pnu: result.pnu,
+        title: query,
+        subtitle: result.subtitle,
+        roadAddress: result.roadAddress,
+        parcelAddress: result.parcelAddress,
+      });
+      moveVworldToResult({ ...result, query, title: query });
+    });
+
+    aerialForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const activeElement = document.activeElement;
+      const submitType = event.submitter?.dataset.aerialSubmit || (activeElement === aerialLotInput ? "parcel" : "text");
+      const searchMode = submitType === "parcel" ? "address" : aerialForm.querySelector("input[name='vworldSearchMode']:checked")?.value || "address";
+      const rawQuery = submitType === "parcel" ? buildAerialParcelQuery() : aerialInput?.value.trim() || "";
+      const query =
+        submitType === "parcel"
+          ? rawQuery
+          : searchMode === "address"
+            ? buildAerialAddressQuery(rawQuery)
+            : buildAerialPlaceQuery(rawQuery);
+
+      if (!query) {
+        vworldSearchResults = [];
+        renderAerialResults([], submitType === "parcel" ? "읍면·리와 번지를 선택 또는 입력해 주세요." : "검색어를 입력해 주세요.");
+        updateAerialStatus(submitType === "parcel" ? "읍면·리와 번지를 입력해 주세요." : "도로명 또는 명칭을 입력해 주세요.");
+        return;
+      }
+
+      if (searchMode === "address") {
+        saveParcelAddress(query);
+      }
+
+      if (submitType === "text" && searchMode === "address" && aerialInput && aerialInput.value !== query) {
+        aerialInput.value = query;
+      }
+      renderAerialResults([], "검색 중입니다.");
+      updateAerialStatus(rawQuery && rawQuery !== query ? `"${rawQuery}"을 "${query}" 기준으로 검색 중입니다.` : `"${query}" 검색 중입니다.`);
+
+      try {
+        vworldSearchResults = await searchVworldIntegrated(query, searchMode);
+        renderAerialResults(vworldSearchResults);
+        updateAerialStatus(vworldSearchResults.length ? "검색 결과를 선택해 주세요." : "검색 결과가 없습니다.");
+      } catch (error) {
+        vworldSearchResults = [];
+        renderAerialResults([], "V-World 검색 API를 불러오지 못했습니다.");
+        updateAerialStatus("V-World 검색 API를 불러오지 못했습니다. API 키와 네트워크 상태를 확인해 주세요.");
+      }
+    });
   }
 
   function bindAerialSearchForm() {
     const aerialForm = document.querySelector("[data-aerial-parcel-form]");
     const aerialInput = document.querySelector("[data-aerial-parcel-input]");
+    const textSubmitButton = aerialForm?.querySelector('[data-aerial-submit="text"]') || aerialForm?.querySelector('button[type="submit"]');
 
     if (!aerialForm || !aerialInput) {
       return;
     }
+
+    aerialInput.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" || event.isComposing) {
+        return;
+      }
+
+      event.preventDefault();
+
+      if (textSubmitButton && typeof aerialForm.requestSubmit === "function") {
+        aerialForm.requestSubmit(textSubmitButton);
+        return;
+      }
+
+      if (textSubmitButton) {
+        textSubmitButton.click();
+      }
+    });
 
     aerialInput.addEventListener("input", () => {
       if (parcelInput) {
         parcelInput.value = aerialInput.value;
       }
 
-      saveParcelAddress();
+      saveParcelAddress(aerialInput.value, { preserveTyping: true, updateInput: false });
     });
 
     aerialForm.addEventListener("submit", async (event) => {
       event.preventDefault();
+      const originalAddress = aerialInput.value.trim();
+      const address = buildContextualParcelAddress(originalAddress);
+
       if (parcelInput) {
-        parcelInput.value = aerialInput.value.trim();
+        parcelInput.value = address;
       }
-      saveParcelAddress();
+
+      saveParcelAddress(address);
+      if (aerialInput.value !== address) {
+        aerialInput.value = address;
+      }
       await resolveParcelAddress();
       setActivePortal("aerial");
+    });
+  }
+
+  function bindAerialPanelToggle() {
+    const portal = document.querySelector(".aerial-portal");
+    const toggleButton = document.querySelector("[data-aerial-panel-toggle]");
+
+    if (!portal || !toggleButton || toggleButton.dataset.bound) {
+      return;
+    }
+
+    toggleButton.dataset.bound = "true";
+    toggleButton.addEventListener("click", () => {
+      const collapsed = !portal.classList.contains("is-panel-collapsed");
+      portal.classList.toggle("is-panel-collapsed", collapsed);
+      toggleButton.setAttribute("aria-expanded", String(!collapsed));
+
+      const label = toggleButton.querySelector("span");
+      const iconName = collapsed ? "chevron-right" : "chevron-left";
+      const icon = document.createElement("i");
+      icon.setAttribute("data-lucide", iconName);
+      toggleButton.replaceChildren(icon);
+
+      if (label) {
+        label.textContent = collapsed ? "패널 열기" : "패널 접기";
+        toggleButton.append(label);
+      }
+
+      toggleButton.setAttribute("aria-label", collapsed ? "패널 열기" : "패널 접기");
+      toggleButton.setAttribute("title", collapsed ? "패널 열기" : "패널 접기");
+
+      if (window.lucide?.createIcons) {
+        window.lucide.createIcons();
+      }
+
+      window.setTimeout(() => {
+        if (vworldMap) {
+          vworldMap.invalidateSize();
+        }
+      }, 220);
     });
   }
 
@@ -945,10 +3703,172 @@ function initPortalTabs() {
     return window.L.tileLayer(
       `https://api.vworld.kr/req/wmts/1.0.0/${encodeURIComponent(vworldApiKey)}/${layerName}/{z}/{y}/{x}.${extension}`,
       {
-        maxZoom: 19,
+        maxZoom: vworldMapMaxZoom,
+        maxNativeZoom: vworldTileNativeMaxZoom,
         attribution: "V-World",
       }
     );
+  }
+
+  function createVworldCadastralLayer() {
+    return window.L.tileLayer.wms("https://api.vworld.kr/req/wms", {
+      service: "WMS",
+      version: "1.3.0",
+      request: "GetMap",
+      layers: "lp_pa_cbnd_bonbun,lp_pa_cbnd_bubun",
+      styles: "lp_pa_cbnd_bonbun_line,lp_pa_cbnd_bubun_line",
+      format: "image/png",
+      transparent: true,
+      exceptions: "text/xml",
+      maxZoom: vworldMapMaxZoom,
+      maxNativeZoom: vworldTileNativeMaxZoom,
+      key: vworldApiKey,
+      domain: window.location.origin,
+      attribution: "V-World",
+    });
+  }
+
+  function renderVworldUrbanPlanningTools() {
+    return `
+      <fieldset class="vworld-urban-planning">
+        <legend>도시계획 레이어</legend>
+        <svg class="vworld-urban-planning__filter" width="0" height="0" aria-hidden="true" focusable="false">
+          <defs>
+            <filter id="vworld-urban-red-tint" color-interpolation-filters="sRGB">
+              <feColorMatrix type="matrix" values="
+                0.06378  0.21456  0.02166  0  0.70
+                0.051024 0.171648 0.017328 0  0.06
+                0.04252  0.14304  0.01444  0  0.10
+                0        0        0        1  0" />
+            </filter>
+          </defs>
+        </svg>
+        <div class="vworld-urban-planning__layers">
+          ${vworldUrbanPlanningLayers.map(({ id, title }) => `
+            <label><input type="checkbox" data-vworld-urban-layer="${id}"${vworldUrbanPlanningVisible.has(id) ? " checked" : ""} />${title}</label>
+          `).join("")}
+        </div>
+        <label class="vworld-urban-planning__opacity">
+          선명도
+          <input type="range" min="10" max="100" step="5" value="${vworldUrbanPlanningOpacity * 100}" data-vworld-urban-opacity aria-label="도시계획 레이어 선명도" />
+          <output data-vworld-urban-opacity-value>${Math.round(vworldUrbanPlanningOpacity * 100)}%</output>
+        </label>
+      </fieldset>
+      <section class="parcel-zoning" data-parcel-zoning aria-label="선택 필지 정보" aria-live="polite"></section>
+    `;
+  }
+
+  function syncVworldUrbanPlanningControls() {
+    document.querySelectorAll("[data-vworld-urban-layer]").forEach((input) => {
+      input.checked = vworldUrbanPlanningVisible.has(input.dataset.vworldUrbanLayer);
+    });
+    const selected = vworldUrbanPlanningLayers.filter(({ id }) => vworldUrbanPlanningVisible.has(id));
+    const failed = selected.filter(({ id }) => vworldUrbanPlanningStates.get(id) === "error");
+    if (failed.length) updateAerialStatus(`${failed.map(({ title }) => title).join(", ")} 레이어를 불러오지 못했습니다.`);
+  }
+
+  function setVworldUrbanPlanningLayer(id, visible) {
+    const definition = vworldUrbanPlanningLayers.find((item) => item.id === id);
+    if (!definition || !vworldMap || !window.L) return;
+    const existing = vworldUrbanPlanningOverlays.get(id);
+    if (!visible) {
+      vworldUrbanPlanningVisible.delete(id);
+      vworldUrbanPlanningOverlays.delete(id);
+      vworldUrbanPlanningStates.delete(id);
+      if (existing) vworldMap.removeLayer(existing);
+    } else {
+      vworldUrbanPlanningVisible.add(id);
+      if (!existing) {
+        const layer = window.L.tileLayer.wms("https://api.vworld.kr/req/wms", {
+          service: "WMS",
+          version: "1.3.0",
+          request: "GetMap",
+          layers: id,
+          styles: id,
+          format: "image/png",
+          transparent: true,
+          exceptions: "text/xml",
+          maxZoom: vworldMapMaxZoom,
+          maxNativeZoom: vworldTileNativeMaxZoom,
+          key: vworldApiKey,
+          domain: window.location.origin,
+          attribution: "V-World 도시계획시설도",
+          // Tint only planning tiles; preserve source transparency and contrast.
+          className: "vworld-urban-planning-overlay",
+          opacity: vworldUrbanPlanningOpacity,
+          zIndex: id === "lt_c_upisuq151" ? 26 : 25,
+        });
+        vworldUrbanPlanningOverlays.set(id, layer);
+        const updateState = (state) => {
+          if (vworldUrbanPlanningOverlays.get(id) !== layer) return;
+          vworldUrbanPlanningStates.set(id, state);
+          syncVworldUrbanPlanningControls();
+        };
+        layer.on("loading", () => updateState("loading"));
+        layer.on("tileerror", () => updateState("error"));
+        layer.on("load", () => {
+          if (vworldUrbanPlanningStates.get(id) !== "error") updateState("ready");
+        });
+        updateState("loading");
+        layer.addTo(vworldMap);
+      }
+    }
+    syncVworldUrbanPlanningControls();
+  }
+
+  function bindVworldUrbanPlanningTools() {
+    renderAerialParcelDetails();
+    const group = document.querySelector(".vworld-urban-planning");
+    if (!group) return;
+    if (!group.dataset.bound) {
+      group.dataset.bound = "true";
+      group.addEventListener("change", (event) => {
+        const id = event.target.dataset.vworldUrbanLayer;
+        if (id) setVworldUrbanPlanningLayer(id, event.target.checked);
+      });
+      group.querySelector("[data-vworld-urban-opacity]").addEventListener("input", (event) => {
+        vworldUrbanPlanningOpacity = Number(event.target.value) / 100;
+        vworldUrbanPlanningOverlays.forEach((layer) => layer.setOpacity(vworldUrbanPlanningOpacity));
+        group.querySelector("[data-vworld-urban-opacity-value]").textContent = `${Math.round(vworldUrbanPlanningOpacity * 100)}%`;
+      });
+    }
+    vworldUrbanPlanningVisible.forEach((id) => setVworldUrbanPlanningLayer(id, true));
+    syncVworldUrbanPlanningControls();
+  }
+
+  function setVworldCadastralLayer() {
+    if (!vworldMap || !window.L) {
+      return;
+    }
+
+    if (vworldCadastralLayer) {
+      vworldMap.removeLayer(vworldCadastralLayer);
+      vworldCadastralLayer = null;
+    }
+
+    if (!vworldCadastralVisible) {
+      syncVworldLotNumberLayerVisibility();
+      syncVworldCadastralButton();
+      return;
+    }
+
+    vworldCadastralLayer = createVworldCadastralLayer().addTo(vworldMap);
+    vworldCadastralLayer.setZIndex(30);
+    syncVworldLotNumberLayerVisibility();
+    syncVworldCadastralButton();
+  }
+
+  function syncVworldCadastralButton() {
+    document.querySelectorAll('[data-vworld-action="toggle-cadastral"]').forEach((button) => {
+      button.classList.toggle("is-active", vworldCadastralVisible);
+      button.setAttribute("aria-pressed", String(vworldCadastralVisible));
+    });
+  }
+
+  function toggleVworldCadastralLayer() {
+    vworldCadastralVisible = !vworldCadastralVisible;
+    setVworldCadastralLayer();
+    updateAerialStatus(vworldCadastralVisible ? "편집지적도와 지번을 표시했습니다." : "편집지적도와 지번을 숨겼습니다.");
   }
 
   function setVworldLayer(layerKey) {
@@ -990,6 +3910,16 @@ function initPortalTabs() {
 
     if (output) {
       output.textContent = message;
+      output.classList.toggle("is-result", /^(거리|면적)\s[\d,]/.test(String(message || "")));
+      output.classList.toggle("is-distance-result", /^거리\s[\d,]/.test(String(message || "")));
+    }
+  }
+
+  function syncVworldMeasureCursor() {
+    const mapNode = vworldMap?.getContainer?.();
+
+    if (mapNode) {
+      mapNode.classList.toggle("is-measuring", Boolean(vworldMeasureMode));
     }
   }
 
@@ -999,7 +3929,7 @@ function initPortalTabs() {
       return;
     }
 
-    vworldMap.setView([vworldCurrentPoint.latitude, vworldCurrentPoint.longitude], 18);
+    vworldMap.setView([vworldCurrentPoint.latitude, vworldCurrentPoint.longitude], vworldParcelDetailZoom);
     updateAerialStatus(`${vworldCurrentPoint.title} 위치로 이동했습니다.`);
   }
 
@@ -1020,6 +3950,247 @@ function initPortalTabs() {
     vworldMarker = window.L.marker([vworldCurrentPoint.latitude, vworldCurrentPoint.longitude]).addTo(vworldMap).bindPopup(vworldCurrentPoint.title);
   }
 
+  function getLotNumberFromPnu(pnu) {
+    const normalized = normalizePnu(pnu);
+
+    if (normalized.length !== 19) {
+      return "";
+    }
+
+    const isMountain = normalized.slice(10, 11) === "2";
+    const mainNumber = Number(normalized.slice(11, 15));
+    const subNumber = Number(normalized.slice(15, 19));
+
+    if (!mainNumber) {
+      return "";
+    }
+
+    return `${isMountain ? "산 " : ""}${mainNumber}${subNumber ? `-${subNumber}` : ""}`;
+  }
+
+  function getCleanLotNumber(value) {
+    const text = String(value || "").trim();
+
+    if (!text) {
+      return "";
+    }
+
+    const matches = text.match(/산\s*\d+(?:-\d+)?|\d+(?:-\d+)?/g);
+
+    return matches?.length ? matches[matches.length - 1].replace(/\s+/g, " ") : text;
+  }
+
+  function getLotNumberLabel(point) {
+    return getLotNumberFromPnu(point?.pnu) || getCleanLotNumber(point?.title);
+  }
+
+  function clearVworldLotNumberLabels() {
+    if (vworldLotNumberLayer && vworldMap) {
+      vworldMap.removeLayer(vworldLotNumberLayer);
+    }
+
+    vworldLotNumberLayer = null;
+    vworldLotNumberLabels = [];
+  }
+
+  function shouldShowVworldLotNumberLabels() {
+    return Boolean(vworldCadastralVisible && vworldMap && vworldMap.getZoom() >= vworldLotNumberMinZoom);
+  }
+
+  function getVworldLotNumberScale() {
+    const zoom = Number(vworldMap?.getZoom?.());
+
+    if (!Number.isFinite(zoom)) {
+      return 1;
+    }
+
+    const zoomRange = Math.max(1, vworldMapMaxZoom - vworldLotNumberMinZoom);
+    const progress = Math.min(1, Math.max(0, (zoom - vworldLotNumberMinZoom) / zoomRange));
+
+    return vworldLotNumberMinScale + (vworldLotNumberMaxScale - vworldLotNumberMinScale) * progress;
+  }
+
+  function syncVworldLotNumberLabelScale() {
+    const mapNode = vworldMap?.getContainer?.();
+
+    if (!mapNode) {
+      return;
+    }
+
+    const scale = getVworldLotNumberScale();
+
+    mapNode.style.setProperty("--vworld-lot-label-scale", scale.toFixed(2));
+    mapNode.style.setProperty("--vworld-parcel-label-font-size", `${(0.74 * scale).toFixed(2)}rem`);
+    mapNode.classList.toggle("is-lot-labels-hidden", !shouldShowVworldLotNumberLabels());
+  }
+
+  function syncVworldLotNumberLayerVisibility() {
+    syncVworldLotNumberLabelScale();
+
+    if (!vworldMap || !vworldLotNumberLayer) {
+      return;
+    }
+
+    const isVisible = vworldMap.hasLayer(vworldLotNumberLayer);
+    const shouldShow = shouldShowVworldLotNumberLabels();
+
+    if (shouldShow && !isVisible) {
+      vworldLotNumberLayer.addTo(vworldMap);
+      return;
+    }
+
+    if (!shouldShow && isVisible) {
+      vworldMap.removeLayer(vworldLotNumberLayer);
+    }
+  }
+
+  function getVworldLotNumberHtml(lotNumber, jimok = "") {
+    const lotText = String(lotNumber || "").trim();
+    const jimokText = String(jimok || "").trim();
+
+    if (!lotText) {
+      return "";
+    }
+
+    return `<span><b>${escapeHtml(lotText)}</b>${jimokText ? `<small>${escapeHtml(jimokText)}</small>` : ""}</span>`;
+  }
+
+  function createVworldLotNumberMarker(label) {
+    const latitude = Number(label?.latitude);
+    const longitude = Number(label?.longitude);
+    const html = getVworldLotNumberHtml(label?.lotNumber, label?.jimok);
+
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude) || !html) {
+      return null;
+    }
+
+    return window.L.marker([latitude, longitude], {
+      interactive: false,
+      keyboard: false,
+      zIndexOffset: 900,
+      icon: window.L.divIcon({
+        className: "vworld-lot-number-label",
+        html,
+        iconSize: [76, 40],
+        iconAnchor: [38, 20],
+      }),
+    });
+  }
+
+  function getVworldLotNumberLabelBox(label) {
+    if (!vworldMap) {
+      return null;
+    }
+
+    const latitude = Number(label?.latitude);
+    const longitude = Number(label?.longitude);
+
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+      return null;
+    }
+
+    const point = vworldMap.latLngToLayerPoint([latitude, longitude]);
+    const scale = getVworldLotNumberScale();
+    const lotLength = String(label?.lotNumber || "").length;
+    const jimokLength = String(label?.jimok || "").length;
+    const width = Math.max(46, lotLength * 8 + jimokLength * 4 + 20) * scale;
+    const height = (label?.jimok ? 32 : 24) * scale;
+
+    return {
+      left: point.x - width / 2,
+      right: point.x + width / 2,
+      top: point.y - height / 2,
+      bottom: point.y + height / 2,
+    };
+  }
+
+  function doLabelBoxesOverlap(first, second, padding = 4) {
+    return !(
+      first.right + padding < second.left ||
+      second.right + padding < first.left ||
+      first.bottom + padding < second.top ||
+      second.bottom + padding < first.top
+    );
+  }
+
+  function getCollisionSafeLotNumberLabels(labels = []) {
+    const boxes = [];
+    const safeLabels = [];
+
+    labels.forEach((label) => {
+      const box = getVworldLotNumberLabelBox(label);
+
+      if (!box) {
+        return;
+      }
+
+      if (boxes.some((existingBox) => doLabelBoxesOverlap(existingBox, box))) {
+        return;
+      }
+
+      boxes.push(box);
+      safeLabels.push(label);
+    });
+
+    return safeLabels;
+  }
+
+  function renderVworldLotNumberLabels(labels = []) {
+    if (!vworldMap || !window.L) {
+      return 0;
+    }
+
+    if (vworldLotNumberLayer) {
+      vworldMap.removeLayer(vworldLotNumberLayer);
+      vworldLotNumberLayer = null;
+    }
+
+    vworldLotNumberLabels = labels;
+
+    const markers = getCollisionSafeLotNumberLabels(labels).map(createVworldLotNumberMarker).filter(Boolean);
+
+    if (!markers.length) {
+      return 0;
+    }
+
+    vworldLotNumberLayer = window.L.layerGroup(markers);
+    syncVworldLotNumberLayerVisibility();
+    return markers.length;
+  }
+
+  function rerenderVworldLotNumberLabels() {
+    if (!vworldLotNumberLabels.length || !vworldMap) {
+      syncVworldLotNumberLayerVisibility();
+      return;
+    }
+
+    renderVworldLotNumberLabels(vworldLotNumberLabels);
+  }
+
+  function syncVworldLotNumberLabel(point) {
+    if (!point) {
+      clearVworldLotNumberLabels();
+      return 0;
+    }
+
+    const lotNumber = getLotNumberLabel(point);
+
+    if (!lotNumber) {
+      clearVworldLotNumberLabels();
+      return 0;
+    }
+
+    return renderVworldLotNumberLabels([
+      {
+        latitude: point.latitude,
+        longitude: point.longitude,
+        lotNumber,
+        jimok: "",
+        pnu: normalizePnu(point.pnu),
+      },
+    ]);
+  }
+
   function clearVworldParcels() {
     if (vworldParcelLayer && vworldMap) {
       vworldMap.removeLayer(vworldParcelLayer);
@@ -1033,11 +4204,465 @@ function initPortalTabs() {
     vworldRadiusLayer = null;
   }
 
-  function getParcelPopup(properties = {}) {
-    if (properties.source === "local-cadastral") {
-      return "연속지적도<br>주소 기준 50m 이내";
+  function getFeatureProperty(properties = {}, names = []) {
+    for (const name of names) {
+      if (properties[name] !== undefined && properties[name] !== null && properties[name] !== "") {
+        return properties[name];
+      }
     }
 
+    const entries = Object.entries(properties);
+
+    for (const name of names) {
+      const match = entries.find(([key, value]) => key.toLowerCase() === name.toLowerCase() && value !== undefined && value !== null && value !== "");
+
+      if (match) {
+        return match[1];
+      }
+    }
+
+    return "";
+  }
+
+  function getFeaturePnu(feature) {
+    return normalizePnu(getFeatureProperty(feature?.properties, ["pnu", "PNU"]));
+  }
+
+  function formatJimokLabel(value) {
+    const label = String(value || "").trim();
+
+    if (!label) {
+      return "";
+    }
+
+    const normalizedCode = label.replace(/\D/g, "").padStart(2, "0");
+
+    return landCategoryCodeLabels[label] || landCategoryCodeLabels[normalizedCode] || label;
+  }
+
+  function getJimokLabel(properties = {}) {
+    const namedJimok = getFeatureProperty(properties, [
+      "jimok",
+      "JIMOK",
+      "jimok_nm",
+      "JIMOK_NM",
+      "jimokName",
+      "JIMOK_NAME",
+      "lndcgrCodeNm",
+      "LNDCGR_CODE_NM",
+      "lndcgr_code_nm",
+      "landCategory",
+      "LAND_CATEGORY",
+    ]);
+
+    if (namedJimok) {
+      return formatJimokLabel(namedJimok);
+    }
+
+    return formatJimokLabel(
+      getFeatureProperty(properties, ["jimok_cd", "JIMOK_CD", "lndcgrCode", "LNDCGR_CODE", "lndcgr_code", "landCategoryCode"])
+    );
+  }
+
+  function getFeatureLotNumber(feature) {
+    const pnuLotNumber = getLotNumberFromPnu(getFeaturePnu(feature));
+
+    if (pnuLotNumber) {
+      return pnuLotNumber;
+    }
+
+    return getCleanLotNumber(getFeatureProperty(feature?.properties, ["jibun", "JIBUN", "lotNo", "LOT_NO", "lotno", "addr", "ADDR"]));
+  }
+
+  function getParcelFeatureAddress(feature, fallbackAddress = "") {
+    const properties = feature?.properties || {};
+    const location = [
+      getFeatureProperty(properties, ["sido_nm", "SIDO_NM", "sido", "SIDO"]),
+      getFeatureProperty(properties, ["sgg_nm", "SGG_NM", "sigungu", "SIGUNGU", "sgg"]),
+      getFeatureProperty(properties, ["emd_nm", "EMD_NM", "eup_myeon_dong", "EMD", "emd"]),
+      getFeatureProperty(properties, ["ri_nm", "RI_NM", "ri", "RI"]),
+    ]
+      .filter(Boolean)
+      .join(" ");
+    const lotNumber = getFeatureLotNumber(feature);
+
+    return [location, lotNumber].filter(Boolean).join(" ").trim() || fallbackAddress;
+  }
+
+  function collectGeometryCoordinates(coordinates, points = []) {
+    if (!Array.isArray(coordinates)) {
+      return points;
+    }
+
+    const longitude = Number(coordinates[0]);
+    const latitude = Number(coordinates[1]);
+
+    if (Number.isFinite(longitude) && Number.isFinite(latitude)) {
+      points.push([longitude, latitude]);
+      return points;
+    }
+
+    coordinates.forEach((item) => collectGeometryCoordinates(item, points));
+    return points;
+  }
+
+  function getCoordinateBounds(points = []) {
+    if (!points.length) {
+      return null;
+    }
+
+    return points.reduce(
+      (nextBounds, [longitude, latitude]) => ({
+        minLatitude: Math.min(nextBounds.minLatitude, latitude),
+        maxLatitude: Math.max(nextBounds.maxLatitude, latitude),
+        minLongitude: Math.min(nextBounds.minLongitude, longitude),
+        maxLongitude: Math.max(nextBounds.maxLongitude, longitude),
+      }),
+      {
+        minLatitude: Infinity,
+        maxLatitude: -Infinity,
+        minLongitude: Infinity,
+        maxLongitude: -Infinity,
+      }
+    );
+  }
+
+  function getBoundsCenterPoint(bounds) {
+    if (!bounds) {
+      return null;
+    }
+
+    return {
+      latitude: (bounds.minLatitude + bounds.maxLatitude) / 2,
+      longitude: (bounds.minLongitude + bounds.maxLongitude) / 2,
+    };
+  }
+
+  function getRingSignedArea(ring = []) {
+    let area = 0;
+
+    for (let index = 0; index < ring.length - 1; index += 1) {
+      const [currentLongitude, currentLatitude] = ring[index];
+      const [nextLongitude, nextLatitude] = ring[index + 1];
+
+      area += currentLongitude * nextLatitude - nextLongitude * currentLatitude;
+    }
+
+    return area / 2;
+  }
+
+  function getRingCentroidPoint(ring = []) {
+    const signedArea = getRingSignedArea(ring);
+
+    if (!Number.isFinite(signedArea) || Math.abs(signedArea) < 1e-14) {
+      return null;
+    }
+
+    let longitudeSum = 0;
+    let latitudeSum = 0;
+
+    for (let index = 0; index < ring.length - 1; index += 1) {
+      const [currentLongitude, currentLatitude] = ring[index];
+      const [nextLongitude, nextLatitude] = ring[index + 1];
+      const factor = currentLongitude * nextLatitude - nextLongitude * currentLatitude;
+
+      longitudeSum += (currentLongitude + nextLongitude) * factor;
+      latitudeSum += (currentLatitude + nextLatitude) * factor;
+    }
+
+    return {
+      latitude: latitudeSum / (6 * signedArea),
+      longitude: longitudeSum / (6 * signedArea),
+    };
+  }
+
+  function getRingAveragePoint(ring = []) {
+    const points = ring
+      .slice(0, -1)
+      .map(([longitude, latitude]) => ({ latitude, longitude }))
+      .filter((point) => Number.isFinite(point.latitude) && Number.isFinite(point.longitude));
+
+    if (!points.length) {
+      return null;
+    }
+
+    return {
+      latitude: points.reduce((sum, point) => sum + point.latitude, 0) / points.length,
+      longitude: points.reduce((sum, point) => sum + point.longitude, 0) / points.length,
+    };
+  }
+
+  function getPointToSegmentDistanceSquared(point, start, end) {
+    const pointLongitude = Number(point?.longitude);
+    const pointLatitude = Number(point?.latitude);
+    const startLongitude = Number(start?.[0]);
+    const startLatitude = Number(start?.[1]);
+    const endLongitude = Number(end?.[0]);
+    const endLatitude = Number(end?.[1]);
+
+    if (![pointLongitude, pointLatitude, startLongitude, startLatitude, endLongitude, endLatitude].every(Number.isFinite)) {
+      return 0;
+    }
+
+    const deltaLongitude = endLongitude - startLongitude;
+    const deltaLatitude = endLatitude - startLatitude;
+    const lengthSquared = deltaLongitude * deltaLongitude + deltaLatitude * deltaLatitude;
+    const ratio = lengthSquared
+      ? Math.max(0, Math.min(1, ((pointLongitude - startLongitude) * deltaLongitude + (pointLatitude - startLatitude) * deltaLatitude) / lengthSquared))
+      : 0;
+    const closestLongitude = startLongitude + ratio * deltaLongitude;
+    const closestLatitude = startLatitude + ratio * deltaLatitude;
+    const distanceLongitude = pointLongitude - closestLongitude;
+    const distanceLatitude = pointLatitude - closestLatitude;
+
+    return distanceLongitude * distanceLongitude + distanceLatitude * distanceLatitude;
+  }
+
+  function getPointToRingDistanceSquared(point, ring = []) {
+    if (ring.length < 2) {
+      return 0;
+    }
+
+    return ring.slice(1).reduce((minimumDistance, coordinate, index) => {
+      const distance = getPointToSegmentDistanceSquared(point, ring[index], coordinate);
+
+      return Math.min(minimumDistance, distance);
+    }, Infinity);
+  }
+
+  function getPolygonPointScore(point, polygon = []) {
+    if (!polygon.length) {
+      return 0;
+    }
+
+    return polygon.reduce((minimumDistance, ring) => Math.min(minimumDistance, getPointToRingDistanceSquared(point, ring)), Infinity);
+  }
+
+  function getPolygonArea(polygon = []) {
+    return Math.abs(getRingSignedArea(polygon?.[0] || []));
+  }
+
+  function getPolygonInteriorLabelPoint(polygon = []) {
+    const outerRing = polygon?.[0] || [];
+    const bounds = getCoordinateBounds(outerRing);
+    const boundsCenter = getBoundsCenterPoint(bounds);
+    const candidates = [getRingCentroidPoint(outerRing), boundsCenter, getRingAveragePoint(outerRing)].filter(Boolean);
+
+    for (const candidate of candidates) {
+      if (isPointInPolygonCoordinates(candidate, polygon)) {
+        return candidate;
+      }
+    }
+
+    if (!bounds || !boundsCenter) {
+      return null;
+    }
+
+    let bestPoint = null;
+    let bestScore = -Infinity;
+    const gridSizes = [5, 9, 13, 17];
+
+    for (const gridSize of gridSizes) {
+      for (let row = 0; row < gridSize; row += 1) {
+        for (let column = 0; column < gridSize; column += 1) {
+          const candidate = {
+            latitude: bounds.minLatitude + ((row + 0.5) / gridSize) * (bounds.maxLatitude - bounds.minLatitude),
+            longitude: bounds.minLongitude + ((column + 0.5) / gridSize) * (bounds.maxLongitude - bounds.minLongitude),
+          };
+
+          if (!isPointInPolygonCoordinates(candidate, polygon)) {
+            continue;
+          }
+
+          const boundaryDistance = getPolygonPointScore(candidate, polygon);
+          const centerDistance =
+            (candidate.latitude - boundsCenter.latitude) ** 2 + (candidate.longitude - boundsCenter.longitude) ** 2;
+          const score = boundaryDistance - centerDistance * 0.08;
+
+          if (score > bestScore) {
+            bestScore = score;
+            bestPoint = candidate;
+          }
+        }
+      }
+
+      if (bestPoint) {
+        return bestPoint;
+      }
+    }
+
+    return null;
+  }
+
+  function getFeaturePolygons(feature) {
+    const geometry = feature?.geometry;
+
+    if (geometry?.type === "Polygon") {
+      return [geometry.coordinates];
+    }
+
+    if (geometry?.type === "MultiPolygon") {
+      return geometry.coordinates || [];
+    }
+
+    return [];
+  }
+
+  function getFeatureLabelPoint(feature) {
+    const polygons = getFeaturePolygons(feature)
+      .filter((polygon) => polygon?.[0]?.length)
+      .sort((first, second) => getPolygonArea(second) - getPolygonArea(first));
+
+    for (const polygon of polygons) {
+      const labelPoint = getPolygonInteriorLabelPoint(polygon);
+
+      if (labelPoint) {
+        return labelPoint;
+      }
+    }
+
+    return null;
+  }
+
+  function getPointDistanceMeters(first, second) {
+    const from = [Number(first?.latitude), Number(first?.longitude)];
+    const to = [Number(second?.latitude), Number(second?.longitude)];
+
+    if (![...from, ...to].every(Number.isFinite)) {
+      return Infinity;
+    }
+
+    if (vworldMap?.distance) {
+      return vworldMap.distance(from, to);
+    }
+
+    const earthRadius = 6378137;
+    const latitude1 = (from[0] * Math.PI) / 180;
+    const latitude2 = (to[0] * Math.PI) / 180;
+    const latitudeDelta = ((to[0] - from[0]) * Math.PI) / 180;
+    const longitudeDelta = ((to[1] - from[1]) * Math.PI) / 180;
+    const haversine =
+      Math.sin(latitudeDelta / 2) ** 2 + Math.cos(latitude1) * Math.cos(latitude2) * Math.sin(longitudeDelta / 2) ** 2;
+
+    return 2 * earthRadius * Math.atan2(Math.sqrt(haversine), Math.sqrt(1 - haversine));
+  }
+
+  function isFeatureWithinRadius(feature, point, radiusMeters) {
+    if (isPointInParcelFeature(point, feature)) {
+      return true;
+    }
+
+    const labelPoint = getFeatureLabelPoint(feature);
+
+    if (labelPoint && getPointDistanceMeters(point, labelPoint) <= radiusMeters) {
+      return true;
+    }
+
+    return collectGeometryCoordinates(feature?.geometry?.coordinates).some(([longitude, latitude]) =>
+      getPointDistanceMeters(point, { latitude, longitude }) <= radiusMeters
+    );
+  }
+
+  function getNearbyParcelLabelItems(features = [], point, radiusMeters = vworldParcelRadiusMeters) {
+    const labels = [];
+    const seen = new Set();
+
+    features.forEach((feature) => {
+      const labelPoint = getFeatureLabelPoint(feature);
+      const lotNumber = getFeatureLotNumber(feature);
+
+      if (!labelPoint || !lotNumber || !isFeatureWithinRadius(feature, point, radiusMeters)) {
+        return;
+      }
+
+      const pnu = getFeaturePnu(feature);
+      const key = pnu || `${lotNumber}:${labelPoint.latitude.toFixed(7)}:${labelPoint.longitude.toFixed(7)}`;
+
+      if (seen.has(key)) {
+        return;
+      }
+
+      seen.add(key);
+      labels.push({
+        ...labelPoint,
+        lotNumber,
+        jimok: getJimokLabel(feature?.properties),
+        pnu,
+        distance: getPointDistanceMeters(point, labelPoint),
+      });
+    });
+
+    return ensureSelectedParcelLabel(labels, point)
+      .sort((first, second) => first.distance - second.distance)
+      .slice(0, 80);
+  }
+
+  function ensureSelectedParcelLabel(labels, point) {
+    const lotNumber = getLotNumberLabel(point);
+    const selectedPnu = normalizePnu(point?.pnu);
+
+    if (!lotNumber) {
+      return labels;
+    }
+
+    const hasSelectedLabel = labels.some(
+      (label) =>
+        (selectedPnu && label.pnu === selectedPnu) ||
+        (label.lotNumber === lotNumber && getPointDistanceMeters(label, point) <= 8)
+    );
+
+    if (hasSelectedLabel) {
+      return labels;
+    }
+
+    return [
+      {
+        latitude: point.latitude,
+        longitude: point.longitude,
+        lotNumber,
+        jimok: "",
+        pnu: selectedPnu,
+        distance: 0,
+      },
+      ...labels,
+    ];
+  }
+
+  async function loadNearbyParcelNumberLabels(point) {
+    if (!vworldMap || !window.L || !point) {
+      return;
+    }
+
+    const requestId = ++vworldLabelRequestId;
+
+    try {
+      const features = await searchVworldParcels(point.latitude, point.longitude, vworldParcelRadiusMeters);
+
+      if (requestId !== vworldLabelRequestId) {
+        return;
+      }
+
+      const labels = getNearbyParcelLabelItems(features, point, vworldParcelRadiusMeters);
+      const labelCount = renderVworldLotNumberLabels(labels);
+
+      if (labelCount) {
+        updateAerialStatus(`${point.title} 기준 반경 ${vworldParcelRadiusMeters}m 이내 지번·지목 ${labelCount}건을 표시했습니다.`);
+        return;
+      }
+
+      syncVworldLotNumberLabel(point);
+      updateAerialStatus(`${point.title} 위치로 이동했습니다. 반경 ${vworldParcelRadiusMeters}m 이내 지번·지목 정보를 찾지 못했습니다.`);
+    } catch (error) {
+      if (requestId !== vworldLabelRequestId) {
+        return;
+      }
+
+      syncVworldLotNumberLabel(point);
+      updateAerialStatus(`${point.title} 위치로 이동했습니다. 반경 ${vworldParcelRadiusMeters}m 지번·지목은 V-World 필지 API 권한 확인이 필요합니다.`);
+    }
+  }
+
+  function getParcelPopup(properties = {}) {
     const lines = [
       properties.jibun ? `지번: ${properties.jibun}` : "",
       properties.pnu ? `PNU: ${properties.pnu}` : "",
@@ -1109,13 +4734,58 @@ function initPortalTabs() {
 
   function getSelectedParcelFeatures(features, point) {
     const selectedPnu = normalizePnu(point?.pnu);
-    const pnuMatches = selectedPnu ? features.filter((feature) => normalizePnu(feature.properties?.pnu) === selectedPnu) : [];
+    const pnuMatches = selectedPnu ? features.filter((feature) => getFeaturePnu(feature) === selectedPnu) : [];
 
     if (pnuMatches.length) {
       return pnuMatches;
     }
 
     return features.filter((feature) => isPointInParcelFeature(point, feature));
+  }
+
+  async function getClickedParcelContext(latitude, longitude) {
+    const clickPoint = { latitude, longitude };
+
+    try {
+      const features = await searchVworldParcels(latitude, longitude, 24);
+      const sortedFeatures = sortFeaturesByClickPoint(features, clickPoint);
+      const feature = sortedFeatures.find((item) => isPointInParcelFeature(clickPoint, item)) || sortedFeatures[0];
+
+      if (!feature) {
+        return {
+          clickPoint,
+          queryPoint: clickPoint,
+          address: "",
+          pnu: "",
+          feature: null,
+        };
+      }
+
+      const queryPoint = getFeatureLabelPoint(feature) || clickPoint;
+      const pnu = getFeaturePnu(feature);
+      const featureAddress = getParcelFeatureAddress(feature);
+      let address = featureAddress;
+
+      if (!address) {
+        address = await reverseGeocodeParcelAddress(clickPoint.latitude, clickPoint.longitude);
+      }
+
+      return {
+        clickPoint,
+        queryPoint,
+        address,
+        pnu,
+        feature,
+      };
+    } catch (error) {
+      return {
+        clickPoint,
+        queryPoint: clickPoint,
+        address: "",
+        pnu: "",
+        feature: null,
+      };
+    }
   }
 
   function renderVworldParcelLayer(features, point, options = {}) {
@@ -1134,19 +4804,8 @@ function initPortalTabs() {
       },
       {
         style(feature) {
-          const isLocalCadastral = feature.properties?.source === "local-cadastral";
-          const featurePnu = normalizePnu(feature.properties?.pnu);
+          const featurePnu = getFeaturePnu(feature);
           const isSelected = highlightAll || (featurePnu && selectedPnu && featurePnu === selectedPnu) || isPointInParcelFeature(point, feature);
-
-          if (isLocalCadastral) {
-            return {
-              color: "#00e5ff",
-              fillColor: "#ffd84d",
-              fillOpacity: 0.13,
-              opacity: 1,
-              weight: 3.5,
-            };
-          }
 
           return {
             color: isSelected ? "#f2c76b" : "#67e8f9",
@@ -1158,23 +4817,17 @@ function initPortalTabs() {
         },
         onEachFeature(feature, layer) {
           layer.bindPopup(getParcelPopup(feature.properties));
-
-          if (feature.properties?.jibun) {
-            layer.bindTooltip(feature.properties.jibun, {
-              direction: "center",
-              permanent: true,
-              className: "parcel-label",
-            });
-          }
         },
       }
     ).addTo(vworldMap);
+
+    syncVworldLotNumberLabelScale();
 
     if (options.fitBounds) {
       const bounds = vworldParcelLayer.getBounds();
 
       if (bounds.isValid()) {
-        vworldMap.fitBounds(bounds.pad(0.28), { maxZoom: 19 });
+        vworldMap.fitBounds(bounds.pad(0.28), { maxZoom: vworldParcelDetailZoom });
       }
     }
   }
@@ -1204,7 +4857,7 @@ function initPortalTabs() {
       }
 
       if (!selectedFeatures.length) {
-        updateAerialStatus(`${point.title} 번지의 필지 도형을 찾지 못했습니다. 50m도형으로 주변 필지를 확인해 주세요.`);
+        updateAerialStatus(`${point.title} 번지의 필지 도형을 찾지 못했습니다. ${vworldParcelRadiusMeters}m 도형으로 주변 필지를 확인해 주세요.`);
         return;
       }
 
@@ -1225,7 +4878,7 @@ function initPortalTabs() {
     const center = [point.latitude, point.longitude];
 
     vworldRadiusLayer = window.L.circle(center, {
-      radius: 50,
+      radius: vworldParcelRadiusMeters,
       color: "#f2c76b",
       fillColor: "#f2c76b",
       fillOpacity: 0.08,
@@ -1234,54 +4887,36 @@ function initPortalTabs() {
     }).addTo(vworldMap);
 
     try {
-      updateAerialStatus(`${point.title} 기준 50m 이내 연속지적도를 불러오는 중입니다.`);
-      let features = await searchLocalCadastralFeatures(point, localCadastralRadiusMeters);
-      let sourceLabel = "cadastral SHP";
+      updateAerialStatus(`${point.title} 기준 ${vworldParcelRadiusMeters}m 이내 연속지적도를 불러오는 중입니다.`);
+      const features = await searchVworldParcels(point.latitude, point.longitude, vworldParcelRadiusMeters);
 
       if (!features.length) {
-        features = await searchVworldParcels(point.latitude, point.longitude, localCadastralRadiusMeters);
-        sourceLabel = "V-World";
-      }
-
-      if (!features.length) {
-        updateAerialStatus(`${point.title} 기준 50m 이내 연속지적도 도형을 찾지 못했습니다. 주소가 cadastral SHP 범위 밖인지 확인해 주세요.`);
+        updateAerialStatus(`${point.title} 기준 ${vworldParcelRadiusMeters}m 이내 연속지적도 도형을 찾지 못했습니다.`);
         return;
       }
 
       renderVworldParcelLayer(features, point, { highlightAll: true });
 
-      updateAerialStatus(`${point.title} 기준 50m 이내 연속지적도 ${features.length}개를 ${sourceLabel} 기준으로 표시했습니다.`);
+      updateAerialStatus(`${point.title} 기준 ${vworldParcelRadiusMeters}m 이내 연속지적도 ${features.length}개를 표시했습니다.`);
     } catch (error) {
-      try {
-        const fallbackFeatures = await searchVworldParcels(point.latitude, point.longitude, localCadastralRadiusMeters);
-
-        if (fallbackFeatures.length) {
-          renderVworldParcelLayer(fallbackFeatures, point, { highlightAll: true });
-          updateAerialStatus(`cadastral SHP를 직접 읽지 못해 V-World 기준 50m 이내 연속지적도 ${fallbackFeatures.length}개를 표시했습니다.`);
-          return;
-        }
-      } catch (fallbackError) {
-        // Show the local SHP guidance below.
-      }
-
-      updateAerialStatus("연속지적도를 불러오지 못했습니다. node server.cjs로 실행한 뒤 http://127.0.0.1:4173/에서 다시 열어 주세요.");
+      updateAerialStatus("V-World 연속지적도 API를 불러오지 못했습니다. API 키 또는 도메인 설정을 확인해 주세요.");
     }
   }
 
   function formatDistance(meters) {
     if (meters >= 1000) {
-      return `${(meters / 1000).toFixed(2)} km`;
+      return `${(meters / 1000).toFixed(1)} km`;
     }
 
-    return `${Math.round(meters)} m`;
+    return `${meters.toLocaleString("ko-KR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} m`;
   }
 
   function formatArea(squareMeters) {
     if (squareMeters >= 1000000) {
-      return `${(squareMeters / 1000000).toFixed(2)} km²`;
+      return `${(squareMeters / 1000000).toFixed(1)} km²`;
     }
 
-    return `${Math.round(squareMeters).toLocaleString()} m²`;
+    return `${squareMeters.toLocaleString("ko-KR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} m²`;
   }
 
   function calculatePolygonArea(points) {
@@ -1314,7 +4949,13 @@ function initPortalTabs() {
     }
 
     vworldMeasureLayer = null;
-    updateMeasureOutput("지도 도구를 선택하세요.");
+    vworldCompletedMeasureLayers.forEach((layer) => vworldMap?.removeLayer(layer));
+    vworldCompletedMeasureLayers = [];
+    document.querySelectorAll('[data-vworld-action="distance"], [data-vworld-action="area"]').forEach((button) => {
+      button.classList.remove("is-active");
+    });
+    syncVworldMeasureCursor();
+    updateMeasureOutput("거리 또는 면적을 선택한 뒤 도면을 클릭하세요.");
   }
 
   function renderVworldMeasure() {
@@ -1326,22 +4967,26 @@ function initPortalTabs() {
       vworldMap.removeLayer(vworldMeasureLayer);
     }
 
+    const measureColor = vworldMeasureMode === "area" ? "#2563eb" : "#c38394";
     const layers = vworldMeasurePoints.map((point) =>
       window.L.circleMarker(point, {
         radius: 5,
-        color: "#f2c76b",
-        fillColor: "#114636",
+        color: measureColor,
+        fillColor: "#f8eaf0",
         fillOpacity: 1,
         weight: 2,
+        interactive: false,
       })
     );
 
     if (vworldMeasurePoints.length >= 2) {
       const shapeOptions = {
-        color: "#f2c76b",
-        fillColor: "#1f6b55",
+        color: measureColor,
+        fillColor: "#c38394",
         fillOpacity: 0.24,
         weight: 3,
+        interactive: false,
+        className: "vworld-measure-shape",
       };
 
       if (vworldMeasureMode === "area" && vworldMeasurePoints.length >= 3) {
@@ -1362,32 +5007,260 @@ function initPortalTabs() {
         return sum + vworldMap.distance(vworldMeasurePoints[index - 1], point);
       }, 0);
 
-      updateMeasureOutput(vworldMeasurePoints.length > 1 ? `거리 ${formatDistance(distance)}` : "지도에서 지점을 클릭하세요.");
+      updateMeasureOutput(vworldMeasurePoints.length > 1 ? `거리 ${formatDistance(distance)} · 우클릭/Enter로 완료` : "다음 지점을 클릭하세요. 우클릭/Enter로 완료합니다.");
       return;
     }
 
     if (vworldMeasureMode === "area") {
       const area = calculatePolygonArea(vworldMeasurePoints);
-      updateMeasureOutput(vworldMeasurePoints.length > 2 ? `면적 ${formatArea(area)}` : "지도에서 3개 이상 지점을 클릭하세요.");
+      updateMeasureOutput(vworldMeasurePoints.length > 2 ? `면적 ${formatArea(area)} · 우클릭/Enter로 완료` : "지도에서 3개 이상 지점을 클릭하세요.");
     }
   }
 
-  function handleVworldMapClick(event) {
-    if (!vworldMeasureMode) {
+  function finishVworldMeasure() {
+    if (!vworldMeasureMode || !vworldMap || !vworldMeasureLayer) return false;
+    const isArea = vworldMeasureMode === "area";
+    if (vworldMeasurePoints.length < (isArea ? 3 : 2)) {
+      updateMeasureOutput(isArea ? "면적을 측정하려면 세 지점 이상 클릭하세요." : "거리를 측정하려면 두 지점 이상 클릭하세요.");
+      return false;
+    }
+    const value = isArea ? calculatePolygonArea(vworldMeasurePoints) : vworldMeasurePoints.reduce((sum, point, index) =>
+      index ? sum + vworldMap.distance(vworldMeasurePoints[index - 1], point) : sum, 0);
+    const label = isArea ? `면적 ${formatArea(value)}` : `거리 ${formatDistance(value)}`;
+    window.L.tooltip({ permanent: true, direction: "top", offset: [0, -8], className: isArea ? "vworld-area-label" : "vworld-distance-label", interactive: false })
+      .setLatLng(vworldMeasurePoints[vworldMeasurePoints.length - 1])
+      .setContent(label)
+      .addTo(vworldMeasureLayer);
+    // Keep completed distance and area layers until the user explicitly clears them.
+    vworldCompletedMeasureLayers.push(vworldMeasureLayer);
+    vworldMeasureLayer = null;
+    vworldMeasurePoints = [];
+    updateMeasureOutput(`${label} · 완료. 다음 시작점을 클릭하세요.`);
+    return true;
+  }
+
+  function bindVworldMeasureCompletion(mapNode) {
+    if (mapNode.dataset.measureCompletionBound) return;
+    mapNode.dataset.measureCompletionBound = "true";
+    mapNode.addEventListener("contextmenu", (event) => {
+      if (!vworldMeasureMode || event.target.closest(".leaflet-control, button, a, input, select, textarea")) return;
+      event.preventDefault();
+      finishVworldMeasure();
+    });
+    mapNode.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" || event.isComposing || event.repeat || !vworldMeasureMode) return;
+      if (event.target.closest(".leaflet-control, button, a, input, select, textarea, [contenteditable]")) return;
+      event.preventDefault();
+      finishVworldMeasure();
+    });
+  }
+
+  function getVworldInfoPanel() {
+    return document.querySelector("[data-vworld-info-panel]");
+  }
+
+  function setVworldInfoTab(tabKey = "building") {
+    const panel = getVworldInfoPanel();
+
+    if (!panel) {
       return;
     }
 
-    vworldMeasurePoints.push(event.latlng);
-    renderVworldMeasure();
+    panel.querySelectorAll("[data-vworld-info-tab]").forEach((button) => {
+      const isActive = button.dataset.vworldInfoTab === tabKey;
+      button.classList.toggle("is-active", isActive);
+      button.setAttribute("aria-selected", String(isActive));
+    });
+
+    panel.querySelectorAll("[data-vworld-info-content]").forEach((content) => {
+      const isActive = content.dataset.vworldInfoContent === tabKey;
+      content.classList.toggle("is-active", isActive);
+      content.hidden = !isActive;
+    });
+  }
+
+  function setVworldInfoContent(type, html) {
+    const panel = getVworldInfoPanel();
+    const content = panel?.querySelector(`[data-vworld-info-content="${type}"]`);
+
+    if (content) {
+      content.innerHTML = html;
+    }
+  }
+
+  function showVworldInfoPanel() {
+    const panel = getVworldInfoPanel();
+
+    if (!panel) {
+      return;
+    }
+
+    panel.hidden = false;
+    refreshIcons();
+  }
+
+  function hideVworldInfoPanel() {
+    const panel = getVworldInfoPanel();
+
+    if (panel) {
+      panel.hidden = true;
+    }
+  }
+
+  function clearVworldClickInfo() {
+    vworldInfoRequestId += 1;
+    hideVworldInfoPanel();
+
+    if (vworldInfoMarker && vworldMap) {
+      vworldMap.removeLayer(vworldInfoMarker);
+    }
+
+    vworldInfoMarker = null;
+  }
+
+  function syncVworldInfoMarker(latlng) {
+    if (!vworldMap || !window.L || !latlng) {
+      return;
+    }
+
+    if (vworldInfoMarker) {
+      vworldMap.removeLayer(vworldInfoMarker);
+      vworldInfoMarker = null;
+    }
+
+    vworldInfoMarker = window.L.circleMarker(latlng, {
+      radius: 7,
+      color: "#ffffff",
+      fillColor: "#4f5fd5",
+      fillOpacity: 0.95,
+      weight: 3,
+      interactive: false,
+    }).addTo(vworldMap);
+  }
+
+  async function loadVworldClickInfo(latlng) {
+    if (!vworldMap || !latlng) {
+      return;
+    }
+
+    const latitude = Number(latlng.lat);
+    const longitude = Number(latlng.lng);
+
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+      return;
+    }
+
+    const requestId = ++vworldInfoRequestId;
+    const loadingHtml = `
+      <p class="vworld-info-empty">V-World 정보를 조회하는 중입니다.</p>
+      <small class="vworld-info-note">좌표: ${escapeHtml(formatVworldCoordinate(latitude, longitude))}</small>
+    `;
+
+    showVworldInfoPanel();
+    setVworldInfoTab("building");
+    setVworldInfoContent("building", loadingHtml);
+    setVworldInfoContent("poi", loadingHtml);
+    syncVworldInfoMarker(latlng);
+    updateAerialStatus("클릭한 지점의 건축물정보와 POI 정보를 조회하는 중입니다.");
+
+    const parcelContext = await getClickedParcelContext(latitude, longitude);
+    const queryPoint = parcelContext.queryPoint || { latitude, longitude };
+    let pointAddress = parcelContext.address || "";
+
+    if (!pointAddress) {
+      try {
+        pointAddress = await reverseGeocodeParcelAddress(latitude, longitude);
+      } catch (error) {
+        pointAddress = "";
+      }
+    }
+
+    if (!pointAddress) {
+      pointAddress = getParcelAddress() || getParcelState().title || "";
+    }
+
+    const [buildingResult, poiResult] = await Promise.allSettled([
+      searchVworldBuildingInfoForParcel(parcelContext, queryPoint.latitude, queryPoint.longitude),
+      searchVworldNearbyPois(queryPoint.latitude, queryPoint.longitude, pointAddress),
+    ]);
+
+    if (requestId !== vworldInfoRequestId) {
+      return;
+    }
+
+    const buildingFeatures = buildingResult.status === "fulfilled" ? buildingResult.value : [];
+    const pois = poiResult.status === "fulfilled" ? poiResult.value : [];
+
+    setVworldInfoContent(
+      "building",
+      buildingResult.status === "fulfilled"
+        ? renderBuildingInfo(buildingFeatures, pointAddress, queryPoint.latitude, queryPoint.longitude)
+        : renderBuildingInfo([], pointAddress, queryPoint.latitude, queryPoint.longitude)
+    );
+    setVworldInfoContent(
+      "poi",
+      poiResult.status === "fulfilled" ? renderPoiInfo(pois, queryPoint.latitude, queryPoint.longitude) : renderVworldInfoError("POI정보", latitude, longitude)
+    );
+
+    if (!buildingFeatures.length && !pois.length) {
+      updateAerialStatus("클릭한 지점의 V-World 건축물정보와 POI 정보를 찾지 못했습니다.");
+      return;
+    }
+
+    updateAerialStatus(`건축물정보 ${buildingFeatures.length}건, POI정보 ${pois.length}건을 조회했습니다.`);
+  }
+
+  function handleVworldMapClick(event) {
+    if (vworldMeasureMode) {
+      vworldMap.getContainer().focus({ preventScroll: true });
+      vworldMeasurePoints.push(event.latlng);
+      renderVworldMeasure();
+      return;
+    }
+
+    selectAerialParcelDetails({ latitude: event.latlng.lat, longitude: event.latlng.lng, title: "선택한 필지" });
+
+    updateAerialStatus("POI 마커를 클릭하면 POI정보와 해당 필지의 건축물정보를 확인할 수 있습니다.");
   }
 
   function setVworldMeasureMode(mode) {
-    clearVworldMeasure();
+    // Save a valid current measurement on tool changes; discard only unfinished points.
+    if (!finishVworldMeasure() && vworldMeasureLayer && vworldMap) {
+      vworldMap.removeLayer(vworldMeasureLayer);
+    }
+    vworldMeasureLayer = null;
+    vworldMeasurePoints = [];
+    clearVworldClickInfo();
     vworldMeasureMode = mode;
-    updateMeasureOutput(mode === "distance" ? "거리재기: 지도에서 지점을 클릭하세요." : "면적재기: 지도에서 3개 이상 지점을 클릭하세요.");
+    document.querySelectorAll('[data-vworld-action="distance"], [data-vworld-action="area"]').forEach((button) => {
+      button.classList.toggle("is-active", button.dataset.vworldAction === mode);
+    });
+    syncVworldMeasureCursor();
+    vworldMap?.getContainer().focus({ preventScroll: true });
+    updateMeasureOutput(mode === "distance" ? "지점을 클릭하세요. 우클릭/Enter로 완료 후 계속 측정합니다." : "3개 이상 지점을 클릭하세요. 우클릭/Enter로 면적 측정을 완료합니다.");
   }
 
   function bindVworldTools() {
+    bindVworldUrbanPlanningTools();
+    const infoPanel = getVworldInfoPanel();
+
+    if (infoPanel && !infoPanel.dataset.bound) {
+      infoPanel.dataset.bound = "true";
+      infoPanel.addEventListener("click", (event) => {
+        const tabButton = event.target.closest("[data-vworld-info-tab]");
+        const closeButton = event.target.closest("[data-vworld-info-close]");
+
+        if (tabButton) {
+          setVworldInfoTab(tabButton.dataset.vworldInfoTab);
+          return;
+        }
+
+        if (closeButton) {
+          hideVworldInfoPanel();
+        }
+      });
+    }
+
     document.querySelectorAll("[data-vworld-layer]").forEach((button) => {
       button.addEventListener("click", () => setVworldLayer(button.dataset.vworldLayer));
     });
@@ -1406,6 +5279,10 @@ function initPortalTabs() {
           updateAerialStatus(vworldMarkerVisible ? "마커를 표시했습니다." : "마커를 숨겼습니다.");
         }
 
+        if (action === "toggle-cadastral") {
+          toggleVworldCadastralLayer();
+        }
+
         if (action === "parcels") {
           loadNearbyParcelShapes(vworldCurrentPoint);
         }
@@ -1420,10 +5297,12 @@ function initPortalTabs() {
 
         if (action === "clear") {
           clearVworldMeasure();
-          updateAerialStatus("측정 표시를 초기화했습니다.");
+          updateAerialStatus("거리·면적 측정값을 초기화했습니다.");
         }
       });
     });
+
+    syncVworldCadastralButton();
   }
 
   async function initAerialMap() {
@@ -1440,7 +5319,17 @@ function initPortalTabs() {
       vworldHybridLayer = null;
       vworldParcelLayer = null;
       vworldRadiusLayer = null;
+      vworldCadastralLayer = null;
+      vworldUrbanPlanningOverlays.clear();
+      vworldUrbanPlanningStates.clear();
+      vworldPoiLayer = null;
+      vworldLotNumberLayer = null;
+      vworldLabelRequestId += 1;
+      vworldPoiMarkerRequestId += 1;
+      vworldInfoMarker = null;
+      vworldInfoRequestId += 1;
       vworldMeasureLayer = null;
+      vworldCompletedMeasureLayers = [];
       vworldMeasurePoints = [];
       vworldMeasureMode = "";
     }
@@ -1467,12 +5356,19 @@ function initPortalTabs() {
     emptyState.hidden = true;
 
     vworldMap = window.L.map(mapNode, {
-      zoomControl: true,
+      zoomControl: false,
+      maxZoom: vworldMapMaxZoom,
     }).setView(defaultAerialCenter, 16);
+    window.L.control.zoom({ position: "topright" }).addTo(vworldMap);
     vworldMap.on("click", handleVworldMapClick);
+    bindVworldMeasureCompletion(mapNode);
+    vworldMap.on("zoom", syncVworldLotNumberLabelScale);
+    vworldMap.on("zoomend", rerenderVworldLotNumberLabels);
+    syncVworldLotNumberLabelScale();
 
     setVworldLayer(vworldCurrentLayer);
     bindVworldTools();
+    bindAerialPanelToggle();
 
     status.textContent = `"${parcelAddress}" 위치를 V-World에서 검색 중입니다.`;
 
@@ -1486,7 +5382,7 @@ function initPortalTabs() {
 
       const position = [point.latitude, point.longitude];
       vworldCurrentPoint = point;
-      vworldMap.setView(position, 18);
+      vworldMap.setView(position, vworldParcelDetailZoom);
       syncVworldMarker();
       if (vworldMarker) {
         vworldMarker.openPopup();
@@ -1498,13 +5394,97 @@ function initPortalTabs() {
     }
   }
 
+  async function initAerialMapConnected() {
+    const mapNode = document.querySelector("#vworld-map");
+    const emptyState = document.querySelector("[data-vworld-empty]");
+    const status = document.querySelector("[data-aerial-status]");
+    const parcelAddress = getParcelAddress();
+
+    if (vworldMap) {
+      vworldMap.remove();
+      vworldMap = null;
+      vworldMarker = null;
+      vworldBaseLayer = null;
+      vworldHybridLayer = null;
+      vworldParcelLayer = null;
+      vworldRadiusLayer = null;
+      vworldCadastralLayer = null;
+      vworldUrbanPlanningOverlays.clear();
+      vworldUrbanPlanningStates.clear();
+      vworldPoiLayer = null;
+      vworldLotNumberLayer = null;
+      vworldLabelRequestId += 1;
+      vworldPoiMarkerRequestId += 1;
+      vworldInfoMarker = null;
+      vworldInfoRequestId += 1;
+      vworldMeasureLayer = null;
+      vworldCompletedMeasureLayers = [];
+      vworldMeasurePoints = [];
+      vworldMeasureMode = "";
+    }
+
+    if (!mapNode || !emptyState || !status) {
+      return;
+    }
+
+    if (!window.L) {
+      mapNode.classList.add("is-hidden");
+      emptyState.hidden = false;
+      status.textContent = "지도 라이브러리를 불러오지 못했습니다. 네트워크 연결을 확인해 주세요.";
+      return;
+    }
+
+    mapNode.classList.remove("is-hidden");
+    emptyState.hidden = true;
+
+    vworldMap = window.L.map(mapNode, {
+      zoomControl: false,
+      maxZoom: vworldMapMaxZoom,
+    }).setView([36.4, 127.8], 7);
+    window.L.control.zoom({ position: "topright" }).addTo(vworldMap);
+    vworldMap.on("click", handleVworldMapClick);
+    bindVworldMeasureCompletion(mapNode);
+    vworldMap.on("zoom", syncVworldLotNumberLabelScale);
+    vworldMap.on("zoomend", rerenderVworldLotNumberLabels);
+    syncVworldLotNumberLabelScale();
+
+    setVworldLayer("satellite");
+    setVworldCadastralLayer();
+    bindVworldTools();
+    bindAerialPanelToggle();
+
+    const savedState = getParcelState();
+
+    if (Number.isFinite(savedState.latitude) && Number.isFinite(savedState.longitude)) {
+      moveVworldToResult(savedState);
+      return;
+    }
+
+    if (!parcelAddress) {
+      status.textContent = "주소 또는 명칭을 검색한 뒤 결과를 선택해 주세요.";
+      return;
+    }
+
+    status.textContent = `"${parcelAddress}" 위치를 확인하는 중입니다.`;
+
+    try {
+      const point = await resolveParcelAddress();
+
+      if (point) {
+        moveVworldToResult(point);
+        return;
+      }
+
+      status.textContent = `"${parcelAddress}" 검색 결과를 찾지 못했습니다.`;
+    } catch (error) {
+      status.textContent = "V-World 검색 API를 불러오지 못했습니다. API 키와 네트워크 상태를 확인해 주세요.";
+    }
+  }
+
   function setActivePortal(portalKey) {
     const portal = portalData[portalKey];
     activePortalKey = portalKey;
-
-    if (parcelForm) {
-      parcelForm.hidden = portalKey === "aerial" || portalKey === "law";
-    }
+    const { view, isNew } = ensurePortalView(portalKey);
 
     portalTabs.forEach((button) => {
       const isActive = button.dataset.portal === portalKey;
@@ -1512,15 +5492,33 @@ function initPortalTabs() {
       button.setAttribute("aria-selected", String(isActive));
     });
 
-    portalPanel.innerHTML =
-      portal.type === "aerial" ? renderAerialPortal() : renderEmbeddedPortal(portal, { showParcelContext: portalKey === "eum" || portalKey === "map" });
+    portalViews.forEach((portalView, key) => {
+      portalView.hidden = key !== portalKey;
+    });
 
     refreshIcons();
-    syncSharedParcelText();
+
+    if (portal.type === "farmland") {
+      renderParcelDetails();
+      initFarmlandMap();
+    }
 
     if (portal.type === "aerial") {
-      bindAerialSearchForm();
-      window.requestAnimationFrame(() => initAerialMap());
+      if (isNew || !view.dataset.aerialInitialized) {
+        bindAerialSearchFormConnected();
+        view.dataset.aerialInitialized = "true";
+        window.requestAnimationFrame(() => initAerialMapConnected());
+      } else {
+        const state = getParcelState();
+
+        if (vworldMap) {
+          window.requestAnimationFrame(() => vworldMap.invalidateSize());
+
+          if (Number.isFinite(state.latitude) && Number.isFinite(state.longitude)) {
+            moveVworldToResult(state);
+          }
+        }
+      }
     }
 
     if ((portalKey === "eum" || portalKey === "map") && getParcelAddress() && !getParcelState().pnu) {
@@ -1535,26 +5533,212 @@ function initPortalTabs() {
   if (parcelInput) {
     parcelInput.value = readStoredValue(parcelStorageKey);
     parcelInput.addEventListener("input", () => {
-      saveParcelAddress();
-      syncSharedParcelText();
+      saveParcelAddress(parcelInput.value, { preserveTyping: true, updateInput: false });
+      clearParcelCandidateChoices();
+    });
+  }
+
+  if (parcelProvince) {
+    parcelProvince.value = readStoredValue(parcelProvinceStorageKey) || "전북특별자치도";
+    parcelProvince.addEventListener("change", () => {
+      saveParcelRegion();
+      clearParcelCandidateChoices();
+      updateParcelStatus("선택한 시도 기준으로 다음 주소 검색을 진행합니다.");
+    });
+  }
+
+  if (parcelCity) {
+    parcelCity.value = readStoredValue(parcelCityStorageKey);
+    parcelCity.addEventListener("change", () => {
+      saveParcelRegion();
+      clearParcelCandidateChoices();
+      updateParcelStatus(parcelCity.value ? `${getParcelProvince()} ${parcelCity.value} 기준으로 다음 주소 검색을 진행합니다.` : "시군 기준을 해제했습니다.");
     });
   }
 
   if (parcelForm) {
+    parcelForm.addEventListener("click", async (event) => {
+      const candidateButton = event.target.closest("[data-parcel-candidate]");
+
+      if (!candidateButton) {
+        return;
+      }
+
+      const candidateIndex = Number(candidateButton.dataset.parcelCandidate);
+      const result = parcelCandidateResults[candidateIndex];
+
+      if (!result) {
+        return;
+      }
+
+      updateParcelStatus(`${result.title || result.searchQuery} 주소를 연결하는 중입니다.`);
+
+      try {
+        const selectedQuery = result.searchQuery || result.parcelAddress || result.title || getParcelAddress();
+        let nextState;
+
+        if (Number.isFinite(result.latitude) && Number.isFinite(result.longitude)) {
+          nextState = await createParcelStateFromResult(result, selectedQuery);
+        } else {
+          saveParcelAddress(selectedQuery);
+          nextState = await resolveParcelAddress();
+        }
+
+        if (!nextState || nextState.ambiguous) {
+          updateParcelStatus(`${selectedQuery} 검색 결과를 찾지 못했습니다. 지번을 더 정확히 입력해 주세요.`);
+          return;
+        }
+
+        writeStoredJson(parcelStateStorageKey, nextState);
+        setSharedParcelAddress(nextState.query);
+        saveParcelAddress(nextState.query);
+        clearParcelCandidateChoices();
+        updateParcelStatus(`${nextState.title || nextState.query} 기준으로 토지이음·토지이음지도·항공사진을 연결했습니다.`);
+        setActivePortal(activePortalKey);
+        if (activePortalKey === "farmland") focusFarmlandPoint(nextState, true);
+      } catch (error) {
+        updateParcelStatus("선택한 후보 주소를 연결하지 못했습니다. 다시 검색해 주세요.");
+      }
+    });
+
     parcelForm.addEventListener("submit", async (event) => {
       event.preventDefault();
-      saveParcelAddress();
-      await resolveParcelAddress();
-      setActivePortal(activePortalKey);
+      saveParcelRegion();
+      const originalAddress = getParcelAddress();
+      const address = buildContextualParcelAddress(originalAddress);
+      saveParcelAddress(address);
+
+      if (!address) {
+        updateParcelStatus("주소를 입력해 주세요.");
+        return;
+      }
+
+      updateParcelStatus(
+        originalAddress && originalAddress !== address ? `"${originalAddress}"을 "${address}" 기준으로 확인하는 중입니다.` : `"${address}" 주소를 확인하는 중입니다.`
+      );
+
+      try {
+        const state = await resolveParcelAddress();
+
+        if (state?.ambiguous && state.candidates?.length) {
+          renderParcelCandidateChoices(state.candidates, originalAddress || address);
+          updateParcelStatus(`${originalAddress || address} 후보가 여러 곳에 있습니다. 정확한 읍면을 선택해 주세요.`);
+          return;
+        }
+
+        clearParcelCandidateChoices();
+
+        if (state?.pnu || (Number.isFinite(state?.latitude) && Number.isFinite(state?.longitude))) {
+          updateParcelStatus(`${state.title || address} 기준으로 토지이음·토지이음지도·항공사진을 연결했습니다.`);
+        } else {
+          updateParcelStatus(`"${address}" 검색 결과를 찾지 못했습니다. 지번이나 도로명을 더 정확히 입력해 주세요.`);
+        }
+
+        setActivePortal(activePortalKey);
+        if (activePortalKey === "farmland") focusFarmlandPoint(state, true);
+      } catch (error) {
+        updateParcelStatus("주소 검색 API를 불러오지 못했습니다. 네트워크 상태와 API 키를 확인해 주세요.");
+      }
     });
   }
+
+  async function copyParcelAddress() {
+    const address = getParcelAddress();
+
+    if (!address) {
+      updateParcelStatus("복사할 주소가 없습니다. 먼저 주소를 검색해 주세요.");
+      return false;
+    }
+
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(address);
+      } else {
+        const textarea = document.createElement("textarea");
+        textarea.value = address;
+        textarea.setAttribute("readonly", "");
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+        document.body.append(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        textarea.remove();
+      }
+
+      updateParcelStatus(`"${address}" 주소를 복사했습니다.`);
+      return true;
+    } catch (error) {
+      updateParcelStatus("브라우저 보안 설정으로 자동 복사가 제한되었습니다. 화면의 주소를 직접 복사해 주세요.");
+      return false;
+    }
+  }
+
+  portalPanel.addEventListener("keydown", (event) => {
+    const tab = event.target.closest("[data-farmland-info-tab]");
+    if (!tab || !["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+    event.preventDefault();
+    const tabs = [...tab.parentElement.querySelectorAll("[data-farmland-info-tab]")];
+    const index = tabs.indexOf(tab);
+    const nextIndex = event.key === "Home" ? 0 : event.key === "End" ? tabs.length - 1 : (index + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length;
+    setFarmlandInfoTab(tabs[nextIndex].dataset.farmlandInfoTab);
+    tabs[nextIndex].focus();
+  });
+
+  portalPanel.addEventListener("click", (event) => {
+    const infoTab = event.target.closest("[data-farmland-info-tab]");
+    if (infoTab) {
+      setFarmlandInfoTab(infoTab.dataset.farmlandInfoTab);
+      return;
+    }
+    if (event.target.closest("[data-farmland-retry]")) {
+      initFarmlandMap();
+      return;
+    }
+    if (event.target.closest("[data-farmland-center]")) {
+      resolveParcelAddress().then((point) => {
+        if (point?.ambiguous) {
+          renderParcelCandidateChoices(point.candidates, getParcelAddress());
+          document.querySelector("[data-farmland-status]").textContent = "상단 검색 결과에서 정확한 지번을 선택해 주세요.";
+        } else if (point) focusFarmlandPoint(point, true);
+        else document.querySelector("[data-farmland-status]").textContent = "상단에서 지번주소를 먼저 검색해 주세요.";
+      }).catch(() => { document.querySelector("[data-farmland-status]").textContent = "주소를 확인하지 못했습니다. 다시 검색해 주세요."; });
+      return;
+    }
+    const eumActionButton = event.target.closest("[data-eum-action]");
+    const copyButton = event.target.closest("[data-farmland-copy]");
+
+    if (eumActionButton) {
+      const action = eumActionButton.dataset.eumAction;
+
+      if (action === "reload") {
+        refreshEumIframe();
+      } else if (action === "reset") {
+        refreshEumIframe({ resetSession: true });
+      } else if (action === "stable-map") {
+        setActivePortal("aerial");
+        updateParcelStatus("항공사진에서 V-World 연속지적도와 지번 정보를 안정 도면으로 확인합니다.");
+      } else if (action === "map") {
+        setActivePortal("map");
+        updateParcelStatus("토지이음지도에서 같은 필지를 확인합니다.");
+      }
+
+      return;
+    }
+
+    if (copyButton) {
+      copyParcelAddress();
+      return;
+    }
+
+  });
 
   portalTabs.forEach((button) => {
     button.addEventListener("click", () => setActivePortal(button.dataset.portal));
   });
 
-  const initialPortal = new URLSearchParams(window.location.search).get("portal");
-  setActivePortal(portalData[initialPortal] ? initialPortal : "eum");
+  const requestedPortal = initialParams.get("portal");
+  const initialPortal = requestedPortal === "realestate" ? "farmland" : requestedPortal;
+  setActivePortal(selectedLaw ? "law" : portalData[initialPortal] ? initialPortal : "eum");
 }
 
 function renderList(target, items) {
@@ -1581,8 +5765,12 @@ function initProcessSteps() {
     return;
   }
 
-  function setActiveStep(stepKey) {
+  function setActiveStep(stepKey, options = {}) {
     const step = processSteps[stepKey];
+
+    if (!step) {
+      return;
+    }
 
     stepButtons.forEach((button) => {
       const isActive = button.dataset.step === stepKey;
@@ -1597,13 +5785,23 @@ function initProcessSteps() {
     renderList(stepChecks, step.checks);
     renderList(stepOutputs, step.outputs);
     stepNotice.textContent = step.notice;
+
+    if (options.updateHash) {
+      window.history.replaceState(null, "", `#${stepKey}`);
+    }
   }
 
   stepButtons.forEach((button) => {
-    button.addEventListener("click", () => setActiveStep(button.dataset.step));
+    button.addEventListener("click", () => setActiveStep(button.dataset.step, { updateHash: true }));
   });
 
-  setActiveStep("consult");
+  function activateStepFromHash() {
+    const hashStep = window.location.hash.replace("#", "");
+    setActiveStep(processSteps[hashStep] ? hashStep : "consult");
+  }
+
+  window.addEventListener("hashchange", activateStepFromHash);
+  activateStepFromHash();
 }
 
 function initReadinessChecklist() {
@@ -1673,6 +5871,15 @@ function initGuidePages() {
   const hasInitialPage = [...pagePanels].some((panel) => panel.dataset.guidePanel === initialPage);
 
   setActiveGuidePage(hasInitialPage ? initialPage : pageButtons[0].dataset.guidePage);
+
+  window.addEventListener("hashchange", () => {
+    const nextPage = window.location.hash.replace("#", "");
+    const hasNextPage = [...pagePanels].some((panel) => panel.dataset.guidePanel === nextPage);
+
+    if (hasNextPage) {
+      setActiveGuidePage(nextPage);
+    }
+  });
 }
 
 function initGuidePrintButtons() {
@@ -1717,13 +5924,775 @@ function initGuidePrintButtons() {
   });
 }
 
+function setScopedContentTab(scope, tabKey) {
+  const buttons = [...scope.querySelectorAll("[data-content-tab]")];
+  const panels = [...scope.querySelectorAll("[data-content-panel]")];
+
+  if (!buttons.length || !panels.length) {
+    return;
+  }
+
+  const nextKey = tabKey || buttons[0].dataset.contentTab;
+  scope.dataset.activeContentTab = nextKey;
+  scope.classList.remove("is-searching");
+
+  buttons.forEach((button) => {
+    const isActive = button.dataset.contentTab === nextKey;
+    button.classList.toggle("is-active", isActive);
+    button.setAttribute("aria-selected", String(isActive));
+  });
+
+  panels.forEach((panel) => {
+    const isActive = panel.dataset.contentPanel === nextKey;
+    panel.classList.toggle("is-active", isActive);
+    panel.hidden = !isActive;
+  });
+}
+
+function initContentTabs() {
+  document.querySelectorAll("[data-content-scope]").forEach((scope) => {
+    const buttons = [...scope.querySelectorAll("[data-content-tab]")];
+
+    if (!buttons.length) {
+      return;
+    }
+
+    function getHashContentKey() {
+      const hashKey = window.location.hash.replace("#", "");
+      return buttons.some((button) => button.dataset.contentTab === hashKey) ? hashKey : "";
+    }
+
+    buttons.forEach((button) => {
+      button.addEventListener("click", () => {
+        scope.querySelectorAll("[data-search-item]").forEach((item) => {
+          item.hidden = false;
+        });
+        setScopedContentTab(scope, button.dataset.contentTab);
+        window.history.replaceState(null, "", `#${button.dataset.contentTab}`);
+
+        const status = scope.querySelector("[data-page-search-status]");
+        const input = scope.querySelector("[data-page-search-input]");
+
+        if (input) {
+          input.value = "";
+        }
+
+        if (status) {
+          status.textContent = "검색어를 입력하면 문구를 바로 찾습니다.";
+        }
+      });
+    });
+
+    const initialKey =
+      getHashContentKey() || buttons.find((button) => button.classList.contains("is-active"))?.dataset.contentTab || buttons[0].dataset.contentTab;
+    setScopedContentTab(scope, initialKey);
+
+    window.addEventListener("hashchange", () => {
+      const hashKey = getHashContentKey();
+
+      if (hashKey) {
+        scope.querySelectorAll("[data-search-item]").forEach((item) => {
+          item.hidden = false;
+        });
+        setScopedContentTab(scope, hashKey);
+      }
+    });
+  });
+}
+
+function setKnowledgeSubtab(container, tabKey) {
+  const buttons = [...container.querySelectorAll("[data-knowledge-subtab]")];
+  const panels = [...container.querySelectorAll("[data-knowledge-subpanel]")];
+
+  if (!buttons.length || !panels.length) {
+    return;
+  }
+
+  const nextKey = tabKey || buttons[0].dataset.knowledgeSubtab;
+  container.dataset.activeKnowledgeSubtab = nextKey;
+
+  buttons.forEach((button) => {
+    const isActive = button.dataset.knowledgeSubtab === nextKey;
+    button.classList.toggle("is-active", isActive);
+    button.setAttribute("aria-selected", String(isActive));
+  });
+
+  panels.forEach((panel) => {
+    const isActive = panel.dataset.knowledgeSubpanel === nextKey;
+    panel.classList.toggle("is-active", isActive);
+    panel.hidden = !isActive;
+  });
+}
+
+function initKnowledgeSubtabs() {
+  document.querySelectorAll("[data-knowledge-subtabs]").forEach((container) => {
+    const buttons = [...container.querySelectorAll("[data-knowledge-subtab]")];
+
+    if (!buttons.length) {
+      return;
+    }
+
+    buttons.forEach((button) => {
+      button.addEventListener("click", () => {
+        const scope = button.closest("[data-content-scope]");
+        const searchInput = scope?.querySelector("[data-page-search-input]");
+        const searchStatus = scope?.querySelector("[data-page-search-status]");
+
+        if (searchInput) {
+          searchInput.value = "";
+        }
+
+        if (searchStatus) {
+          searchStatus.textContent = "검색어를 입력하면 문구를 바로 찾습니다.";
+        }
+
+        container.querySelectorAll("[data-search-item]").forEach((item) => {
+          item.hidden = false;
+        });
+        setKnowledgeSubtab(container, button.dataset.knowledgeSubtab);
+      });
+    });
+
+    const initialKey = buttons.find((button) => button.classList.contains("is-active"))?.dataset.knowledgeSubtab || buttons[0].dataset.knowledgeSubtab;
+    setKnowledgeSubtab(container, initialKey);
+  });
+}
+
+function initManualDocumentTabs() {
+  document.querySelectorAll("[data-manual-document-tabs]").forEach((tablist) => {
+    const container = tablist.closest(".manual-step-card") || document;
+    const buttons = [...tablist.querySelectorAll("[data-manual-document-tab]")];
+    const panels = [...container.querySelectorAll("[data-manual-document-panel]")];
+
+    if (!buttons.length || !panels.length) {
+      return;
+    }
+
+    function setActiveDocument(documentKey) {
+      buttons.forEach((button) => {
+        const isActive = button.dataset.manualDocumentTab === documentKey;
+        button.classList.toggle("is-active", isActive);
+        button.setAttribute("aria-selected", String(isActive));
+      });
+
+      panels.forEach((panel) => {
+        const isActive = panel.dataset.manualDocumentPanel === documentKey;
+        panel.classList.toggle("is-active", isActive);
+        panel.hidden = !isActive;
+      });
+    }
+
+    buttons.forEach((button) => {
+      button.addEventListener("click", () => setActiveDocument(button.dataset.manualDocumentTab));
+    });
+
+    const initialKey = buttons.find((button) => button.classList.contains("is-active"))?.dataset.manualDocumentTab || buttons[0].dataset.manualDocumentTab;
+    setActiveDocument(initialKey);
+  });
+}
+
+const buanVillageMap = {
+  "부안읍": ["동중리", "서외리", "선은리", "봉덕리", "연곡리", "신흥리", "내요리", "모산리", "행중리", "신운리"],
+  "주산면": ["갈촌리", "돈계리", "덕림리", "백석리", "사산리", "소산리", "소주리", "주산리"],
+  "동진면": ["당상리", "동전리", "본덕리", "봉황리", "안성리", "장등리", "증산리", "하장리"],
+  "행안면": ["대초리", "삼간리", "신기리", "역리", "진동리"],
+  "계화면": ["계화리", "궁안리", "양산리", "의복리", "창북리"],
+  "보안면": ["남포리", "상림리", "신복리", "영전리", "우동리", "월천리", "유천리", "하입석리"],
+  "변산면": ["격포리", "대항리", "도청리", "마포리", "운산리", "중계리", "지서리"],
+  "진서면": ["곰소리", "석포리", "운호리", "진서리"],
+  "백산면": ["금판리", "대수리", "덕신리", "신평리", "오곡리", "용계리", "원천리", "평교리", "하청리"],
+  "상서면": ["가오리", "감교리", "고잔리", "용서리", "장동리", "청림리", "통정리"],
+  "하서면": ["백련리", "석상리", "언독리", "장신리", "청호리"],
+  "줄포면": ["난산리", "대동리", "신리", "우포리", "장동리", "줄포리", "파산리"],
+  "위도면": ["대리", "식도리", "정금리", "진리", "치도리"],
+};
+
+const jeonbukTownVillageMap = window.jeonbukTownVillageMapData || {
+  "부안군": buanVillageMap,
+};
+
+function getLocalAerialTownMap(city) {
+  return jeonbukTownVillageMap[city] || {};
+}
+
+function getLocalAerialTownOptions(city) {
+  return Object.keys(getLocalAerialTownMap(city));
+}
+
+function getLocalAerialVillageOptions(city, town) {
+  return getLocalAerialTownMap(city)[town] || [];
+}
+
+const landCategoryOptions = ["전", "답", "대", "임야", "도로", "구거", "하천", "잡종지", "과수원", "목장용지", "공장용지", "학교용지", "주차장", "주유소용지", "창고용지", "공원", "체육용지", "종교용지", "묘지"];
+
+function formatNumber(value, digits = 1) {
+  if (!Number.isFinite(value)) {
+    return "";
+  }
+
+  return value.toLocaleString("ko-KR", {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  });
+}
+
+function initEraConverters() {
+  document.querySelectorAll("[data-era-converter]").forEach((converter) => {
+    const typeSelect = converter.querySelector("[data-era-type]");
+    const yearInput = converter.querySelector("[data-era-year]");
+    const output = converter.querySelector("[data-era-output]");
+    const note = converter.querySelector("[data-era-note]");
+
+    if (!typeSelect || !yearInput || !output || !note) {
+      return;
+    }
+
+    const eraData = {
+      taisho: { label: "대정", start: 1911, min: 1, max: 15 },
+      showa: { label: "소화", start: 1925, min: 1, max: 64 },
+      dangi: { label: "단기", start: -2333, min: 2334, max: 9999 },
+    };
+
+    function updateConverter() {
+      const era = eraData[typeSelect.value] || eraData.taisho;
+      const inputYear = Number(yearInput.value);
+
+      if (!yearInput.value || !Number.isFinite(inputYear)) {
+        output.textContent = "연도를 입력하세요";
+        note.textContent = `${era.label} 연도를 입력하면 서기 연도를 계산합니다.`;
+        return;
+      }
+
+      const gregorianYear = typeSelect.value === "dangi" ? inputYear - 2333 : inputYear + era.start;
+      output.textContent = `${gregorianYear.toLocaleString("ko-KR")}년`;
+
+      if (inputYear < era.min || inputYear > era.max) {
+        note.textContent = `${era.label} ${inputYear.toLocaleString("ko-KR")}년은 일반적인 사용 범위 밖입니다. 계산값만 참고하세요.`;
+      } else if (typeSelect.value === "dangi") {
+        note.textContent = `단기 ${inputYear.toLocaleString("ko-KR")}년은 서기 ${gregorianYear.toLocaleString("ko-KR")}년입니다.`;
+      } else {
+        note.textContent = `${era.label} ${inputYear.toLocaleString("ko-KR")}년은 서기 ${gregorianYear.toLocaleString("ko-KR")}년입니다.`;
+      }
+    }
+
+    typeSelect.addEventListener("change", updateConverter);
+    yearInput.addEventListener("input", updateConverter);
+    updateConverter();
+  });
+}
+
+function initJeongdanCalculator() {
+  document.querySelectorAll("[data-jeongdan-calculator]").forEach((calculator) => {
+    const inputs = [...calculator.querySelectorAll("[data-jeongdan-field]")];
+    const pyeongOutput = calculator.querySelector('[data-jeongdan-output="pyeong"]');
+    const sqmOutput = calculator.querySelector('[data-jeongdan-output="sqm"]');
+
+    if (!inputs.length || !pyeongOutput || !sqmOutput) {
+      return;
+    }
+
+    function readField(name) {
+      const input = calculator.querySelector(`[data-jeongdan-field="${name}"]`);
+      return Number(input?.value) || 0;
+    }
+
+    function updateCalculator() {
+      const pyeong = readField("jeong") * 3000 + readField("dan") * 300 + readField("mu") * 30 + readField("bo");
+      const squareMeters = pyeong / 0.3025;
+
+      pyeongOutput.textContent = formatNumber(pyeong, Number.isInteger(pyeong) ? 0 : 1) || "0";
+      sqmOutput.textContent = formatNumber(squareMeters, 1) || "0.0";
+    }
+
+    inputs.forEach((input) => {
+      input.addEventListener("input", updateCalculator);
+    });
+
+    updateCalculator();
+  });
+}
+
+function initAreaUnitConverters() {
+  document.querySelectorAll("[data-area-unit-converter]").forEach((converter) => {
+    const sqmInput = converter.querySelector("[data-area-unit-sqm]");
+    const pyeongInput = converter.querySelector("[data-area-unit-pyeong]");
+    const note = converter.querySelector("[data-area-unit-note]");
+
+    if (!sqmInput || !pyeongInput || !note) {
+      return;
+    }
+
+    function updateFromSquareMeters() {
+      const squareMeters = Number(sqmInput.value);
+
+      if (!sqmInput.value || !Number.isFinite(squareMeters)) {
+        pyeongInput.value = "";
+        note.textContent = "값을 입력하면 자동 계산됩니다.";
+        return;
+      }
+
+      const pyeong = squareMeters * 0.3025;
+      pyeongInput.value = pyeong.toFixed(2);
+      note.textContent = `${formatNumber(squareMeters, 2)}㎡ = ${formatNumber(pyeong, 2)}평`;
+    }
+
+    function updateFromPyeong() {
+      const pyeong = Number(pyeongInput.value);
+
+      if (!pyeongInput.value || !Number.isFinite(pyeong)) {
+        sqmInput.value = "";
+        note.textContent = "값을 입력하면 자동 계산됩니다.";
+        return;
+      }
+
+      const squareMeters = pyeong / 0.3025;
+      sqmInput.value = squareMeters.toFixed(2);
+      note.textContent = `${formatNumber(pyeong, 2)}평 = ${formatNumber(squareMeters, 2)}㎡`;
+    }
+
+    sqmInput.addEventListener("input", updateFromSquareMeters);
+    pyeongInput.addEventListener("input", updateFromPyeong);
+  });
+}
+
+function initAreaChangeBuilders() {
+  document.querySelectorAll("[data-area-change-builder]").forEach((builder) => {
+    const rows = builder.querySelector("[data-area-rows]");
+    const addButton = builder.querySelector("[data-area-row-add]");
+
+    if (!rows) {
+      return;
+    }
+
+    function fillSelect(select, options, placeholder) {
+      const currentValue = select.value;
+      select.replaceChildren(
+        new Option(placeholder, ""),
+        ...options.map((option) => new Option(option, option))
+      );
+
+      if (options.includes(currentValue)) {
+        select.value = currentValue;
+      }
+    }
+
+    function setupVillageSelect(row) {
+      const townSelect = row.querySelector('[data-area-field="town"]');
+      const villageSelect = row.querySelector('[data-area-field="village"]');
+
+      if (!townSelect || !villageSelect) {
+        return;
+      }
+
+      const villages = buanVillageMap[townSelect.value] || [];
+      fillSelect(villageSelect, villages, townSelect.value ? "동리 선택" : "읍면 먼저 선택");
+    }
+
+    function setupRow(row) {
+      const townSelect = row.querySelector('[data-area-field="town"]');
+      const landCategorySelect = row.querySelector('[data-area-field="landCategory"]');
+
+      if (townSelect && townSelect.options.length <= 1) {
+        fillSelect(townSelect, Object.keys(buanVillageMap), "읍면 선택");
+      }
+
+      if (landCategorySelect && landCategorySelect.options.length <= 1) {
+        fillSelect(landCategorySelect, landCategoryOptions, "지목 선택");
+      }
+
+      setupVillageSelect(row);
+      updateAreaRow(row);
+    }
+
+    function updateAreaRow(row) {
+      const ledgerInput = row.querySelector('[data-area-field="ledgerArea"]');
+      const computedInput = row.querySelector('[data-area-field="computedArea"]');
+      const ledgerArea = Number(ledgerInput?.value);
+      const computedArea = Number(computedInput?.value);
+      const toleranceOutput = row.querySelector('[data-area-output="tolerance"]');
+      const errorOutput = row.querySelector('[data-area-output="error"]');
+
+      if (toleranceOutput) {
+        const tolerance = ledgerInput?.value && Number.isFinite(ledgerArea) && ledgerArea > 0 ? 0.026 * 0.026 * 1200 * Math.sqrt(ledgerArea) : 0;
+        toleranceOutput.textContent = formatNumber(tolerance, 1) || "0.0";
+      }
+
+      if (errorOutput) {
+        const error = ledgerInput?.value && computedInput?.value && Number.isFinite(ledgerArea) && Number.isFinite(computedArea) ? computedArea - ledgerArea : 0;
+        errorOutput.textContent = formatNumber(error, 1) || "0.0";
+      }
+    }
+
+    function resetRow(row) {
+      row.querySelectorAll("input, textarea").forEach((field) => {
+        field.value = "";
+      });
+      row.querySelectorAll("select").forEach((field) => {
+        field.value = "";
+      });
+      setupVillageSelect(row);
+      updateAreaRow(row);
+    }
+
+    rows.querySelectorAll("tr").forEach(setupRow);
+
+    rows.addEventListener("input", (event) => {
+      const row = event.target.closest("tr");
+
+      if (row) {
+        updateAreaRow(row);
+      }
+    });
+
+    rows.addEventListener("change", (event) => {
+      const row = event.target.closest("tr");
+
+      if (!row) {
+        return;
+      }
+
+      if (event.target.matches('[data-area-field="town"]')) {
+        setupVillageSelect(row);
+      }
+
+      updateAreaRow(row);
+    });
+
+    rows.addEventListener("click", (event) => {
+      const removeButton = event.target.closest("[data-area-row-remove]");
+
+      if (!removeButton) {
+        return;
+      }
+
+      const row = removeButton.closest("tr");
+
+      if (!row) {
+        return;
+      }
+
+      if (rows.querySelectorAll("tr").length === 1) {
+        resetRow(row);
+      } else {
+        row.remove();
+      }
+    });
+
+    if (addButton) {
+      addButton.addEventListener("click", () => {
+        const sourceRow = rows.querySelector("tr");
+
+        if (!sourceRow) {
+          return;
+        }
+
+        const nextRow = sourceRow.cloneNode(true);
+        rows.append(nextRow);
+        resetRow(nextRow);
+      });
+    }
+  });
+}
+
+function initPageSearch() {
+  const forms = document.querySelectorAll("[data-page-search]");
+
+  forms.forEach((form) => {
+    const input = form.querySelector("[data-page-search-input]");
+    const status = form.querySelector("[data-page-search-status]");
+    const scope = form.closest("[data-content-scope]") || document;
+    const items = [...scope.querySelectorAll("[data-search-item]")];
+    const panels = [...scope.querySelectorAll("[data-content-panel]")];
+    const subtabGroups = [...scope.querySelectorAll("[data-knowledge-subtabs]")];
+
+    if (!input || !items.length) {
+      return;
+    }
+
+    const normalize = (value) => String(value || "").trim().toLowerCase();
+
+    function applySearch() {
+      const query = normalize(input.value);
+      let visibleCount = 0;
+
+      items.forEach((item) => {
+        const matches = !query || normalize(item.textContent).includes(query);
+        item.hidden = !matches;
+
+        if (matches) {
+          visibleCount += 1;
+        }
+      });
+
+      if (panels.length) {
+        if (query) {
+          scope.classList.add("is-searching");
+          panels.forEach((panel) => {
+            const hasMatch = [...panel.querySelectorAll("[data-search-item]")].some((item) => !item.hidden);
+            panel.hidden = !hasMatch;
+            panel.classList.toggle("is-active", hasMatch);
+          });
+          subtabGroups.forEach((group) => {
+            group.querySelectorAll("[data-knowledge-subpanel]").forEach((panel) => {
+              const hasMatch = [...panel.querySelectorAll("[data-search-item]")].some((item) => !item.hidden);
+
+              panel.hidden = !hasMatch;
+              panel.classList.toggle("is-active", hasMatch);
+            });
+            group.querySelectorAll("[data-knowledge-subtab]").forEach((button) => {
+              button.classList.remove("is-active");
+              button.setAttribute("aria-selected", "false");
+            });
+          });
+          scope.querySelectorAll("[data-content-tab]").forEach((button) => {
+            button.classList.remove("is-active");
+            button.setAttribute("aria-selected", "false");
+          });
+        } else {
+          items.forEach((item) => {
+            item.hidden = false;
+          });
+          setScopedContentTab(scope, scope.dataset.activeContentTab);
+          subtabGroups.forEach((group) => {
+            setKnowledgeSubtab(group, group.dataset.activeKnowledgeSubtab);
+          });
+        }
+      }
+
+      if (status) {
+        status.textContent = query ? `${visibleCount}건을 찾았습니다.` : "검색어를 입력하면 문구를 바로 찾습니다.";
+      }
+    }
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      applySearch();
+    });
+
+    input.addEventListener("input", applySearch);
+  });
+}
+
+function normalizeSiteSearchText(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function getSiteSearchMatches(query) {
+  const normalizedQuery = normalizeSiteSearchText(query);
+
+  if (!normalizedQuery) {
+    return [];
+  }
+
+  const tokens = normalizedQuery.split(" ").filter(Boolean);
+
+  return siteSearchIndex
+    .map((entry) => {
+      const haystack = normalizeSiteSearchText(`${entry.title} ${entry.section} ${entry.summary} ${entry.keywords}`);
+      const matches = tokens.every((token) => haystack.includes(token));
+      const titleMatch = normalizeSiteSearchText(entry.title).includes(normalizedQuery);
+      const sectionMatch = normalizeSiteSearchText(entry.section).includes(normalizedQuery);
+
+      return {
+        entry,
+        matches,
+        score: Number(titleMatch) * 3 + Number(sectionMatch) * 2,
+      };
+    })
+    .filter((result) => result.matches)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 8)
+    .map((result) => result.entry);
+}
+
+function initSiteSearch() {
+  document.querySelectorAll("[data-site-search]").forEach((form) => {
+    const input = form.querySelector("[data-site-search-input]");
+    const results = form.querySelector("[data-site-search-results]");
+
+    if (!input || !results) {
+      return;
+    }
+
+    function hideResults() {
+      results.hidden = true;
+      results.replaceChildren();
+    }
+
+    function renderResults() {
+      const query = input.value;
+      const matches = getSiteSearchMatches(query);
+
+      if (!normalizeSiteSearchText(query)) {
+        hideResults();
+        return matches;
+      }
+
+      if (!matches.length) {
+        results.innerHTML = `<p class="site-search__empty">검색 결과가 없습니다.</p>`;
+        results.hidden = false;
+        return matches;
+      }
+
+      results.innerHTML = matches
+        .map(
+          (entry) => `
+            <a href="${escapeHtml(String(entry.url))}">
+              <small>${escapeHtml(String(entry.section))}</small>
+              <strong>${escapeHtml(String(entry.title))}</strong>
+              <span>${escapeHtml(String(entry.summary))}</span>
+            </a>
+          `
+        )
+        .join("");
+      results.hidden = false;
+      return matches;
+    }
+
+    input.addEventListener("input", renderResults);
+    input.addEventListener("focus", () => {
+      if (normalizeSiteSearchText(input.value)) {
+        renderResults();
+      }
+    });
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const matches = renderResults();
+
+      if (matches[0]) {
+        window.location.href = matches[0].url;
+      }
+    });
+
+    document.addEventListener("click", (event) => {
+      if (!form.contains(event.target)) {
+        hideResults();
+      }
+    });
+
+    input.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        hideResults();
+        input.blur();
+      }
+    });
+  });
+}
+
+function initFeeImageViewer() {
+  const selector = ".fee-education-figure img";
+  let viewer = null;
+  let viewerImage = null;
+  let viewerCaption = null;
+  let closeButton = null;
+  let lastFocus = null;
+
+  function closeViewer() {
+    if (!viewer || viewer.hidden) {
+      return;
+    }
+
+    viewer.hidden = true;
+    document.body.classList.remove("fee-image-viewer-open");
+
+    if (viewerImage) {
+      viewerImage.removeAttribute("src");
+    }
+
+    if (lastFocus && typeof lastFocus.focus === "function") {
+      lastFocus.focus();
+    }
+  }
+
+  function ensureViewer() {
+    if (viewer) {
+      return viewer;
+    }
+
+    viewer = document.createElement("div");
+    viewer.className = "fee-image-viewer";
+    viewer.hidden = true;
+    viewer.setAttribute("role", "dialog");
+    viewer.setAttribute("aria-modal", "true");
+    viewer.setAttribute("aria-label", "교육자료 이미지 확대 보기");
+    viewer.innerHTML = `
+      <div class="fee-image-viewer__dialog" role="document">
+        <button class="fee-image-viewer__close" type="button" aria-label="확대 이미지 닫기">
+          <i data-lucide="x"></i>
+        </button>
+        <img class="fee-image-viewer__image" alt="" />
+        <p class="fee-image-viewer__caption"></p>
+      </div>
+    `;
+
+    document.body.append(viewer);
+    viewerImage = viewer.querySelector(".fee-image-viewer__image");
+    viewerCaption = viewer.querySelector(".fee-image-viewer__caption");
+    closeButton = viewer.querySelector(".fee-image-viewer__close");
+
+    closeButton.addEventListener("click", closeViewer);
+    viewer.addEventListener("click", (event) => {
+      if (event.target === viewer) {
+        closeViewer();
+      }
+    });
+    refreshIcons();
+
+    return viewer;
+  }
+
+  function openViewer(image) {
+    const figure = image.closest(".fee-education-figure");
+    const caption = figure?.querySelector("figcaption")?.textContent?.trim() || image.alt || "교육자료 이미지";
+
+    lastFocus = document.activeElement;
+    ensureViewer();
+    viewerImage.src = image.currentSrc || image.src;
+    viewerImage.alt = image.alt || caption;
+    viewerCaption.textContent = caption;
+    viewer.hidden = false;
+    document.body.classList.add("fee-image-viewer-open");
+    closeButton.focus();
+  }
+
+  document.querySelectorAll(selector).forEach((image) => {
+    image.tabIndex = 0;
+    image.setAttribute("role", "button");
+    image.setAttribute("aria-label", `${image.alt || "교육자료 이미지"} 확대 보기`);
+  });
+
+  document.addEventListener("click", (event) => {
+    const image = event.target.closest(selector);
+
+    if (image) {
+      openViewer(image);
+    }
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      closeViewer();
+      return;
+    }
+
+    if ((event.key === "Enter" || event.key === " ") && event.target.matches(selector)) {
+      event.preventDefault();
+      openViewer(event.target);
+    }
+  });
+}
+
 function initAccessLock() {
   const navigation = document.querySelector(".main-nav");
   if (!navigation || !/^https?:$/.test(window.location.protocol)) return;
   const form = document.createElement("form");
+  form.className = "access-lock";
   form.action = "/logout";
   form.method = "post";
-  form.className = "access-lock";
   form.innerHTML = '<button type="submit" title="접속 잠금" aria-label="접속 잠금"><i data-lucide="lock-keyhole" aria-hidden="true"></i></button>';
   navigation.append(form);
   window.addEventListener("pageshow", (event) => {
@@ -1737,4 +6706,14 @@ initProcessSteps();
 initReadinessChecklist();
 initGuidePages();
 initGuidePrintButtons();
+initContentTabs();
+initKnowledgeSubtabs();
+initManualDocumentTabs();
+initEraConverters();
+initJeongdanCalculator();
+initAreaUnitConverters();
+initAreaChangeBuilders();
+initFeeImageViewer();
+initSiteSearch();
+initPageSearch();
 refreshIcons();

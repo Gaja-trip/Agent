@@ -1,0 +1,5 @@
+# Local server and diagnostics are not part of the deployed static site.
+server.cjs
+server*.log
+tests/
+.recovery/

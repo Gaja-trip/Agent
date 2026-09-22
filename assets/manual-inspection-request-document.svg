@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="760" viewBox="0 0 1180 760" role="img" aria-labelledby="title desc">
+  <title id="title">지적측량 성과검사요청서</title>
+  <desc id="desc">성과검사요청서 문서에서 수신, 제목, 근거 조항, 대상 토지를 빨간색으로 강조하고 확대 표시한 예시 화면</desc>
+  <rect width="1180" height="760" fill="#fff"/>
+  <rect x="8" y="8" width="1164" height="150" fill="#fff" stroke="#ff6565" stroke-width="1.5" stroke-dasharray="3 3"/>
+  <text x="78" y="84" fill="#0bb39d" font-family="Arial, sans-serif" font-size="54" font-weight="900">LX</text>
+  <text x="50" y="120" fill="#0f2c45" font-family="Arial, sans-serif" font-size="18" font-weight="800">한국국토정보공사</text>
+  <text x="590" y="94" fill="#111" font-family="Arial, sans-serif" font-size="44" font-weight="500" text-anchor="middle">한국국토정보공사</text>
+  <text x="1040" y="78" fill="#1284c3" font-family="Arial, sans-serif" font-size="34" font-weight="900" text-anchor="middle">Land1</text>
+  <text x="1040" y="116" fill="#0f4a79" font-family="Arial, sans-serif" font-size="20" font-weight="800" text-anchor="middle">함께하는 안전</text>
+
+  <rect x="8" y="158" width="1164" height="180" fill="#fff" stroke="#111"/>
+  <line x1="8" y1="206" x2="1172" y2="206" stroke="#ff6565" stroke-dasharray="3 3"/>
+  <line x1="8" y1="260" x2="1172" y2="260" stroke="#ff6565" stroke-dasharray="3 3"/>
+  <line x1="120" y1="158" x2="120" y2="338" stroke="#ff6565" stroke-dasharray="3 3"/>
+  <g font-family="Arial, sans-serif" font-size="28" fill="#111">
+    <text x="36" y="195">수신</text>
+    <text x="134" y="195">부안군수(민원과장)</text>
+    <text x="28" y="247">(경유)</text>
+    <text x="36" y="307">제목</text>
+    <text x="134" y="307">지적측량 성과검사요청서</text>
+  </g>
+  <rect x="116" y="166" width="420" height="42" fill="none" stroke="#ff2a2a" stroke-width="4"/>
+  <rect x="116" y="276" width="520" height="48" fill="none" stroke="#ff2a2a" stroke-width="4"/>
+
+  <text x="24" y="386" fill="#111" font-family="Arial, sans-serif" font-size="28">「공간정보의 구축 및 관리 등에 관한 법률」 제25조 제1항 및 「지적측량시행규칙」</text>
+  <text x="24" y="428" fill="#111" font-family="Arial, sans-serif" font-size="28">제28조 제2항에 의하여 아래와 같이 지적측량 검사를 요청합니다.</text>
+  <rect x="12" y="350" width="1110" height="98" fill="none" stroke="#ff2a2a" stroke-width="3"/>
+  <text x="590" y="502" fill="#111" font-family="Arial, sans-serif" font-size="28" text-anchor="middle">- 아 래 -</text>
+
+  <rect x="22" y="540" width="1136" height="120" fill="#fff" stroke="#111"/>
+  <g stroke="#111">
+    <line x1="22" y1="586" x2="1158" y2="586"/>
+    <line x1="120" y1="540" x2="120" y2="660"/>
+    <line x1="258" y1="540" x2="258" y2="660"/>
+    <line x1="410" y1="540" x2="410" y2="660"/>
+    <line x1="690" y1="540" x2="690" y2="660"/>
+    <line x1="760" y1="540" x2="760" y2="660"/>
+    <line x1="850" y1="540" x2="850" y2="660"/>
+    <line x1="942" y1="540" x2="942" y2="660"/>
+    <line x1="1052" y1="540" x2="1052" y2="660"/>
+  </g>
+  <g font-family="Arial, sans-serif" fill="#111" text-anchor="middle">
+    <text x="70" y="568" font-size="17" font-weight="800">접수</text>
+    <text x="190" y="568" font-size="17" font-weight="800">측량종목</text>
+    <text x="550" y="568" font-size="17" font-weight="800">토지소재지</text>
+    <text x="724" y="568" font-size="17" font-weight="800">축척</text>
+    <text x="805" y="568" font-size="17" font-weight="800">지번수</text>
+    <text x="896" y="568" font-size="17" font-weight="800">원면적</text>
+    <text x="996" y="568" font-size="17" font-weight="800">측량일</text>
+    <text x="1104" y="568" font-size="17" font-weight="800">측량자</text>
+    <text x="70" y="624" font-size="14">2026-05-20</text>
+    <text x="190" y="624" font-size="14">분할측량</text>
+    <text x="550" y="624" font-size="14">보안면 신복리 218-32</text>
+    <text x="724" y="624" font-size="14">1,200</text>
+    <text x="805" y="624" font-size="14">2</text>
+    <text x="896" y="624" font-size="14">477</text>
+    <text x="996" y="624" font-size="14">2026-05-27</text>
+    <text x="1104" y="624" font-size="14">정호</text>
+  </g>
+  <rect x="410" y="586" width="280" height="74" fill="none" stroke="#ff2a2a" stroke-width="3"/>
+  <text x="22" y="708" fill="#111" font-family="Arial, sans-serif" font-size="25">붙임  1. 지적측량결과도 1부</text>
+  <text x="82" y="742" fill="#111" font-family="Arial, sans-serif" font-size="25">2. 지적측량결과부 1부.  끝.</text>
+
+  <g transform="translate(690 162)">
+    <rect width="455" height="165" rx="8" fill="#fff" stroke="#ff2a2a" stroke-width="5"/>
+    <text x="22" y="36" fill="#ff2a2a" font-family="Arial, sans-serif" font-size="16" font-weight="900">확대 보기: 수신과 제목</text>
+    <text x="34" y="82" fill="#111" font-family="Arial, sans-serif" font-size="23">수신  부안군수(민원과장)</text>
+    <text x="34" y="124" fill="#111" font-family="Arial, sans-serif" font-size="23">제목  지적측량 성과검사요청서</text>
+  </g>
+  <g transform="translate(704 468)">
+    <rect width="420" height="110" rx="8" fill="#fff" stroke="#ff2a2a" stroke-width="5"/>
+    <text x="22" y="36" fill="#ff2a2a" font-family="Arial, sans-serif" font-size="16" font-weight="900">확대 보기: 검사요청 대상</text>
+    <text x="34" y="76" fill="#111" font-family="Arial, sans-serif" font-size="22">보안면 신복리 218-32 / 분할측량</text>
+  </g>
+</svg>

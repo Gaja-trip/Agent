@@ -2,6 +2,8 @@ const http = require("http");
 const fs = require("fs");
 const path = require("path");
 const { Readable } = require("node:stream");
+const { handleFarmlandRequest } = require("./farmland-service.cjs");
+const { handleVworldRequest } = require("./vworld-service.cjs");
 const accessControl = import("./access-control.mjs");
 
 const root = __dirname;
@@ -44,6 +46,8 @@ function createSiteServer() {
         return;
       }
     const parsedUrl = new URL(request.url, `http://127.0.0.1:${port}`);
+    if (await handleFarmlandRequest(request, response, parsedUrl)) return;
+    if (await handleVworldRequest(request, response, parsedUrl)) return;
     const pathname = decodeURIComponent(parsedUrl.pathname === "/" ? "/index.html" : parsedUrl.pathname);
     const filePath = path.resolve(root, `.${pathname}`);
 
