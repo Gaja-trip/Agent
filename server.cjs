@@ -2,6 +2,7 @@ const http = require("http");
 const fs = require("fs");
 const path = require("path");
 const { handleFarmlandRequest } = require("./farmland-service.cjs");
+const { handleVworldRequest } = require("./vworld-service.cjs");
 
 const root = process.cwd();
 const port = Number(process.env.PORT || 4173);
@@ -24,6 +25,7 @@ http
   .createServer(async (request, response) => {
     const parsedUrl = new URL(request.url, `http://127.0.0.1:${port}`);
     if (await handleFarmlandRequest(request, response, parsedUrl)) return;
+    if (await handleVworldRequest(request, response, parsedUrl)) return;
     const pathname = decodeURIComponent(parsedUrl.pathname === "/" ? "/index.html" : parsedUrl.pathname);
     const filePath = path.resolve(root, `.${pathname}`);
 

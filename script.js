@@ -54,7 +54,7 @@ const duplicateParcelVillageCandidates = {
     "장신리": ["줄포면", "하서면"],
   },
 };
-const vworldApiKey = "39B6F1DE-2D35-3582-9008-A537EF6A6BC4";
+const vworldApiKey = window.VworldConfig?.key || "";
 const vworldParcelDataId = "LP_PA_CBND_BUBUN";
 const vworldParcelWfsDataIds = ["lp_pa_cbnd_bubun", "lt_c_landinfobasemap"];
 const vworldBuildingDataIds = ["LT_C_SPBD"];
@@ -130,6 +130,11 @@ let vworldUrbanPlanningOpacity = 0.75;
 let parcelDetailsRequestId = 0;
 let parcelDetailsState = { label: "필지를 선택해 주세요." };
 const parcelDetailsCache = new Map();
+let aerialParcelDetailsRequestId = 0;
+let aerialParcelDetailsState = { label: "필지를 선택해 주세요." };
+const aerialParcelDetailsCache = new Map();
+// Registered service domain for this project's V-World NED API key.
+const vworldAttributeDomain = window.VworldConfig?.domain || window.location.origin;
 let farmlandMap = null;
 let farmlandMapPromise = null;
 let farmlandSelectionLayer = null;
@@ -831,7 +836,7 @@ function initPortalTabs() {
     Object.entries(params).forEach(([key, value]) => url.searchParams.set(key, String(value)));
     const response = await fetch(url, { signal: AbortSignal.timeout(15000) });
     if (!(response.headers.get("content-type") || "").includes("json")) {
-      throw new Error("지도 연동 서버에 연결할 수 없습니다.");
+      throw new Error(response.status === 404 ? "지도 조회 API가 배포되지 않았습니다. Vercel에 api 폴더와 vercel.json을 포함해 다시 배포해 주세요." : "지도 연동 서버에서 올바른 응답을 받지 못했습니다.");
     }
     const data = await response.json();
     if (!response.ok || data.error) throw new Error(data.error || "필지정보 조회에 실패했습니다.");
@@ -869,13 +874,12 @@ function initPortalTabs() {
     };
     const lotNumber = getLotNumberFromPnu(pnu) || "—";
     const area = loading ? "조회 중…" : error ? "조회 실패" : data ? formatParcelArea(data.parcel.area) : "—";
-    document.querySelectorAll("[data-parcel-zoning]").forEach((node) => {
-      const isAerial = !node.closest(".farmland-portal");
+    document.querySelectorAll(".farmland-portal [data-parcel-zoning]").forEach((node) => {
       node.innerHTML = `
         <h3>선택 필지 용도지역·지구</h3>
         <strong>${escapeHtml(label)}</strong>
         ${pnu ? `<small>PNU ${escapeHtml(pnu)}</small>` : ""}
-        <dl><dt>지번</dt><dd>${escapeHtml(lotNumber)}</dd>${isAerial ? `<dt>면적</dt><dd>${escapeHtml(area)}</dd>` : ""}<dt>용도지역</dt><dd>${escapeHtml(value("region"))}</dd><dt>용도지구</dt><dd>${escapeHtml(value("district"))}</dd></dl>
+        <dl><dt>지번</dt><dd>${escapeHtml(lotNumber)}</dd><dt>용도지역</dt><dd>${escapeHtml(value("region"))}</dd><dt>용도지구</dt><dd>${escapeHtml(value("district"))}</dd></dl>
         ${error ? `<p role="alert">${escapeHtml(error)}</p>` : ""}
         ${data ? '<small>자료: 농지공간포털</small>' : ""}
       `;
@@ -926,6 +930,74 @@ function initPortalTabs() {
       parcelDetailsState = { label: point?.title || "선택한 필지", pnu, point, error: error.name === "TimeoutError" ? "조회 시간이 초과되었습니다. 다시 선택해 주세요." : error.message };
     }
     renderParcelDetails();
+  }
+
+  function renderAerialParcelDetails() {
+    const { label, pnu, data, loading, error } = aerialParcelDetailsState;
+    const value = (kind) => {
+      if (loading) return "조회 중…";
+      if (error || data?.errors?.[kind]) return "조회 실패";
+      if (!data) return "—";
+      if (kind === "area") return formatParcelArea(data.parcel.area);
+      const zones = data.zones.filter((zone) => zone.kind === kind);
+      return zones.length ? zones.map((zone) => `${zone.name}${zone.relation ? ` (${zone.relation})` : ""}`).join(", ") : "조회된 정보 없음";
+    };
+    const errors = [...new Set([error, ...Object.values(data?.errors || {})].filter(Boolean))];
+    document.querySelectorAll(".aerial-portal [data-parcel-zoning]").forEach((node) => {
+      node.innerHTML = `<h3>선택 필지 용도지역·지구</h3>
+        <strong>${escapeHtml(label)}</strong>${pnu ? `<small>PNU ${escapeHtml(pnu)}</small>` : ""}
+        <dl><dt>지번</dt><dd>${escapeHtml(getLotNumberFromPnu(pnu) || "—")}</dd>
+        <dt>면적</dt><dd>${escapeHtml(value("area"))}</dd><dt>용도지역</dt><dd>${escapeHtml(value("region"))}</dd><dt>용도지구</dt><dd>${escapeHtml(value("district"))}</dd></dl>
+        ${errors.map((message) => `<p role="alert">${escapeHtml(message)}</p>`).join("")}
+        ${data ? `<small>자료: V-World${data.year ? ` · 토지특성 ${escapeHtml(data.year)}년` : ""}</small>` : ""}`;
+    });
+  }
+
+  async function selectAerialParcelDetails(point) {
+    const requestId = ++aerialParcelDetailsRequestId;
+    let pnu = normalizePnu(point?.pnu);
+    aerialParcelDetailsState = { label: point?.title || "선택한 필지", pnu, loading: true };
+    renderAerialParcelDetails();
+    try {
+      let feature = point?.feature;
+      if (!pnu) {
+        if (!Number.isFinite(point?.latitude) || !Number.isFinite(point?.longitude)) throw new Error("주소를 검색하거나 지도에서 필지를 선택해 주세요.");
+        const url = createVworldParcelDataUrl();
+        url.searchParams.set("geomFilter", `POINT(${point.longitude} ${point.latitude})`);
+        url.searchParams.set("size", "1");
+        feature = extractVworldFeatures(await requestVworldJson(url))[0];
+        pnu = normalizePnu(feature?.properties?.pnu);
+        if (!pnu) throw new Error("V-World에서 선택 지점의 필지를 찾지 못했습니다.");
+      }
+      if (requestId !== aerialParcelDetailsRequestId) return;
+      const cached = aerialParcelDetailsCache.get(pnu);
+      const data = cached && Date.now() - cached.time < 60000 ? cached.data : await fetchAerialParcelDetails(pnu);
+      if (requestId !== aerialParcelDetailsRequestId) return;
+      if (!Object.values(data.errors).some(Boolean)) {
+        if (aerialParcelDetailsCache.size >= 50) aerialParcelDetailsCache.delete(aerialParcelDetailsCache.keys().next().value);
+        aerialParcelDetailsCache.set(pnu, { time: Date.now(), data });
+      }
+      aerialParcelDetailsState = { label: feature?.properties?.addr || data.address || point?.title || `필지 ${pnu}`, pnu, data };
+    } catch (error) {
+      if (requestId !== aerialParcelDetailsRequestId) return;
+      aerialParcelDetailsState = { label: point?.title || "선택한 필지", pnu, error: error.name === "TimeoutError" ? "V-World 조회 시간이 초과되었습니다. 다시 선택해 주세요." : error.message };
+    }
+    renderAerialParcelDetails();
+  }
+
+  async function fetchAerialParcelDetails(pnu) {
+    // Same-origin proxy avoids browser CORS/JSONP restrictions while using V-World only.
+    const url = new URL("/api/vworld/parcel", window.location.href);
+    url.searchParams.set("pnu", pnu);
+    let response;
+    try { response = await fetch(url, { signal: AbortSignal.timeout(15000) }); } catch { /* Try the public API directly below. */ }
+    if (response && response.status !== 404 && (response.headers.get("content-type") || "").includes("json")) {
+      const data = await response.json();
+      if (!response.ok || data.error) throw new Error(data.error || "V-World 속성 조회에 실패했습니다.");
+      if (data.pnu !== pnu || !Array.isArray(data.zones)) throw new Error("V-World 필지 응답을 확인할 수 없습니다.");
+      return data;
+    }
+    return window.VworldParcel.load(pnu, { key: vworldApiKey, domain: vworldAttributeDomain, requestJson: requestVworldJson });
   }
 
   function highlightFarmlandParcel(point) {
@@ -1533,6 +1605,7 @@ function initPortalTabs() {
       const expectsParseResponse =
         jsonpUrl.searchParams.get("output") === "text/javascript" || /\/req\/wfs/i.test(jsonpUrl.pathname);
       let finished = false;
+      let timeoutId = 0;
 
       jsonpUrl.searchParams.set("callback", callbackName);
 
@@ -1566,6 +1639,7 @@ function initPortalTabs() {
       };
 
       const cleanup = () => {
+        window.clearTimeout(timeoutId);
         script.remove();
         delete window[callbackName];
       };
@@ -1596,17 +1670,24 @@ function initPortalTabs() {
         finished = true;
         removeParseResponseHandler(complete);
         cleanup();
-        reject(new Error("V-World address search failed"));
+        reject(new Error("V-World API에 연결하지 못했습니다. 잠시 후 다시 선택해 주세요."));
       };
 
       script.src = jsonpUrl.toString();
+      timeoutId = window.setTimeout(() => {
+        if (finished) return;
+        finished = true;
+        removeParseResponseHandler(complete);
+        cleanup();
+        reject(new Error("V-World 조회 시간이 초과되었습니다. 다시 선택해 주세요."));
+      }, 12000);
       document.head.appendChild(script);
     });
   }
 
   async function requestVworldJson(url) {
     try {
-      const response = await fetch(url.toString());
+      const response = await fetch(url.toString(), { signal: AbortSignal.timeout(8000) });
 
       if (response.ok) {
         return await response.json();
@@ -3070,7 +3151,7 @@ function initPortalTabs() {
     updateAerialStatus(`${title} 위치로 이동했습니다. 반경 ${vworldParcelRadiusMeters}m 이내 지번과 지목을 불러오는 중입니다.`);
     loadNearbyParcelNumberLabels(vworldCurrentPoint);
     loadVworldPoiLogoMarkers(vworldCurrentPoint);
-    selectParcelDetails(vworldCurrentPoint);
+    selectAerialParcelDetails(vworldCurrentPoint);
   }
 
   function bindAerialSearchFormConnected() {
@@ -3738,7 +3819,7 @@ function initPortalTabs() {
   }
 
   function bindVworldUrbanPlanningTools() {
-    renderParcelDetails();
+    renderAerialParcelDetails();
     const group = document.querySelector(".vworld-urban-planning");
     if (!group) return;
     if (!group.dataset.bound) {
@@ -5096,7 +5177,7 @@ function initPortalTabs() {
       return;
     }
 
-    selectParcelDetails({ latitude: event.latlng.lat, longitude: event.latlng.lng, title: "선택한 필지" });
+    selectAerialParcelDetails({ latitude: event.latlng.lat, longitude: event.latlng.lng, title: "선택한 필지" });
 
     updateAerialStatus("POI 마커를 클릭하면 POI정보와 해당 필지의 건축물정보를 확인할 수 있습니다.");
   }
