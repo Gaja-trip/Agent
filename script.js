@@ -127,6 +127,18 @@ const vworldUrbanPlanningVisible = new Set();
 const vworldUrbanPlanningOverlays = new Map();
 const vworldUrbanPlanningStates = new Map();
 let vworldUrbanPlanningOpacity = 0.75;
+let parcelDetailsRequestId = 0;
+let parcelDetailsState = { label: "필지를 선택해 주세요." };
+const parcelDetailsCache = new Map();
+let farmlandMap = null;
+let farmlandMapPromise = null;
+let farmlandSelectionLayer = null;
+let farmlandMarker = null;
+let farmlandLastPointKey = "";
+let farmlandFocusPoint = null;
+let farmlandCadastralLayer = null;
+const farmlandParcelRadiusMeters = 100;
+const farmlandParcelDetailZoom = 13;
 let vworldMap = null;
 let vworldMarker = null;
 let vworldBaseLayer = null;
@@ -814,46 +826,285 @@ function initPortalTabs() {
     `;
   }
 
-  // The official portal sends X-Frame-Options: SAMEORIGIN. Open the original
-  // map so its aerial layers and parcel-information interactions remain intact.
-  function renderFarmlandPortal() {
-    const parcelAddress = escapeHtml(getParcelAddress());
-    const displayText = parcelAddress || "주소검색 후 이곳에 검색 주소가 표시됩니다.";
+  async function fetchFarmlandJson(path, params = {}) {
+    const url = new URL(`/api/farmland/${path}`, window.location.href);
+    Object.entries(params).forEach(([key, value]) => url.searchParams.set(key, String(value)));
+    const response = await fetch(url, { signal: AbortSignal.timeout(15000) });
+    if (!(response.headers.get("content-type") || "").includes("json")) {
+      throw new Error("지도 연동 서버에 연결할 수 없습니다.");
+    }
+    const data = await response.json();
+    if (!response.ok || data.error) throw new Error(data.error || "필지정보 조회에 실패했습니다.");
+    return data;
+  }
 
+  function formatParcelArea(area) {
+    const raw = String(area ?? "").replace(/,/g, "").trim();
+    const squareMeters = raw ? Number(raw) : NaN;
+    if (!Number.isFinite(squareMeters) || squareMeters < 0) return "조회된 정보 없음";
+    return `${formatNumber(squareMeters, 2)} ㎡ (${formatNumber(squareMeters * 0.3025, 2)}평)`;
+  }
+
+  function setFarmlandInfoTab(key) {
+    const view = portalViews.get("farmland");
+    if (!view || !["parcel", "plan", "building"].includes(key)) return;
+    view.querySelectorAll("[data-farmland-info-tab]").forEach((button) => {
+      const active = button.dataset.farmlandInfoTab === key;
+      button.setAttribute("aria-selected", String(active));
+      button.tabIndex = active ? 0 : -1;
+    });
+    view.querySelectorAll("[data-farmland-info-panel]").forEach((panel) => {
+      panel.hidden = panel.dataset.farmlandInfoPanel !== key;
+    });
+  }
+
+  function renderParcelDetails() {
+    const { label, pnu, data, loading, error } = parcelDetailsState;
+    const value = (kind) => {
+      if (loading) return "조회 중…";
+      if (error) return "조회 실패";
+      if (!data) return "—";
+      const zones = data.zones.filter((zone) => zone.kind === kind);
+      return zones.length ? zones.map((zone) => `${zone.name}${zone.relation ? ` (${zone.relation})` : ""}`).join(", ") : "조회된 정보 없음";
+    };
+    const lotNumber = getLotNumberFromPnu(pnu) || "—";
+    const area = loading ? "조회 중…" : error ? "조회 실패" : data ? formatParcelArea(data.parcel.area) : "—";
+    document.querySelectorAll("[data-parcel-zoning]").forEach((node) => {
+      const isAerial = !node.closest(".farmland-portal");
+      node.innerHTML = `
+        <h3>선택 필지 용도지역·지구</h3>
+        <strong>${escapeHtml(label)}</strong>
+        ${pnu ? `<small>PNU ${escapeHtml(pnu)}</small>` : ""}
+        <dl><dt>지번</dt><dd>${escapeHtml(lotNumber)}</dd>${isAerial ? `<dt>면적</dt><dd>${escapeHtml(area)}</dd>` : ""}<dt>용도지역</dt><dd>${escapeHtml(value("region"))}</dd><dt>용도지구</dt><dd>${escapeHtml(value("district"))}</dd></dl>
+        ${error ? `<p role="alert">${escapeHtml(error)}</p>` : ""}
+        ${data ? '<small>자료: 농지공간포털</small>' : ""}
+      `;
+    });
+    const target = document.querySelector("[data-farmland-attributes]");
+    const plan = document.querySelector("[data-farmland-plan]");
+    const building = document.querySelector("[data-farmland-buildings]");
+    if (!target || !plan || !building) return;
+    if (!data) {
+      const message = `<p>${loading ? "필지 속성정보를 조회하는 중입니다." : error ? "속성정보를 불러오지 못했습니다. 필지를 다시 선택해 주세요." : "지도에서 필지를 클릭하면 속성정보가 표시됩니다."}</p>`;
+      [target, plan, building].forEach((node) => { node.innerHTML = message; });
+      return;
+    }
+    const rows = [["지목", data.parcel.category], ["면적", area], ["토지이동일", data.parcel.changeDate], ["변동사유", data.parcel.changeReason]];
+    const table = (items) => `<dl class="farmland-attributes">${items.map(([key, val]) => `<dt>${escapeHtml(key)}</dt><dd>${escapeHtml(val || "조회된 정보 없음")}</dd>`).join("")}</dl>`;
+    target.innerHTML = `<h3>필지 속성정보</h3>${table(rows)}`;
+    plan.innerHTML = `<h3>토지이용계획</h3>${data.zones.length ? `<ul>${data.zones.map((zone) => `<li>${escapeHtml(zone.name)}${zone.relation ? ` · ${escapeHtml(zone.relation)}` : ""}</li>`).join("")}</ul>` : "<p>조회된 정보 없음</p>"}
+      <h3>개별공시지가</h3>${data.prices.length ? table(data.prices.map((row) => [`${row.year}년`, row.price])) : "<p>조회된 정보 없음</p>"}`;
+    building.innerHTML = `<h3>건축물정보</h3>${data.buildings.length ? data.buildings.map((row) => table([["용도", row.use], ["구조", row.structure], ["건축면적", row.area], ["용적률 산정 연면적", row.totalArea], ["사용승인일", row.approvalDate]])).join("") : "<p>조회된 정보 없음</p>"}`;
+  }
+
+  async function selectParcelDetails(point) {
+    const requestId = ++parcelDetailsRequestId;
+    const pnu = normalizePnu(point?.pnu);
+    parcelDetailsState = { label: point?.title || "선택한 필지", pnu, loading: true, point };
+    renderParcelDetails();
+    try {
+      let selectedPnu = pnu, feature = point?.feature;
+      if (!selectedPnu) {
+        if (!Number.isFinite(point?.latitude) || !Number.isFinite(point?.longitude)) throw new Error("주소를 검색하거나 지도에서 필지를 선택해 주세요.");
+        const collection = await fetchFarmlandJson("parcel", { lat: point.latitude, lon: point.longitude });
+        if (requestId !== parcelDetailsRequestId) return;
+        feature = collection.features?.[0];
+        selectedPnu = normalizePnu(feature?.properties?.pnu);
+        if (!selectedPnu) throw new Error("선택 지점에서 필지를 찾지 못했습니다.");
+      }
+      const cached = parcelDetailsCache.get(selectedPnu);
+      const data = cached && Date.now() - cached.time < 60000 ? cached.data : await fetchFarmlandJson("info", { pnu: selectedPnu });
+      if (requestId !== parcelDetailsRequestId) return;
+      if (data.pnu !== selectedPnu || !Array.isArray(data.zones)) throw new Error("필지정보를 확인할 수 없습니다.");
+      if (parcelDetailsCache.size >= 50) parcelDetailsCache.delete(parcelDetailsCache.keys().next().value);
+      parcelDetailsCache.set(selectedPnu, { time: Date.now(), data });
+      const selectedPoint = { ...point, pnu: selectedPnu, feature, title: feature?.properties?.addr || data.address || point.title || `필지 ${selectedPnu}` };
+      parcelDetailsState = { label: selectedPoint.title, pnu: selectedPnu, data, point: selectedPoint };
+      if (activePortalKey === "farmland") highlightFarmlandParcel(selectedPoint);
+    } catch (error) {
+      if (requestId !== parcelDetailsRequestId) return;
+      parcelDetailsState = { label: point?.title || "선택한 필지", pnu, point, error: error.name === "TimeoutError" ? "조회 시간이 초과되었습니다. 다시 선택해 주세요." : error.message };
+    }
+    renderParcelDetails();
+  }
+
+  function highlightFarmlandParcel(point) {
+    if (!farmlandMap) return;
+    if (farmlandSelectionLayer) farmlandMap.removeLayer(farmlandSelectionLayer);
+    if (farmlandMarker) farmlandMap.removeLayer(farmlandMarker);
+    farmlandSelectionLayer = null;
+    farmlandMarker = null;
+    if (point.feature?.geometry) {
+      farmlandSelectionLayer = window.L.geoJSON(point.feature, { pane: "farmlandCadastral", interactive: false, style: { color: "#ffdf6b", weight: 3, fillOpacity: 0.18 } }).addTo(farmlandMap);
+    }
+    if (Number.isFinite(point.latitude) && Number.isFinite(point.longitude)) {
+      farmlandMarker = window.L.circleMarker([point.latitude, point.longitude], { radius: 6, color: "#fff", fillColor: "#b82424", fillOpacity: 1, interactive: false }).addTo(farmlandMap);
+      const lotNumber = getLotNumberFromPnu(point.pnu);
+      const selected = wgs84ToEpsg5186(point.latitude, point.longitude);
+      const center = farmlandFocusPoint && wgs84ToEpsg5186(farmlandFocusPoint.latitude, farmlandFocusPoint.longitude);
+      const withinRadius = !center || Math.hypot(selected.x - center.x, selected.y - center.y) <= farmlandParcelRadiusMeters;
+      if (lotNumber && withinRadius) farmlandMarker.bindTooltip(escapeHtml(lotNumber), {
+        permanent: true, direction: "top", offset: [0, -8], className: "farmland-selected-lot",
+      });
+    }
+  }
+
+  function syncFarmlandCadastralClip() {
+    if (!farmlandMap) return;
+    const pane = farmlandMap.getPane("farmlandCadastral");
+    if (!pane) return;
+    if (!farmlandFocusPoint) {
+      pane.style.clipPath = "circle(0px at 0px 0px)";
+      return;
+    }
+    const center = farmlandMap.latLngToLayerPoint([farmlandFocusPoint.latitude, farmlandFocusPoint.longitude]);
+    // EPSG:5186 uses metres, so the clip remains 100 m at every zoom level.
+    const radius = farmlandParcelRadiusMeters * farmlandMap.options.crs.scale(farmlandMap.getZoom());
+    pane.style.clipPath = `circle(${radius}px at ${center.x}px ${center.y}px)`;
+  }
+
+  function refreshFarmlandCadastral() {
+    if (!farmlandMap || !farmlandCadastralLayer) return;
+    syncFarmlandCadastralClip();
+    const enabled = portalViews.get("farmland")?.querySelector("[data-farmland-cadastral]")?.checked;
+    if (!farmlandFocusPoint || !enabled) {
+      farmlandMap.removeLayer(farmlandCadastralLayer);
+      return;
+    }
+    const center = wgs84ToEpsg5186(farmlandFocusPoint.latitude, farmlandFocusPoint.longitude);
+    const southwest = epsg5186ToWgs84(center.x - farmlandParcelRadiusMeters, center.y - farmlandParcelRadiusMeters);
+    const northeast = epsg5186ToWgs84(center.x + farmlandParcelRadiusMeters, center.y + farmlandParcelRadiusMeters);
+    farmlandCadastralLayer.options.bounds = window.L.latLngBounds(
+      [southwest.latitude, southwest.longitude], [northeast.latitude, northeast.longitude]
+    );
+    if (farmlandMap.hasLayer(farmlandCadastralLayer)) farmlandCadastralLayer.redraw();
+    else farmlandCadastralLayer.addTo(farmlandMap);
+  }
+
+  function focusFarmlandPoint(point, force = false) {
+    if (!farmlandMap || !Number.isFinite(point?.latitude) || !Number.isFinite(point?.longitude)) return;
+    const key = `${point.pnu || ""}:${point.latitude}:${point.longitude}`;
+    if (!force && farmlandLastPointKey === key) return;
+    farmlandLastPointKey = key;
+    farmlandFocusPoint = { ...point };
+    farmlandMap.setView([point.latitude, point.longitude], farmlandParcelDetailZoom, { animate: false });
+    refreshFarmlandCadastral();
+    highlightFarmlandParcel(point);
+    const status = portalViews.get("farmland")?.querySelector("[data-farmland-status]");
+    if (status) status.textContent = "검색 지번 주변 반경 100m의 연속지적도와 지번을 표시합니다.";
+    if (parcelDetailsState.pnu !== normalizePnu(point.pnu) || !parcelDetailsState.data) selectParcelDetails(point);
+  }
+
+  async function initFarmlandMap() {
+    if (farmlandMapPromise) return farmlandMapPromise;
+    if (farmlandMap) {
+      window.requestAnimationFrame(() => {
+        farmlandMap.invalidateSize({ pan: false });
+        focusFarmlandPoint(getParcelState());
+        syncFarmlandCadastralClip();
+      });
+      return;
+    }
+    const view = portalViews.get("farmland");
+    if (!view) return;
+    const status = view.querySelector("[data-farmland-status]");
+    const retry = view.querySelector("[data-farmland-retry]");
+    retry.hidden = true;
+    status.textContent = "농지공간포털 항공영상을 준비 중입니다.";
+    farmlandMapPromise = (async () => {
+      try {
+        if (!window.L) throw new Error("지도 라이브러리를 불러오지 못했습니다.");
+        const config = await fetchFarmlandJson("config");
+        const L = window.L;
+        // Match the portal's EPSG:5186 WMTS grid; Web Mercator tile numbers do not align.
+        const crs = L.extend({}, L.CRS.Earth, {
+          code: "EPSG:5186", infinite: true, wrapLng: undefined,
+          projection: {
+            project(latlng) { const point = wgs84ToEpsg5186(latlng.lat, latlng.lng); return L.point(point.x, point.y); },
+            unproject(point) { const result = epsg5186ToWgs84(point.x, point.y); return L.latLng(result.latitude, result.longitude); },
+          },
+          transformation: new L.Transformation(1, -config.origin[0], -1, config.origin[1]),
+          scale(zoom) { return 2 ** zoom / config.baseResolution; },
+          zoom(scale) { return Math.log2(scale * config.baseResolution); },
+        });
+        farmlandMap = L.map(view.querySelector("#farmland-map"), { crs, minZoom: 3, maxZoom: 14 }).setView([35.7315, 126.733], 8);
+        const PortalTiles = L.TileLayer.extend({
+          _isValidTile(coords) {
+            const limit = this.options.portalLimits[coords.z];
+            return Boolean(limit && coords.x >= limit.minX && coords.x <= limit.maxX && coords.y >= limit.minY && coords.y <= limit.maxY);
+          },
+        });
+        config.layers.forEach((layer) => {
+          const zooms = Object.keys(layer.limits).map(Number);
+          new PortalTiles(`/api/farmland/tile?layer=${encodeURIComponent(layer.id)}&z={z}&x={x}&y={y}`, {
+            portalLimits: layer.limits, minZoom: Math.min(...zooms), maxZoom: 14,
+            maxNativeZoom: Math.max(...zooms), noWrap: true, keepBuffer: 1,
+            attribution: `농림축산식품부 농지공간포털 · ${config.year} 항공영상`,
+          }).on("tileerror", () => { status.textContent = "일부 항공영상을 불러오지 못했습니다. 지도를 이동하거나 잠시 후 다시 열어 주세요."; }).addTo(farmlandMap);
+        });
+        const cadastralPane = farmlandMap.createPane("farmlandCadastral");
+        cadastralPane.classList.add("farmland-cadastral-pane");
+        cadastralPane.style.zIndex = "350";
+        farmlandCadastralLayer = L.tileLayer.wms("/api/farmland/wms", { layers: config.cadastralLayer, format: "image/png", transparent: true, version: "1.1.1", crs, minZoom: 9, maxZoom: 14, pane: "farmlandCadastral" });
+        farmlandCadastralLayer.on("tileerror", () => { status.textContent = "연속지적도를 불러오지 못했습니다. 항공영상의 필지를 클릭해 속성을 조회할 수 있습니다."; });
+        view.querySelector("[data-farmland-cadastral]").onchange = refreshFarmlandCadastral;
+        farmlandMap.on("move zoomend viewreset resize", syncFarmlandCadastralClip);
+        farmlandMap.on("zoomstart", () => { cadastralPane.style.visibility = "hidden"; });
+        farmlandMap.on("zoomend", () => { syncFarmlandCadastralClip(); cadastralPane.style.visibility = ""; });
+        farmlandMap.on("click", (event) => {
+          const point = { latitude: event.latlng.lat, longitude: event.latlng.lng, title: "선택한 필지" };
+          if (!farmlandFocusPoint) {
+            farmlandFocusPoint = point;
+            refreshFarmlandCadastral();
+          }
+          highlightFarmlandParcel(point);
+          selectParcelDetails(point);
+        });
+        view.querySelector("[data-farmland-source]").textContent = `농지공간포털 · ${config.year}년 항공영상`;
+        status.textContent = "지도에서 필지를 클릭하면 속성정보를 확인할 수 있습니다.";
+        const searchedPoint = getParcelState();
+        focusFarmlandPoint(Number.isFinite(searchedPoint.latitude) && Number.isFinite(searchedPoint.longitude) ? searchedPoint : parcelDetailsState.point, true);
+      } catch (error) {
+        if (farmlandMap) { farmlandMap.remove(); farmlandMap = null; }
+        status.textContent = error.name === "TimeoutError" ? "항공영상 연결 시간이 초과되었습니다." : error.message;
+        retry.hidden = false;
+      }
+    })().finally(() => { farmlandMapPromise = null; });
+    return farmlandMapPromise;
+  }
+
+  // Render the portal's public imagery and JSON attributes without embedding its page.
+  function renderFarmlandPortal() {
     return `
-      <div class="farmland-connect">
-        ${renderSharedParcel("농지공간정보 검색 주소")}
-        <div class="farmland-connect__body">
-          <div class="farmland-connect__icon" aria-hidden="true">
-            <i data-lucide="sprout"></i>
+      <div class="farmland-portal">
+        <aside class="farmland-portal__sidebar">
+          <h2>농지공간정보</h2>
+          <p data-farmland-source>농지공간포털 항공영상</p>
+          <div class="farmland-portal__tools">
+            <button type="button" data-farmland-center>검색한 지번으로 이동</button>
+            <label><input type="checkbox" data-farmland-cadastral checked />연속지적도·지번 (반경 100m)</label>
           </div>
-          <div class="farmland-connect__content">
-            <p class="farmland-connect__eyebrow">농지공간포털 지도서비스</p>
-            <h2>농지공간정보</h2>
-            <p>
-              일반지도와 항공영상으로 농지를 살펴보고, 필지를 선택해 속성정보를 확인하세요.
-              농지공간포털은 외부 화면 안에 표시할 수 없어 공식 지도를 새 창에서 엽니다.
-            </p>
-            <p>
-              지도에서 주소를 검색한 뒤 ‘지도선택’에서 ‘항공영상’을 선택하세요.
-              ‘필지정보’를 켜고 원하는 필지를 클릭하면 해당 필지의 속성정보를 확인할 수 있습니다.
-              현재 검색 주소는 자동으로 전달되지 않으므로 아래 주소를 복사해 지도에서 검색해 주세요.
-            </p>
-            <div class="farmland-connect__address">
-              <span>현재 검색 주소</span>
-              <strong data-shared-parcel>${displayText}</strong>
-            </div>
-            <div class="farmland-connect__actions">
-              <button class="button farmland-connect__copy" type="button" data-farmland-copy>
-                <i data-lucide="copy"></i>
-                주소 복사
-              </button>
-              <a class="button button--primary" href="${escapeHtml(portalData.farmland.url)}" target="_blank" rel="noopener noreferrer">
-                <i data-lucide="external-link"></i>
-                농지공간포털 지도 열기 (새 창)
-              </a>
-            </div>
+          <div class="farmland-info-tabs" role="tablist" aria-label="농지공간정보 상세 메뉴">
+            <button id="farmland-tab-parcel" type="button" role="tab" aria-selected="true" aria-controls="farmland-panel-parcel" data-farmland-info-tab="parcel">필지정보</button>
+            <button id="farmland-tab-plan" type="button" role="tab" aria-selected="false" aria-controls="farmland-panel-plan" tabindex="-1" data-farmland-info-tab="plan">토지이용계획<br>· 공시지가</button>
+            <button id="farmland-tab-building" type="button" role="tab" aria-selected="false" aria-controls="farmland-panel-building" tabindex="-1" data-farmland-info-tab="building">건축물정보</button>
           </div>
+          <section id="farmland-panel-parcel" role="tabpanel" aria-labelledby="farmland-tab-parcel" tabindex="0" data-farmland-info-panel="parcel">
+            <section class="parcel-zoning" data-parcel-zoning aria-live="polite"></section>
+            <section data-farmland-attributes aria-live="polite"></section>
+          </section>
+          <section id="farmland-panel-plan" role="tabpanel" aria-labelledby="farmland-tab-plan" tabindex="0" data-farmland-info-panel="plan" hidden>
+            <div data-farmland-plan aria-live="polite"></div>
+          </section>
+          <section id="farmland-panel-building" role="tabpanel" aria-labelledby="farmland-tab-building" tabindex="0" data-farmland-info-panel="building" hidden>
+            <div data-farmland-buildings aria-live="polite"></div>
+          </section>
+          <a href="${escapeHtml(portalData.farmland.url)}" target="_blank" rel="noopener noreferrer">농지공간포털 원문</a>
+        </aside>
+        <div class="farmland-portal__map-shell">
+          <div id="farmland-map" aria-label="농지공간포털 항공영상 지도"></div>
+          <p class="farmland-portal__status" data-farmland-status role="status">항공영상을 준비 중입니다.</p>
+          <button class="farmland-portal__retry" type="button" data-farmland-retry hidden>지도 다시 불러오기</button>
         </div>
       </div>
     `;
@@ -1239,9 +1490,7 @@ function initPortalTabs() {
       return { view, isNew: true };
     }
 
-    if (portal.type === "farmland") {
-      view.innerHTML = renderFarmlandPortal();
-    } else if (portal.type !== "aerial") {
+    if (portal.type !== "farmland" && portal.type !== "aerial") {
       if (portal === portalData.eum) {
         const wrapper = view.querySelector(".embedded-site");
         const tools = view.querySelector(".embedded-site__tools");
@@ -2821,6 +3070,7 @@ function initPortalTabs() {
     updateAerialStatus(`${title} 위치로 이동했습니다. 반경 ${vworldParcelRadiusMeters}m 이내 지번과 지목을 불러오는 중입니다.`);
     loadNearbyParcelNumberLabels(vworldCurrentPoint);
     loadVworldPoiLogoMarkers(vworldCurrentPoint);
+    selectParcelDetails(vworldCurrentPoint);
   }
 
   function bindAerialSearchFormConnected() {
@@ -3424,9 +3674,8 @@ function initPortalTabs() {
           <output data-vworld-urban-opacity-value>${Math.round(vworldUrbanPlanningOpacity * 100)}%</output>
         </label>
         <button type="button" data-vworld-urban-hide>도시계획 모두 숨기기</button>
-        <p class="vworld-urban-planning__status" data-vworld-urban-status role="status">항목을 선택하면 항공사진 위에 표시합니다.</p>
-        <p>경계선과 내부 영역을 붉은 계열로 표시합니다. 선이 보이지 않으면 지도를 확대하세요.</p>
       </fieldset>
+      <section class="parcel-zoning" data-parcel-zoning aria-live="polite"></section>
     `;
   }
 
@@ -3434,18 +3683,9 @@ function initPortalTabs() {
     document.querySelectorAll("[data-vworld-urban-layer]").forEach((input) => {
       input.checked = vworldUrbanPlanningVisible.has(input.dataset.vworldUrbanLayer);
     });
-    const status = document.querySelector("[data-vworld-urban-status]");
-    if (!status) return;
     const selected = vworldUrbanPlanningLayers.filter(({ id }) => vworldUrbanPlanningVisible.has(id));
     const failed = selected.filter(({ id }) => vworldUrbanPlanningStates.get(id) === "error");
-    const loading = selected.some(({ id }) => vworldUrbanPlanningStates.get(id) === "loading");
-    status.textContent = failed.length
-      ? `${failed.map(({ title }) => title).join(", ")} 지도를 불러오지 못했습니다. 네트워크 또는 V-World 키·도메인 권한을 확인하고 해당 항목을 다시 켜 주세요.`
-      : !selected.length
-        ? "도시계획 레이어를 모두 숨겼습니다."
-        : loading
-          ? "도시계획 레이어를 불러오는 중입니다."
-          : `${selected.length}개 레이어 켜짐 · V-World 제공`;
+    if (failed.length) updateAerialStatus(`${failed.map(({ title }) => title).join(", ")} 레이어를 불러오지 못했습니다.`);
   }
 
   function setVworldUrbanPlanningLayer(id, visible) {
@@ -3498,6 +3738,7 @@ function initPortalTabs() {
   }
 
   function bindVworldUrbanPlanningTools() {
+    renderParcelDetails();
     const group = document.querySelector(".vworld-urban-planning");
     if (!group) return;
     if (!group.dataset.bound) {
@@ -4855,6 +5096,8 @@ function initPortalTabs() {
       return;
     }
 
+    selectParcelDetails({ latitude: event.latlng.lat, longitude: event.latlng.lng, title: "선택한 필지" });
+
     updateAerialStatus("POI 마커를 클릭하면 POI정보와 해당 필지의 건축물정보를 확인할 수 있습니다.");
   }
 
@@ -5123,6 +5366,11 @@ function initPortalTabs() {
 
     refreshIcons();
 
+    if (portal.type === "farmland") {
+      renderParcelDetails();
+      initFarmlandMap();
+    }
+
     if (portal.type === "aerial") {
       if (isNew || !view.dataset.aerialInitialized) {
         bindAerialSearchFormConnected();
@@ -5215,6 +5463,7 @@ function initPortalTabs() {
         clearParcelCandidateChoices();
         updateParcelStatus(`${nextState.title || nextState.query} 기준으로 토지이음·토지이음지도·항공사진을 연결했습니다.`);
         setActivePortal(activePortalKey);
+        if (activePortalKey === "farmland") focusFarmlandPoint(nextState, true);
       } catch (error) {
         updateParcelStatus("선택한 후보 주소를 연결하지 못했습니다. 다시 검색해 주세요.");
       }
@@ -5254,6 +5503,7 @@ function initPortalTabs() {
         }
 
         setActivePortal(activePortalKey);
+        if (activePortalKey === "farmland") focusFarmlandPoint(state, true);
       } catch (error) {
         updateParcelStatus("주소 검색 API를 불러오지 못했습니다. 네트워크 상태와 API 키를 확인해 주세요.");
       }
@@ -5291,7 +5541,37 @@ function initPortalTabs() {
     }
   }
 
+  portalPanel.addEventListener("keydown", (event) => {
+    const tab = event.target.closest("[data-farmland-info-tab]");
+    if (!tab || !["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+    event.preventDefault();
+    const tabs = [...tab.parentElement.querySelectorAll("[data-farmland-info-tab]")];
+    const index = tabs.indexOf(tab);
+    const nextIndex = event.key === "Home" ? 0 : event.key === "End" ? tabs.length - 1 : (index + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length;
+    setFarmlandInfoTab(tabs[nextIndex].dataset.farmlandInfoTab);
+    tabs[nextIndex].focus();
+  });
+
   portalPanel.addEventListener("click", (event) => {
+    const infoTab = event.target.closest("[data-farmland-info-tab]");
+    if (infoTab) {
+      setFarmlandInfoTab(infoTab.dataset.farmlandInfoTab);
+      return;
+    }
+    if (event.target.closest("[data-farmland-retry]")) {
+      initFarmlandMap();
+      return;
+    }
+    if (event.target.closest("[data-farmland-center]")) {
+      resolveParcelAddress().then((point) => {
+        if (point?.ambiguous) {
+          renderParcelCandidateChoices(point.candidates, getParcelAddress());
+          document.querySelector("[data-farmland-status]").textContent = "상단 검색 결과에서 정확한 지번을 선택해 주세요.";
+        } else if (point) focusFarmlandPoint(point, true);
+        else document.querySelector("[data-farmland-status]").textContent = "상단에서 지번주소를 먼저 검색해 주세요.";
+      }).catch(() => { document.querySelector("[data-farmland-status]").textContent = "주소를 확인하지 못했습니다. 다시 검색해 주세요."; });
+      return;
+    }
     const eumActionButton = event.target.closest("[data-eum-action]");
     const copyButton = event.target.closest("[data-farmland-copy]");
 
