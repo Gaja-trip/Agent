@@ -3019,14 +3019,16 @@ body.fee-image-viewer-open {
   border-color: #e5c5d0;
 }
 
-.vworld-distance-label {
+.vworld-distance-label,
+.vworld-area-label {
   color: #9c5065;
   background: #f8eaf0;
   border-color: #e5c5d0;
   font-weight: 800;
 }
 
-.vworld-distance-label.leaflet-tooltip-top::before {
+.vworld-distance-label.leaflet-tooltip-top::before,
+.vworld-area-label.leaflet-tooltip-top::before {
   border-top-color: #e5c5d0;
 }
 
