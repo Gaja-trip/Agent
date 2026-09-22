@@ -5,6 +5,19 @@
   const regionNames = new Set(['도시지역', '관리지역', '농림지역', '자연환경보전지역', '보전관리지역', '생산관리지역', '계획관리지역', '주거지역', '상업지역', '공업지역', '녹지지역', '전용주거지역', '일반주거지역', '제1종전용주거지역', '제2종전용주거지역', '제1종일반주거지역', '제2종일반주거지역', '제3종일반주거지역', '준주거지역', '중심상업지역', '일반상업지역', '근린상업지역', '유통상업지역', '전용공업지역', '일반공업지역', '준공업지역', '보전녹지지역', '생산녹지지역', '자연녹지지역']);
   const clean = (value) => value == null ? '' : String(value).trim();
 
+  function formatLocation(address, lotNumber = '') {
+    const tokens = clean(address).replace(/\s+/g, ' ').split(' ');
+    const localityToken = /^[가-힣0-9·]+(?:읍|면|리|동|가)$/;
+    const start = tokens.findIndex((token) => localityToken.test(token));
+    if (start < 0) return clean(lotNumber);
+    const locality = [];
+    let end = start;
+    while (end < tokens.length && localityToken.test(tokens[end])) locality.push(tokens[end++]);
+    const addressLot = tokens.slice(end).join(' ').match(/^(?:산\s*)?\d+(?:-\d+)?(?:\s*번지)?(?=$|\s|[()])/);
+    const lot = clean(lotNumber) || (addressLot ? addressLot[0].replace(/\s*번지$/, '').replace(/^산\s*/, '산 ') : '');
+    return [...locality, lot].filter(Boolean).join(' ');
+  }
+
   function readPage(data, fieldName) {
     const body = data?.[fieldName];
     if (!body || typeof body !== 'object') throw new Error('V-World 속성정보 응답 형식을 확인할 수 없습니다.');
@@ -80,5 +93,5 @@
     );
   }
 
-  return { load, normalize, readPage };
+  return { load, normalize, readPage, formatLocation };
 });

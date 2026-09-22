@@ -1,8 +1,21 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { load, normalize, readPage } = require('../vworld-parcel.js');
+const { load, normalize, readPage, formatLocation } = require('../vworld-parcel.js');
 const pnu = '1111011900100010000';
 const characteristic = { pnu, stdrYear: '2026', stdrMt: '01', lndpclAr: '238881.8', prposArea1Nm: '제1종일반주거지역', prposArea2Nm: '자연녹지지역' };
+
+test('parcel location shows town, village and lot without province or county', () => {
+  assert.equal(formatLocation('전북특별자치도 부안군 부안읍 동중리 351-2', '351-2'), '부안읍 동중리 351-2');
+  assert.equal(formatLocation('전북특별자치도 부안군 변산면 격포리 산12-3', '산 12-3'), '변산면 격포리 산 12-3');
+  assert.equal(formatLocation('전라북도 완주군 삼례읍 삼례리', '100'), '삼례읍 삼례리 100');
+  assert.equal(formatLocation('서울특별시 종로구 종로1가 1-2'), '종로1가 1-2');
+  assert.equal(formatLocation('전북특별자치도 전주시 완산구 효자동3가 1200'), '효자동3가 1200');
+  assert.equal(formatLocation('전북특별자치도 부안군 부안읍 동중리 351-2 전', '352'), '부안읍 동중리 352');
+  assert.equal(formatLocation('  부안읍   동중리  351-2번지 '), '부안읍 동중리 351-2');
+  assert.equal(formatLocation('부안읍 동중리 산12-3'), '부안읍 동중리 산 12-3');
+  assert.equal(formatLocation('선택한 필지', '12'), '12');
+  assert.equal(formatLocation('필지를 선택해 주세요.'), '');
+});
 
 test('selects newest annual area, preserves land-use relations, and deduplicates districts', () => {
   const uses = [

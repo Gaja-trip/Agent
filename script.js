@@ -527,6 +527,22 @@ function initPortalTabs() {
     return;
   }
 
+  const workspace = portalPanel.closest(".home-landing");
+  const siteHeader = document.querySelector(".site-header");
+  const toolbar = document.querySelector(".portal-tabs");
+  const syncWorkspaceSize = () => {
+    workspace.style.setProperty("--site-header-height", `${siteHeader.getBoundingClientRect().height}px`);
+    workspace.style.setProperty("--portal-toolbar-height", `${toolbar.getBoundingClientRect().height}px`);
+    vworldMap?.invalidateSize({ pan: false });
+    farmlandMap?.invalidateSize({ pan: false });
+  };
+  if (workspace && siteHeader && toolbar) {
+    const workspaceObserver = new ResizeObserver(syncWorkspaceSize);
+    workspaceObserver.observe(siteHeader);
+    workspaceObserver.observe(toolbar);
+    syncWorkspaceSize();
+  }
+
   parcelCandidateBox.className = "parcel-search__choices";
   parcelCandidateBox.hidden = true;
   parcelCandidateBox.setAttribute("data-parcel-candidates", "");
@@ -934,7 +950,8 @@ function initPortalTabs() {
   }
 
   function renderAerialParcelDetails() {
-    const { pnu, data, loading, error } = aerialParcelDetailsState;
+    const { label, pnu, data, loading, error } = aerialParcelDetailsState;
+    const location = window.VworldParcel.formatLocation(label, getLotNumberFromPnu(pnu)) || "—";
     const value = (kind) => {
       if (loading) return "조회 중…";
       if (error || data?.errors?.[kind]) return "조회 실패";
@@ -945,7 +962,7 @@ function initPortalTabs() {
     };
     const errors = [...new Set([error, ...Object.values(data?.errors || {})].filter(Boolean))];
     document.querySelectorAll(".aerial-portal [data-parcel-zoning]").forEach((node) => {
-      node.innerHTML = `<dl><dt>지번</dt><dd>${escapeHtml(getLotNumberFromPnu(pnu) || "—")}</dd>
+      node.innerHTML = `<dl><dt>토지소재지</dt><dd>${escapeHtml(location)}</dd>
         <dt>면적</dt><dd>${escapeHtml(value("area"))}</dd><dt>용도지역</dt><dd>${escapeHtml(value("region"))}</dd><dt>용도지구</dt><dd>${escapeHtml(value("district"))}</dd></dl>
         ${errors.map((message) => `<p role="alert">${escapeHtml(message)}</p>`).join("")}
         ${data ? `<small>자료: V-World${data.year ? ` · 토지특성 ${escapeHtml(data.year)}년` : ""}</small>` : ""}`;
@@ -955,7 +972,8 @@ function initPortalTabs() {
   async function selectAerialParcelDetails(point) {
     const requestId = ++aerialParcelDetailsRequestId;
     let pnu = normalizePnu(point?.pnu);
-    aerialParcelDetailsState = { label: point?.title || "선택한 필지", pnu, loading: true };
+    let label = point?.feature?.properties?.addr || point?.parcelAddress || point?.title || "선택한 필지";
+    aerialParcelDetailsState = { label, pnu, loading: true };
     renderAerialParcelDetails();
     try {
       let feature = point?.feature;
@@ -969,6 +987,9 @@ function initPortalTabs() {
         if (!pnu) throw new Error("V-World에서 선택 지점의 필지를 찾지 못했습니다.");
       }
       if (requestId !== aerialParcelDetailsRequestId) return;
+      label = feature?.properties?.addr || label;
+      aerialParcelDetailsState = { label, pnu, loading: true };
+      renderAerialParcelDetails();
       const cached = aerialParcelDetailsCache.get(pnu);
       const data = cached && Date.now() - cached.time < 60000 ? cached.data : await fetchAerialParcelDetails(pnu);
       if (requestId !== aerialParcelDetailsRequestId) return;
@@ -976,10 +997,12 @@ function initPortalTabs() {
         if (aerialParcelDetailsCache.size >= 50) aerialParcelDetailsCache.delete(aerialParcelDetailsCache.keys().next().value);
         aerialParcelDetailsCache.set(pnu, { time: Date.now(), data });
       }
-      aerialParcelDetailsState = { label: feature?.properties?.addr || data.address || point?.title || `필지 ${pnu}`, pnu, data };
+      const locationLabel = [feature?.properties?.addr, data.address, label]
+        .find((address) => window.VworldParcel.formatLocation(address)) || label;
+      aerialParcelDetailsState = { label: locationLabel, pnu, data };
     } catch (error) {
       if (requestId !== aerialParcelDetailsRequestId) return;
-      aerialParcelDetailsState = { label: point?.title || "선택한 필지", pnu, error: error.name === "TimeoutError" ? "V-World 조회 시간이 초과되었습니다. 다시 선택해 주세요." : error.message };
+      aerialParcelDetailsState = { label, pnu, error: error.name === "TimeoutError" ? "V-World 조회 시간이 초과되었습니다. 다시 선택해 주세요." : error.message };
     }
     renderAerialParcelDetails();
   }

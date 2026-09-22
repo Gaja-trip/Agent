@@ -2007,11 +2007,11 @@ body.fee-image-viewer-open {
 
 .home-landing {
   position: relative;
-  min-height: calc(100vh - 72px);
+  min-height: calc(100dvh - var(--site-header-height, 83px));
   display: flex;
   overflow: visible;
   color: #fff;
-  background: var(--green-dark);
+  background: var(--paper);
 }
 
 .home-landing__image,
@@ -2037,10 +2037,10 @@ body.fee-image-viewer-open {
   z-index: 1;
   display: flex;
   width: 100%;
-  min-height: calc(100vh - 72px);
+  min-height: calc(100dvh - var(--site-header-height, 83px));
   flex-direction: column;
   margin: 0 auto;
-  padding: 0 clamp(10px, 1.5vw, 16px) clamp(18px, 3vw, 32px);
+  padding: 0;
 }
 
 .home-landing h1,
@@ -2072,8 +2072,7 @@ body.fee-image-viewer-open {
   color: var(--ink);
   background: rgba(255, 255, 255, 0.94);
   border: 1px solid rgba(255, 255, 255, 0.62);
-  border-radius: 8px;
-  box-shadow: 0 16px 40px rgba(18, 42, 35, 0.12);
+  border-radius: 8px 8px 0 0;
 }
 
 .parcel-search label,
@@ -2185,12 +2184,12 @@ body.fee-image-viewer-open {
 
 .portal-tabs {
   position: sticky;
-  top: 83px;
+  top: var(--site-header-height, 83px);
   z-index: 18;
   display: grid;
   grid-template-columns: minmax(650px, 2.2fr) repeat(5, minmax(104px, 0.5fr));
   gap: 8px;
-  padding: 10px 0 12px;
+  padding: 8px 8px 0;
   background: rgba(17, 70, 54, 0.96);
   backdrop-filter: blur(12px);
 }
@@ -2205,7 +2204,7 @@ body.fee-image-viewer-open {
   color: rgba(255, 255, 255, 0.84);
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.24);
-  border-radius: 8px;
+  border-radius: 8px 8px 0 0;
   cursor: pointer;
   font-size: 0.93rem;
   font-weight: 900;
@@ -2225,7 +2224,11 @@ body.fee-image-viewer-open {
   stroke-width: 2.4;
 }
 
-@media (max-width: 1180px) {
+@media (max-width: 1400px) {
+  .portal-tab svg { display: none; }
+}
+
+@media (max-width: 1240px) {
   .portal-tabs {
     grid-template-columns: repeat(5, minmax(0, 1fr));
   }
@@ -2242,10 +2245,9 @@ body.fee-image-viewer-open {
   padding: 0;
   color: var(--ink);
   background: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.48);
-  border-radius: 8px;
+  border: 0;
+  border-radius: 0;
   overflow: hidden;
-  box-shadow: var(--shadow);
 }
 
 .portal-view {
@@ -2601,8 +2603,8 @@ body.fee-image-viewer-open {
   --aerial-panel-width: 360px;
   position: relative;
   display: grid;
-  grid-template-columns: var(--aerial-panel-width) minmax(420px, 1fr);
-  height: calc(100vh - 150px);
+  grid-template-columns: var(--aerial-panel-width) minmax(0, 1fr);
+  height: calc(100dvh - var(--site-header-height, 83px) - var(--portal-toolbar-height, 78px));
   min-height: 560px;
   overflow: hidden;
   background: #f7faf8;
@@ -2610,7 +2612,7 @@ body.fee-image-viewer-open {
 }
 
 .aerial-portal.is-panel-collapsed {
-  grid-template-columns: 0 minmax(420px, 1fr);
+  grid-template-columns: 0 minmax(0, 1fr);
 }
 
 .aerial-panel-toggle {
@@ -2831,13 +2833,13 @@ body.fee-image-viewer-open {
 
 .aerial-portal .parcel-zoning {
   margin: 0;
-  padding: 10px 12px;
-  line-height: 1.4;
+  padding: 14px 12px;
+  line-height: 1.5;
 }
 
 .aerial-portal .parcel-zoning dl {
-  grid-template-columns: 60px minmax(0, 1fr);
-  gap: 5px 8px;
+  grid-template-columns: 76px minmax(0, 1fr);
+  gap: 12px 10px;
   margin: 0;
 }
 
@@ -4565,6 +4567,7 @@ body.fee-image-viewer-open {
 
   .portal-tabs {
     top: 0;
+    position: relative;
   }
 
   .content-tabs--manual,
@@ -4601,6 +4604,8 @@ body.fee-image-viewer-open {
   }
 
   .aerial-portal {
+    --aerial-panel-width: min(360px, 100%);
+    grid-template-columns: minmax(0, 1fr);
     height: auto;
     min-height: auto;
   }
@@ -4677,12 +4682,32 @@ body.fee-image-viewer-open {
   }
 
   .aerial-portal__panel {
+    max-height: 560px;
     border-right: 0;
     border-bottom: 1px solid var(--line);
   }
 
   .vworld-map-shell {
     min-height: 520px;
+  }
+
+  .aerial-panel-toggle {
+    top: 0;
+    right: 0;
+    left: auto;
+    width: 34px;
+    height: 34px;
+    border: 1px solid var(--line);
+    border-radius: 0 0 0 6px;
+  }
+
+  .aerial-panel-toggle svg { transform: rotate(90deg); }
+  .aerial-portal.is-panel-collapsed { grid-template-columns: minmax(0, 1fr); }
+  .aerial-portal.is-panel-collapsed .aerial-portal__panel { display: none; }
+  .aerial-portal.is-panel-collapsed .aerial-panel-toggle {
+    right: auto;
+    left: 0;
+    border-radius: 0 0 6px 0;
   }
 
   .home-landing {
