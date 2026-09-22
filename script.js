@@ -4967,7 +4967,7 @@ function initPortalTabs() {
       vworldMap.removeLayer(vworldMeasureLayer);
     }
 
-    const measureColor = "#c38394";
+    const measureColor = vworldMeasureMode === "area" ? "#2563eb" : "#c38394";
     const layers = vworldMeasurePoints.map((point) =>
       window.L.circleMarker(point, {
         radius: 5,
