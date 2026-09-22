@@ -4967,11 +4967,12 @@ function initPortalTabs() {
       vworldMap.removeLayer(vworldMeasureLayer);
     }
 
+    const measureColor = vworldMeasureMode === "distance" ? "#c38394" : "#f2c76b";
     const layers = vworldMeasurePoints.map((point) =>
       window.L.circleMarker(point, {
         radius: 5,
-        color: "#f2c76b",
-        fillColor: "#114636",
+        color: measureColor,
+        fillColor: vworldMeasureMode === "distance" ? "#f8eaf0" : "#114636",
         fillOpacity: 1,
         weight: 2,
         interactive: false,
@@ -4980,7 +4981,7 @@ function initPortalTabs() {
 
     if (vworldMeasurePoints.length >= 2) {
       const shapeOptions = {
-        color: "#f2c76b",
+        color: measureColor,
         fillColor: "#1f6b55",
         fillOpacity: 0.24,
         weight: 3,
