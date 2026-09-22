@@ -166,6 +166,7 @@ let vworldInfoMarker = null;
 let vworldMeasureMode = "";
 let vworldMeasurePoints = [];
 let vworldMeasureLayer = null;
+let vworldCompletedMeasureLayers = [];
 const vworldAdminTownCache = new Map();
 const vworldAdminVillageCache = new Map();
 
@@ -3910,6 +3911,7 @@ function initPortalTabs() {
     if (output) {
       output.textContent = message;
       output.classList.toggle("is-result", /^(거리|면적)\s[\d,]/.test(String(message || "")));
+      output.classList.toggle("is-distance-result", /^거리\s[\d,]/.test(String(message || "")));
     }
   }
 
@@ -4947,6 +4949,8 @@ function initPortalTabs() {
     }
 
     vworldMeasureLayer = null;
+    vworldCompletedMeasureLayers.forEach((layer) => vworldMap?.removeLayer(layer));
+    vworldCompletedMeasureLayers = [];
     document.querySelectorAll('[data-vworld-action="distance"], [data-vworld-action="area"]').forEach((button) => {
       button.classList.remove("is-active");
     });
@@ -4970,6 +4974,7 @@ function initPortalTabs() {
         fillColor: "#114636",
         fillOpacity: 1,
         weight: 2,
+        interactive: false,
       })
     );
 
@@ -4979,6 +4984,8 @@ function initPortalTabs() {
         fillColor: "#1f6b55",
         fillOpacity: 0.24,
         weight: 3,
+        interactive: false,
+        className: "vworld-measure-shape",
       };
 
       if (vworldMeasureMode === "area" && vworldMeasurePoints.length >= 3) {
@@ -4999,7 +5006,7 @@ function initPortalTabs() {
         return sum + vworldMap.distance(vworldMeasurePoints[index - 1], point);
       }, 0);
 
-      updateMeasureOutput(vworldMeasurePoints.length > 1 ? `거리 ${formatDistance(distance)}` : "지도에서 지점을 클릭하세요.");
+      updateMeasureOutput(vworldMeasurePoints.length > 1 ? `거리 ${formatDistance(distance)} · 우클릭/Enter로 완료` : "다음 지점을 클릭하세요. 우클릭/Enter로 완료합니다.");
       return;
     }
 
@@ -5007,6 +5014,42 @@ function initPortalTabs() {
       const area = calculatePolygonArea(vworldMeasurePoints);
       updateMeasureOutput(vworldMeasurePoints.length > 2 ? `면적 ${formatArea(area)}` : "지도에서 3개 이상 지점을 클릭하세요.");
     }
+  }
+
+  function finishVworldDistanceMeasure() {
+    if (vworldMeasureMode !== "distance" || !vworldMap || !vworldMeasureLayer) return;
+    if (vworldMeasurePoints.length < 2) {
+      updateMeasureOutput("거리를 측정하려면 두 지점 이상 클릭하세요.");
+      return;
+    }
+    const distance = vworldMeasurePoints.reduce((sum, point, index) =>
+      index ? sum + vworldMap.distance(vworldMeasurePoints[index - 1], point) : sum, 0);
+    const label = `거리 ${formatDistance(distance)}`;
+    window.L.tooltip({ permanent: true, direction: "top", offset: [0, -8], className: "vworld-distance-label", interactive: false })
+      .setLatLng(vworldMeasurePoints[vworldMeasurePoints.length - 1])
+      .setContent(label)
+      .addTo(vworldMeasureLayer);
+    // Keep the completed line while the next click starts a separate measurement.
+    vworldCompletedMeasureLayers.push(vworldMeasureLayer);
+    vworldMeasureLayer = null;
+    vworldMeasurePoints = [];
+    updateMeasureOutput(`${label} · 완료. 다음 시작점을 클릭하세요.`);
+  }
+
+  function bindVworldMeasureCompletion(mapNode) {
+    if (mapNode.dataset.measureCompletionBound) return;
+    mapNode.dataset.measureCompletionBound = "true";
+    mapNode.addEventListener("contextmenu", (event) => {
+      if (vworldMeasureMode !== "distance" || event.target.closest(".leaflet-control, button, a, input, select, textarea")) return;
+      event.preventDefault();
+      finishVworldDistanceMeasure();
+    });
+    mapNode.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" || event.isComposing || event.repeat || vworldMeasureMode !== "distance") return;
+      if (event.target.closest(".leaflet-control, button, a, input, select, textarea, [contenteditable]")) return;
+      event.preventDefault();
+      finishVworldDistanceMeasure();
+    });
   }
 
   function getVworldInfoPanel() {
@@ -5166,6 +5209,7 @@ function initPortalTabs() {
 
   function handleVworldMapClick(event) {
     if (vworldMeasureMode) {
+      vworldMap.getContainer().focus({ preventScroll: true });
       vworldMeasurePoints.push(event.latlng);
       renderVworldMeasure();
       return;
@@ -5184,7 +5228,8 @@ function initPortalTabs() {
       button.classList.toggle("is-active", button.dataset.vworldAction === mode);
     });
     syncVworldMeasureCursor();
-    updateMeasureOutput(mode === "distance" ? "거리: 지도에서 지점을 클릭하세요." : "면적: 지도에서 3개 이상 지점을 클릭하세요.");
+    vworldMap?.getContainer().focus({ preventScroll: true });
+    updateMeasureOutput(mode === "distance" ? "지점을 클릭하세요. 우클릭/Enter로 완료 후 계속 측정합니다." : "면적: 지도에서 3개 이상 지점을 클릭하세요.");
   }
 
   function bindVworldTools() {
@@ -5276,6 +5321,7 @@ function initPortalTabs() {
       vworldInfoMarker = null;
       vworldInfoRequestId += 1;
       vworldMeasureLayer = null;
+      vworldCompletedMeasureLayers = [];
       vworldMeasurePoints = [];
       vworldMeasureMode = "";
     }
@@ -5307,6 +5353,7 @@ function initPortalTabs() {
     }).setView(defaultAerialCenter, 16);
     window.L.control.zoom({ position: "topright" }).addTo(vworldMap);
     vworldMap.on("click", handleVworldMapClick);
+    bindVworldMeasureCompletion(mapNode);
     vworldMap.on("zoom", syncVworldLotNumberLabelScale);
     vworldMap.on("zoomend", rerenderVworldLotNumberLabels);
     syncVworldLotNumberLabelScale();
@@ -5363,6 +5410,7 @@ function initPortalTabs() {
       vworldInfoMarker = null;
       vworldInfoRequestId += 1;
       vworldMeasureLayer = null;
+      vworldCompletedMeasureLayers = [];
       vworldMeasurePoints = [];
       vworldMeasureMode = "";
     }
@@ -5387,6 +5435,7 @@ function initPortalTabs() {
     }).setView([36.4, 127.8], 7);
     window.L.control.zoom({ position: "topright" }).addTo(vworldMap);
     vworldMap.on("click", handleVworldMapClick);
+    bindVworldMeasureCompletion(mapNode);
     vworldMap.on("zoom", syncVworldLotNumberLabelScale);
     vworldMap.on("zoomend", rerenderVworldLotNumberLabels);
     syncVworldLotNumberLabelScale();

@@ -3013,6 +3013,23 @@ body.fee-image-viewer-open {
   font-weight: 900;
 }
 
+.vworld-measure.is-distance-result {
+  color: #9c5065;
+  background: #f8eaf0;
+  border-color: #e5c5d0;
+}
+
+.vworld-distance-label {
+  color: #9c5065;
+  background: #f8eaf0;
+  border-color: #e5c5d0;
+  font-weight: 800;
+}
+
+.vworld-distance-label.leaflet-tooltip-top::before {
+  border-top-color: #e5c5d0;
+}
+
 .aerial-status {
   position: absolute;
   right: 12px;
