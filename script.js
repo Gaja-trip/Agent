@@ -1717,6 +1717,21 @@ function initGuidePrintButtons() {
   });
 }
 
+function initAccessLock() {
+  const navigation = document.querySelector(".main-nav");
+  if (!navigation || !/^https?:$/.test(window.location.protocol)) return;
+  const form = document.createElement("form");
+  form.action = "/logout";
+  form.method = "post";
+  form.className = "access-lock";
+  form.innerHTML = '<button type="submit" title="접속 잠금" aria-label="접속 잠금"><i data-lucide="lock-keyhole" aria-hidden="true"></i></button>';
+  navigation.append(form);
+  window.addEventListener("pageshow", (event) => {
+    if (event.persisted) window.location.reload();
+  });
+}
+
+initAccessLock();
 initPortalTabs();
 initProcessSteps();
 initReadinessChecklist();

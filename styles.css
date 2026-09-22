@@ -107,6 +107,25 @@ input {
   border-bottom: 2px solid transparent;
 }
 
+.main-nav:has(.access-lock) { flex-wrap: wrap; }
+.access-lock { margin: 0; flex: 0 0 auto; }
+.access-lock button {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 7px;
+  color: var(--green);
+  background: var(--soft);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  cursor: pointer;
+}
+.access-lock button:hover { background: var(--line); }
+.access-lock button:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+.access-lock svg { width: 20px; height: 20px; }
+@media print { .access-lock { display: none; } }
+
 .main-nav__home {
   position: relative;
   min-width: 32px;
