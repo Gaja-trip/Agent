@@ -2703,6 +2703,68 @@ body.fee-image-viewer-open {
   margin-top: 14px;
 }
 
+.vworld-urban-planning {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f7faf8;
+}
+
+.vworld-urban-planning legend {
+  padding: 0 5px;
+  color: #31463f;
+  font-size: 0.86rem;
+  font-weight: 900;
+}
+
+.vworld-urban-planning__layers {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px 6px;
+}
+
+.vworld-urban-planning label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.vworld-urban-planning input {
+  accent-color: var(--green);
+}
+
+.vworld-urban-planning__opacity input {
+  flex: 1;
+  min-width: 0;
+  width: 70px;
+}
+
+.vworld-urban-planning button {
+  padding: 7px;
+  color: #31463f;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.vworld-urban-planning p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.74rem;
+  line-height: 1.5;
+}
+
+.vworld-urban-planning .vworld-urban-planning__status {
+  color: #31463f;
+}
+
 .vworld-tool-group {
   display: grid;
   gap: 8px;

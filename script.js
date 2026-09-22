@@ -118,6 +118,22 @@ const landCategoryCodeLabels = {
   "28": "잡종지",
 };
 const defaultAerialCenter = [37.5665, 126.978];
+// V-World 도시계획시설도 WMS. 도로는 다른 시설보다 위에 표시합니다.
+const vworldUrbanPlanningLayers = [
+  { id: "lt_c_upisuq151", title: "도시계획도로" },
+  { id: "lt_c_upisuq152", title: "교통시설" },
+  { id: "lt_c_upisuq153", title: "공간시설" },
+  { id: "lt_c_upisuq154", title: "유통·공급시설" },
+  { id: "lt_c_upisuq155", title: "공공·문화체육시설" },
+  { id: "lt_c_upisuq156", title: "방재시설" },
+  { id: "lt_c_upisuq157", title: "보건·위생시설" },
+  { id: "lt_c_upisuq158", title: "환경기초시설" },
+  { id: "lt_c_upisuq159", title: "기타 기반시설" },
+];
+const vworldUrbanPlanningVisible = new Set();
+const vworldUrbanPlanningOverlays = new Map();
+const vworldUrbanPlanningStates = new Map();
+let vworldUrbanPlanningOpacity = 0.75;
 let vworldMap = null;
 let vworldMarker = null;
 let vworldBaseLayer = null;
@@ -1080,6 +1096,7 @@ function initPortalTabs() {
                 <button type="button" data-vworld-layer="hybrid">라벨</button>
               </div>
             </div>
+            ${renderVworldUrbanPlanningTools()}
             <div class="vworld-tool-group vworld-tool-group--inline vworld-tool-group--measure">
               <strong>측정</strong>
               <button type="button" data-vworld-action="distance">
@@ -3388,6 +3405,114 @@ function initPortalTabs() {
     });
   }
 
+  function renderVworldUrbanPlanningTools() {
+    return `
+      <fieldset class="vworld-urban-planning">
+        <legend>도시계획 레이어</legend>
+        <div class="vworld-urban-planning__layers">
+          ${vworldUrbanPlanningLayers.map(({ id, title }) => `
+            <label><input type="checkbox" data-vworld-urban-layer="${id}"${vworldUrbanPlanningVisible.has(id) ? " checked" : ""} />${title}</label>
+          `).join("")}
+        </div>
+        <label class="vworld-urban-planning__opacity">
+          선명도
+          <input type="range" min="10" max="100" step="5" value="${vworldUrbanPlanningOpacity * 100}" data-vworld-urban-opacity aria-label="도시계획 레이어 선명도" />
+          <output data-vworld-urban-opacity-value>${Math.round(vworldUrbanPlanningOpacity * 100)}%</output>
+        </label>
+        <button type="button" data-vworld-urban-hide>도시계획 모두 숨기기</button>
+        <p class="vworld-urban-planning__status" data-vworld-urban-status role="status">항목을 선택하면 항공사진 위에 표시합니다.</p>
+        <p>선이 보이지 않으면 지도를 확대하세요. 지역·축척에 따라 제공 범위가 다릅니다.</p>
+      </fieldset>
+    `;
+  }
+
+  function syncVworldUrbanPlanningControls() {
+    document.querySelectorAll("[data-vworld-urban-layer]").forEach((input) => {
+      input.checked = vworldUrbanPlanningVisible.has(input.dataset.vworldUrbanLayer);
+    });
+    const status = document.querySelector("[data-vworld-urban-status]");
+    if (!status) return;
+    const selected = vworldUrbanPlanningLayers.filter(({ id }) => vworldUrbanPlanningVisible.has(id));
+    const failed = selected.filter(({ id }) => vworldUrbanPlanningStates.get(id) === "error");
+    const loading = selected.some(({ id }) => vworldUrbanPlanningStates.get(id) === "loading");
+    status.textContent = failed.length
+      ? `${failed.map(({ title }) => title).join(", ")} 지도를 불러오지 못했습니다. 네트워크 또는 V-World 키·도메인 권한을 확인하고 해당 항목을 다시 켜 주세요.`
+      : !selected.length
+        ? "도시계획 레이어를 모두 숨겼습니다."
+        : loading
+          ? "도시계획 레이어를 불러오는 중입니다."
+          : `${selected.length}개 레이어 켜짐 · V-World 제공`;
+  }
+
+  function setVworldUrbanPlanningLayer(id, visible) {
+    const definition = vworldUrbanPlanningLayers.find((item) => item.id === id);
+    if (!definition || !vworldMap || !window.L) return;
+    const existing = vworldUrbanPlanningOverlays.get(id);
+    if (!visible) {
+      vworldUrbanPlanningVisible.delete(id);
+      vworldUrbanPlanningOverlays.delete(id);
+      vworldUrbanPlanningStates.delete(id);
+      if (existing) vworldMap.removeLayer(existing);
+    } else {
+      vworldUrbanPlanningVisible.add(id);
+      if (!existing) {
+        const layer = window.L.tileLayer.wms("https://api.vworld.kr/req/wms", {
+          service: "WMS",
+          version: "1.3.0",
+          request: "GetMap",
+          layers: id,
+          styles: id,
+          format: "image/png",
+          transparent: true,
+          exceptions: "text/xml",
+          maxZoom: vworldMapMaxZoom,
+          maxNativeZoom: vworldTileNativeMaxZoom,
+          key: vworldApiKey,
+          domain: window.location.origin,
+          attribution: "V-World 도시계획시설도",
+          opacity: vworldUrbanPlanningOpacity,
+          zIndex: id === "lt_c_upisuq151" ? 26 : 25,
+        });
+        vworldUrbanPlanningOverlays.set(id, layer);
+        const updateState = (state) => {
+          if (vworldUrbanPlanningOverlays.get(id) !== layer) return;
+          vworldUrbanPlanningStates.set(id, state);
+          syncVworldUrbanPlanningControls();
+        };
+        layer.on("loading", () => updateState("loading"));
+        layer.on("tileerror", () => updateState("error"));
+        layer.on("load", () => {
+          if (vworldUrbanPlanningStates.get(id) !== "error") updateState("ready");
+        });
+        updateState("loading");
+        layer.addTo(vworldMap);
+      }
+    }
+    syncVworldUrbanPlanningControls();
+  }
+
+  function bindVworldUrbanPlanningTools() {
+    const group = document.querySelector(".vworld-urban-planning");
+    if (!group) return;
+    if (!group.dataset.bound) {
+      group.dataset.bound = "true";
+      group.addEventListener("change", (event) => {
+        const id = event.target.dataset.vworldUrbanLayer;
+        if (id) setVworldUrbanPlanningLayer(id, event.target.checked);
+      });
+      group.querySelector("[data-vworld-urban-opacity]").addEventListener("input", (event) => {
+        vworldUrbanPlanningOpacity = Number(event.target.value) / 100;
+        vworldUrbanPlanningOverlays.forEach((layer) => layer.setOpacity(vworldUrbanPlanningOpacity));
+        group.querySelector("[data-vworld-urban-opacity-value]").textContent = `${Math.round(vworldUrbanPlanningOpacity * 100)}%`;
+      });
+      group.querySelector("[data-vworld-urban-hide]").addEventListener("click", () => {
+        [...vworldUrbanPlanningVisible].forEach((id) => setVworldUrbanPlanningLayer(id, false));
+      });
+    }
+    vworldUrbanPlanningVisible.forEach((id) => setVworldUrbanPlanningLayer(id, true));
+    syncVworldUrbanPlanningControls();
+  }
+
   function setVworldCadastralLayer() {
     if (!vworldMap || !window.L) {
       return;
@@ -4739,6 +4864,7 @@ function initPortalTabs() {
   }
 
   function bindVworldTools() {
+    bindVworldUrbanPlanningTools();
     const infoPanel = getVworldInfoPanel();
 
     if (infoPanel && !infoPanel.dataset.bound) {
@@ -4817,6 +4943,8 @@ function initPortalTabs() {
       vworldParcelLayer = null;
       vworldRadiusLayer = null;
       vworldCadastralLayer = null;
+      vworldUrbanPlanningOverlays.clear();
+      vworldUrbanPlanningStates.clear();
       vworldPoiLayer = null;
       vworldLotNumberLayer = null;
       vworldLabelRequestId += 1;
@@ -4902,6 +5030,8 @@ function initPortalTabs() {
       vworldParcelLayer = null;
       vworldRadiusLayer = null;
       vworldCadastralLayer = null;
+      vworldUrbanPlanningOverlays.clear();
+      vworldUrbanPlanningStates.clear();
       vworldPoiLayer = null;
       vworldLotNumberLayer = null;
       vworldLabelRequestId += 1;
