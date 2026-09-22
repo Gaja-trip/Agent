@@ -121,13 +121,6 @@ const defaultAerialCenter = [37.5665, 126.978];
 // V-World 도시계획시설도 WMS. 도로는 다른 시설보다 위에 표시합니다.
 const vworldUrbanPlanningLayers = [
   { id: "lt_c_upisuq151", title: "도시계획도로" },
-  { id: "lt_c_upisuq152", title: "교통시설" },
-  { id: "lt_c_upisuq153", title: "공간시설" },
-  { id: "lt_c_upisuq154", title: "유통·공급시설" },
-  { id: "lt_c_upisuq155", title: "공공·문화체육시설" },
-  { id: "lt_c_upisuq156", title: "방재시설" },
-  { id: "lt_c_upisuq157", title: "보건·위생시설" },
-  { id: "lt_c_upisuq158", title: "환경기초시설" },
   { id: "lt_c_upisuq159", title: "기타 기반시설" },
 ];
 const vworldUrbanPlanningVisible = new Set();
@@ -3409,6 +3402,17 @@ function initPortalTabs() {
     return `
       <fieldset class="vworld-urban-planning">
         <legend>도시계획 레이어</legend>
+        <svg class="vworld-urban-planning__filter" width="0" height="0" aria-hidden="true" focusable="false">
+          <defs>
+            <filter id="vworld-urban-red-tint" color-interpolation-filters="sRGB">
+              <feColorMatrix type="matrix" values="
+                0.06378  0.21456  0.02166  0  0.70
+                0.051024 0.171648 0.017328 0  0.06
+                0.04252  0.14304  0.01444  0  0.10
+                0        0        0        1  0" />
+            </filter>
+          </defs>
+        </svg>
         <div class="vworld-urban-planning__layers">
           ${vworldUrbanPlanningLayers.map(({ id, title }) => `
             <label><input type="checkbox" data-vworld-urban-layer="${id}"${vworldUrbanPlanningVisible.has(id) ? " checked" : ""} />${title}</label>
@@ -3421,7 +3425,7 @@ function initPortalTabs() {
         </label>
         <button type="button" data-vworld-urban-hide>도시계획 모두 숨기기</button>
         <p class="vworld-urban-planning__status" data-vworld-urban-status role="status">항목을 선택하면 항공사진 위에 표시합니다.</p>
-        <p>선이 보이지 않으면 지도를 확대하세요. 지역·축척에 따라 제공 범위가 다릅니다.</p>
+        <p>경계선과 내부 영역을 붉은 계열로 표시합니다. 선이 보이지 않으면 지도를 확대하세요.</p>
       </fieldset>
     `;
   }
@@ -3470,6 +3474,8 @@ function initPortalTabs() {
           key: vworldApiKey,
           domain: window.location.origin,
           attribution: "V-World 도시계획시설도",
+          // Tint only planning tiles; preserve source transparency and contrast.
+          className: "vworld-urban-planning-overlay",
           opacity: vworldUrbanPlanningOpacity,
           zIndex: id === "lt_c_upisuq151" ? 26 : 25,
         });

@@ -2736,13 +2736,45 @@ body.fee-image-viewer-open {
 }
 
 .vworld-urban-planning input {
-  accent-color: var(--green);
+  accent-color: #c62828;
+}
+
+.vworld-urban-planning__filter {
+  position: absolute;
+  pointer-events: none;
+}
+
+.vworld-urban-planning-overlay {
+  filter: url("#vworld-urban-red-tint");
 }
 
 .vworld-urban-planning__opacity input {
   flex: 1;
   min-width: 0;
   width: 70px;
+  height: 6px;
+  appearance: none;
+  -webkit-appearance: none;
+  border-radius: 999px;
+  background: linear-gradient(to right, #f2a0a0, #c62828);
+  cursor: pointer;
+}
+
+.vworld-urban-planning__opacity input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #8e1b1b;
+  border-radius: 50%;
+  background: #c62828;
+}
+
+.vworld-urban-planning__opacity input::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border: 2px solid #8e1b1b;
+  border-radius: 50%;
+  background: #c62828;
 }
 
 .vworld-urban-planning button {
