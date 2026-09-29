@@ -951,7 +951,9 @@ function initPortalTabs() {
 
   function renderAerialParcelDetails() {
     const { label, pnu, data, loading, error } = aerialParcelDetailsState;
-    const location = window.VworldParcel.formatLocation(label, getLotNumberFromPnu(pnu)) || "—";
+    const address = window.VworldParcel.formatLocation(label, getLotNumberFromPnu(pnu));
+    const category = String(data?.parcel?.category || "").trim();
+    const location = address ? `${address}${category && category !== "-" ? ` (${category})` : ""}` : "—";
     const value = (kind) => {
       if (loading) return "조회 중…";
       if (error || data?.errors?.[kind]) return "조회 실패";
