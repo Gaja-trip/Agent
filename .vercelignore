@@ -2,3 +2,4 @@
 server.cjs
 server*.log
 tests/
+.recovery/

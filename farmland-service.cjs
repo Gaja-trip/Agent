@@ -93,7 +93,7 @@ async function sendImage(response, result) {
   const type = result.headers.get("content-type") || "";
   if (!/^image\/(png|jpeg)/i.test(type)) throw new Error("지도 이미지가 제공되지 않았습니다.");
   const bytes = Buffer.from(await result.arrayBuffer());
-  response.writeHead(200, { "Content-Type": type, "Cache-Control": "public, max-age=3600", "X-Content-Type-Options": "nosniff" });
+  response.writeHead(200, { "Content-Type": type, "Cache-Control": "private, no-store, max-age=0", "X-Content-Type-Options": "nosniff" });
   response.end(bytes);
 }
 
