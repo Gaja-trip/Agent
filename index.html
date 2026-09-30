@@ -2,7 +2,7 @@
 <html lang="ko">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <link rel="icon" type="image/svg+xml" href="assets/favicon.svg?v=3" />
     <meta
       name="description"
@@ -19,7 +19,7 @@
     <script defer src="vworld-parcel.js"></script>
     <script defer src="script.js"></script>
   </head>
-  <body>
+  <body class="portal-home">
     <header class="site-header">
       <a class="brand" href="index.html" aria-label="토지정보 통합 안내 첫 화면">
         <span class="brand__mark" aria-hidden="true">
@@ -101,15 +101,15 @@
               </button>
               <button class="portal-tab" type="button" role="tab" aria-selected="false" data-portal="map">
                 <i data-lucide="map-pinned"></i>
-                토지이음 지도
+                <span>토지이음<span class="mobile-tab-break"></span> 지도</span>
               </button>
               <button class="portal-tab" type="button" role="tab" aria-selected="false" data-portal="aerial">
                 <i data-lucide="satellite"></i>
                 항공사진
               </button>
-              <button class="portal-tab" type="button" role="tab" aria-selected="false" data-portal="farmland">
+              <button class="portal-tab" type="button" role="tab" aria-selected="false" aria-label="농지공간정보" data-portal="farmland">
                 <i data-lucide="sprout"></i>
-                농지공간정보
+                <span>농지공간<span class="mobile-tab-break"></span>정보</span>
               </button>
               <button class="portal-tab" type="button" role="tab" aria-selected="false" data-portal="law">
                 <i data-lucide="scale"></i>

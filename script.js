@@ -533,8 +533,8 @@ function initPortalTabs() {
   const syncWorkspaceSize = () => {
     workspace.style.setProperty("--site-header-height", `${siteHeader.getBoundingClientRect().height}px`);
     workspace.style.setProperty("--portal-toolbar-height", `${toolbar.getBoundingClientRect().height}px`);
-    vworldMap?.invalidateSize({ pan: false });
-    farmlandMap?.invalidateSize({ pan: false });
+    vworldMap?.invalidateSize({ pan: true, debounceMoveend: true });
+    farmlandMap?.invalidateSize({ pan: true, debounceMoveend: true });
   };
   if (workspace && siteHeader && toolbar) {
     const workspaceObserver = new ResizeObserver(syncWorkspaceSize);
@@ -553,6 +553,200 @@ function initPortalTabs() {
   }
 
   portalPanel.replaceChildren();
+
+  // Reuse the same controls and state in mobile sheets; restore them in place on desktop.
+  const mobileMedia = window.matchMedia("(max-width: 980px), (max-height: 600px) and (max-width: 1180px)");
+  const mobileSheets = [];
+  const tabRail = document.createElement("div");
+  tabRail.className = "portal-tab-rail";
+  tabRail.setAttribute("role", "tablist");
+  tabRail.setAttribute("aria-label", "토지정보 연결 서비스");
+  toolbar.removeAttribute("role");
+  toolbar.removeAttribute("aria-label");
+  tabRail.append(...portalTabs);
+  toolbar.append(tabRail);
+
+  function closeMobileSheets() {
+    mobileSheets.forEach(({ dialog }) => { if (dialog.open) dialog.close(); });
+  }
+
+  function createMobileSheet(id, title, nodes, host) {
+    const dialog = document.createElement("dialog");
+    dialog.id = id;
+    dialog.className = "mobile-sheet";
+    dialog.setAttribute("aria-labelledby", `${id}-title`);
+    dialog.innerHTML = `<div class="mobile-sheet__header"><h2 id="${id}-title" tabindex="-1">${title}</h2><button type="button" class="mobile-sheet__close" aria-label="${title} 닫기">닫기 <i data-lucide="x"></i></button></div><div class="mobile-sheet__body"></div>`;
+    const body = dialog.querySelector(".mobile-sheet__body");
+    const placements = nodes.filter(Boolean).map((node) => {
+      const anchor = document.createComment(`mobile ${id}`);
+      node.before(anchor);
+      return { node, anchor };
+    });
+    host.append(dialog);
+    const sheet = {
+      dialog,
+      sync() {
+        if (!mobileMedia.matches && dialog.open) dialog.close();
+        placements.forEach(({ node, anchor }) => {
+          if (mobileMedia.matches) body.append(node);
+          else anchor.after(node);
+        });
+      },
+      open(selector) {
+        if (!mobileMedia.matches) return;
+        closeMobileSheets();
+        dialog.showModal();
+        // Focus the heading instead of opening the phone keyboard immediately.
+        dialog.querySelector("h2").focus({ preventScroll: true });
+        body.scrollTop = 0;
+        if (selector) {
+          const section = body.querySelector(selector);
+          section?.scrollIntoView({ block: "start" });
+        }
+      },
+    };
+    dialog.querySelector(".mobile-sheet__close").addEventListener("click", () => dialog.close());
+    dialog.addEventListener("click", (event) => {
+      if (event.target !== dialog) return;
+      const rect = dialog.getBoundingClientRect();
+      if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) dialog.close();
+    });
+    mobileSheets.push(sheet);
+    sheet.sync();
+    return sheet;
+  }
+
+  const mobileMenuButton = document.createElement("button");
+  mobileMenuButton.type = "button";
+  mobileMenuButton.className = "mobile-menu-button";
+  mobileMenuButton.setAttribute("aria-haspopup", "dialog");
+  mobileMenuButton.setAttribute("aria-controls", "mobile-site-menu");
+  mobileMenuButton.innerHTML = '<i data-lucide="menu"></i><span>메뉴</span>';
+  siteHeader.append(mobileMenuButton);
+  const mobileMenuSheet = createMobileSheet("mobile-site-menu", "전체 메뉴", [siteHeader.querySelector(".site-search"), siteHeader.querySelector(".main-nav")], siteHeader);
+  mobileMenuButton.addEventListener("click", () => mobileMenuSheet.open());
+
+  const mobileSearchButton = document.createElement("button");
+  mobileSearchButton.type = "button";
+  mobileSearchButton.className = "mobile-address-button";
+  mobileSearchButton.setAttribute("aria-haspopup", "dialog");
+  mobileSearchButton.setAttribute("aria-controls", "mobile-address-search");
+  mobileSearchButton.innerHTML = '<i data-lucide="search"></i><span data-mobile-address>지번·도로명 주소 검색</span><strong>검색</strong>';
+  toolbar.before(mobileSearchButton);
+  const mobileSearchSheet = createMobileSheet("mobile-address-search", "주소 검색", [parcelForm], toolbar.parentElement);
+  mobileSearchButton.addEventListener("click", () => mobileSearchSheet.open());
+
+  function syncMobileAddress() {
+    const address = getParcelState().title || getParcelAddress();
+    mobileSearchButton.querySelector("[data-mobile-address]").textContent = address || "지번·도로명 주소 검색";
+    mobileSearchButton.setAttribute("aria-label", address ? `${address}, 주소 검색` : "지번·도로명 주소 검색");
+  }
+
+  function syncMobileViewport() {
+    const viewport = window.visualViewport;
+    document.documentElement.style.setProperty("--mobile-viewport-height", `${viewport?.height || window.innerHeight}px`);
+    document.documentElement.style.setProperty("--mobile-keyboard-inset", `${Math.max(0, window.innerHeight - (viewport?.height || window.innerHeight) - (viewport?.offsetTop || 0))}px`);
+    window.requestAnimationFrame(syncWorkspaceSize);
+  }
+  mobileMedia.addEventListener("change", () => {
+    mobileSheets.forEach((sheet) => sheet.sync());
+    if (!mobileMedia.matches) resetMobileExpansion();
+    syncMobileViewport();
+  });
+  window.visualViewport?.addEventListener("resize", syncMobileViewport);
+  window.addEventListener("resize", syncMobileViewport);
+  syncMobileViewport();
+
+  function setupMobilePortal(view, portalKey) {
+    if (view.dataset.mobileReady) return;
+    view.dataset.mobileReady = "true";
+    if (portalKey !== "aerial" && portalKey !== "farmland") {
+      const frame = view.querySelector(".embedded-site__frame");
+      const status = view.querySelector("[data-mobile-embed-status]");
+      let loadingTimer;
+      const showLoading = () => {
+        window.clearTimeout(loadingTimer);
+        status.hidden = false;
+        status.textContent = "페이지를 불러오는 중입니다.";
+        loadingTimer = window.setTimeout(() => {
+          status.textContent = "연결이 지연되고 있습니다. 위의 ‘원문 열기’로도 확인할 수 있습니다.";
+        }, 12000);
+      };
+      frame.addEventListener("load", () => {
+        if (frame.getAttribute("src") === "about:blank") return;
+        window.clearTimeout(loadingTimer);
+        status.hidden = true;
+      });
+      new MutationObserver(showLoading).observe(frame, { attributes: true, attributeFilter: ["src"] });
+      showLoading();
+      return;
+    }
+    const aerial = portalKey === "aerial";
+    const root = view.querySelector(aerial ? ".aerial-portal" : ".farmland-portal");
+    const panel = root.querySelector(aerial ? ".aerial-portal__panel" : ".farmland-portal__sidebar");
+    const sheet = createMobileSheet(`mobile-${portalKey}-tools`, aerial ? "항공사진 도구·필지 정보" : "농지공간정보 상세", [panel], root);
+    const dock = document.createElement("div");
+    dock.className = "mobile-map-dock";
+    dock.setAttribute("aria-label", aerial ? "항공사진 빠른 도구" : "농지공간정보 빠른 도구");
+    dock.innerHTML = aerial
+      ? '<button type="button" data-mobile-section=".aerial-search"><i data-lucide="sliders-horizontal"></i>검색·레이어</button><button type="button" data-mobile-section="[data-parcel-zoning]"><i data-lucide="map-pin"></i>필지정보</button><button type="button" data-mobile-section=".vworld-tool-group--measure"><i data-lucide="ruler"></i>측정</button>'
+      : '<button type="button" data-mobile-farm-tab="parcel"><i data-lucide="map-pin"></i>필지정보</button><button type="button" data-mobile-farm-tab="plan"><i data-lucide="layers"></i>토지이용계획</button><button type="button" data-mobile-farm-tab="building"><i data-lucide="building-2"></i>건축물정보</button>';
+    dock.querySelectorAll("button").forEach((button) => {
+      button.setAttribute("aria-haspopup", "dialog");
+      button.setAttribute("aria-controls", sheet.dialog.id);
+      button.addEventListener("click", () => {
+        sheet.open(button.dataset.mobileSection);
+        if (button.dataset.mobileFarmTab) {
+          panel.querySelector(`[data-farmland-info-tab="${button.dataset.mobileFarmTab}"]`)?.click();
+        }
+      });
+    });
+    root.append(dock);
+    if (aerial) {
+      const measurement = document.createElement("div");
+      measurement.className = "mobile-measure-bar";
+      measurement.hidden = true;
+      measurement.innerHTML = '<output data-mobile-measure aria-live="polite"></output><div><button type="button" data-mobile-measure-finish>측정 완료</button><button type="button" data-mobile-measure-stop>측정 종료</button><button type="button" data-mobile-measure-clear>초기화</button></div>';
+      root.append(measurement);
+      measurement.querySelector("[data-mobile-measure-finish]").addEventListener("click", finishVworldMeasure);
+      measurement.querySelector("[data-mobile-measure-stop]").addEventListener("click", () => {
+        // End drawing while preserving completed lines and polygons.
+        if (vworldMeasurePoints.length && !finishVworldMeasure()) {
+          if (vworldMeasureLayer) vworldMap?.removeLayer(vworldMeasureLayer);
+          vworldMeasureLayer = null;
+          vworldMeasurePoints = [];
+        }
+        vworldMeasureMode = "";
+        document.querySelectorAll('[data-vworld-action="distance"], [data-vworld-action="area"]').forEach((button) => button.classList.remove("is-active"));
+        syncVworldMeasureCursor();
+        updateMeasureOutput("측정을 종료했습니다. 측정 결과는 초기화할 때까지 유지됩니다.");
+      });
+      measurement.querySelector("[data-mobile-measure-clear]").addEventListener("click", clearVworldMeasure);
+    }
+  }
+
+  function resetMobileExpansion() {
+    document.body.classList.remove("is-mobile-content-expanded");
+    portalPanel.querySelectorAll("[data-mobile-expand]").forEach((button) => {
+      button.textContent = "화면 확대";
+      button.setAttribute("aria-pressed", "false");
+    });
+  }
+
+  portalPanel.addEventListener("click", (event) => {
+    const expand = event.target.closest("[data-mobile-expand]");
+    if (expand) {
+      const expanded = document.body.classList.toggle("is-mobile-content-expanded");
+      expand.textContent = expanded ? "화면 복귀" : "화면 확대";
+      expand.setAttribute("aria-pressed", String(expanded));
+      syncMobileViewport();
+    }
+    const toolsButton = event.target.closest("[data-mobile-embed-tools]");
+    if (toolsButton) {
+      const open = toolsButton.closest(".embedded-site").classList.toggle("is-tools-open");
+      toolsButton.setAttribute("aria-expanded", String(open));
+    }
+  });
 
   function getParcelAddress() {
     return (parcelInput ? parcelInput.value : readStoredValue(parcelStorageKey)).trim();
@@ -1246,6 +1440,12 @@ function initPortalTabs() {
 
     return `
       <div class="embedded-site${isEumPortal ? " embedded-site--eum" : ""}${isLawPortal ? " embedded-site--law" : ""}">
+        <div class="mobile-embedded-toolbar">
+          <button type="button" data-mobile-expand aria-pressed="false">화면 확대</button>
+          ${isEumPortal ? '<button type="button" data-mobile-embed-tools aria-expanded="false">도면 도구</button>' : ""}
+          <a href="${escapeHtml(iframeUrl)}" data-mobile-original target="_blank" rel="noopener noreferrer">원문 열기 <i data-lucide="external-link"></i></a>
+        </div>
+        <p class="mobile-embedded-status" data-mobile-embed-status role="status">페이지를 불러오는 중입니다.</p>
         ${isEumPortal ? renderEumRecoveryTools() : ""}
         ${isLawPortal ? renderLawContext() : ""}
         ${isEumPortal ? `<iframe class="embedded-site__warmup" title="토지이음 연결 준비" src="${escapeHtml(getEumWarmupUrl())}" aria-hidden="true" tabindex="-1"></iframe>` : ""}
@@ -1829,6 +2029,7 @@ function initPortalTabs() {
 
     writeStoredValue(parcelStorageKey, nextAddress);
     syncSharedParcelText();
+    syncMobileAddress();
   }
 
   async function reverseGeocodeParcelAddress(latitude, longitude) {
@@ -3157,6 +3358,7 @@ function initPortalTabs() {
     if (!vworldMap || !window.L || !result) {
       return;
     }
+    if (mobileMedia.matches) closeMobileSheets();
 
     const title = result.title || result.query || "선택 위치";
     vworldCurrentPoint = { ...result, title };
@@ -3937,6 +4139,13 @@ function initPortalTabs() {
       output.textContent = message;
       output.classList.toggle("is-result", /^(거리|면적)\s[\d,]/.test(String(message || "")));
       output.classList.toggle("is-distance-result", /^거리\s[\d,]/.test(String(message || "")));
+    }
+    const mobileOutput = document.querySelector("[data-mobile-measure]");
+    if (mobileOutput) {
+      mobileOutput.closest(".mobile-measure-bar").hidden = !vworldMeasureMode;
+      mobileOutput.textContent = message.replace(/우클릭\/Enter로/g, "‘측정 완료’로").replace(/클릭/g, "터치");
+      document.querySelector("[data-mobile-measure-finish]").disabled = vworldMeasurePoints.length < (vworldMeasureMode === "area" ? 3 : 2);
+      window.requestAnimationFrame(() => vworldMap?.invalidateSize({ pan: true, debounceMoveend: true }));
     }
   }
 
@@ -5259,6 +5468,7 @@ function initPortalTabs() {
     syncVworldMeasureCursor();
     vworldMap?.getContainer().focus({ preventScroll: true });
     updateMeasureOutput(mode === "distance" ? "지점을 클릭하세요. 우클릭/Enter로 완료 후 계속 측정합니다." : "3개 이상 지점을 클릭하세요. 우클릭/Enter로 면적 측정을 완료합니다.");
+    if (mobileMedia.matches) closeMobileSheets();
   }
 
   function bindVworldTools() {
@@ -5292,6 +5502,7 @@ function initPortalTabs() {
 
         if (action === "center") {
           centerVworldOnParcel();
+          if (mobileMedia.matches) closeMobileSheets();
         }
 
         if (action === "toggle-marker") {
@@ -5504,8 +5715,18 @@ function initPortalTabs() {
 
   function setActivePortal(portalKey) {
     const portal = portalData[portalKey];
+    if (activePortalKey !== portalKey) {
+      closeMobileSheets();
+      resetMobileExpansion();
+    }
     activePortalKey = portalKey;
     const { view, isNew } = ensurePortalView(portalKey);
+    setupMobilePortal(view, portalKey);
+    syncMobileAddress();
+    const originalLink = view.querySelector("[data-mobile-original]");
+    if (originalLink) originalLink.href = getEmbeddedPortalUrl(portal);
+    const embedTools = view.querySelector("[data-mobile-embed-tools]");
+    if (embedTools) embedTools.hidden = !getParcelState().pnu;
 
     portalTabs.forEach((button) => {
       const isActive = button.dataset.portal === portalKey;
@@ -5615,6 +5836,7 @@ function initPortalTabs() {
         saveParcelAddress(nextState.query);
         clearParcelCandidateChoices();
         updateParcelStatus(`${nextState.title || nextState.query} 기준으로 토지이음·토지이음지도·항공사진을 연결했습니다.`);
+        closeMobileSheets();
         setActivePortal(activePortalKey);
         if (activePortalKey === "farmland") focusFarmlandPoint(nextState, true);
       } catch (error) {
@@ -5651,6 +5873,7 @@ function initPortalTabs() {
 
         if (state?.pnu || (Number.isFinite(state?.latitude) && Number.isFinite(state?.longitude))) {
           updateParcelStatus(`${state.title || address} 기준으로 토지이음·토지이음지도·항공사진을 연결했습니다.`);
+          closeMobileSheets();
         } else {
           updateParcelStatus(`"${address}" 검색 결과를 찾지 못했습니다. 지번이나 도로명을 더 정확히 입력해 주세요.`);
         }
@@ -5720,7 +5943,11 @@ function initPortalTabs() {
         if (point?.ambiguous) {
           renderParcelCandidateChoices(point.candidates, getParcelAddress());
           document.querySelector("[data-farmland-status]").textContent = "상단 검색 결과에서 정확한 지번을 선택해 주세요.";
-        } else if (point) focusFarmlandPoint(point, true);
+          mobileSearchSheet.open();
+        } else if (point) {
+          focusFarmlandPoint(point, true);
+          closeMobileSheets();
+        }
         else document.querySelector("[data-farmland-status]").textContent = "상단에서 지번주소를 먼저 검색해 주세요.";
       }).catch(() => { document.querySelector("[data-farmland-status]").textContent = "주소를 확인하지 못했습니다. 다시 검색해 주세요."; });
       return;

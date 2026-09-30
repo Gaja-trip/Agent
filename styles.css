@@ -4754,6 +4754,234 @@ body.fee-image-viewer-open {
   }
 }
 
+.portal-tab-rail { display: contents; }
+.mobile-menu-button,
+.mobile-address-button,
+.mobile-map-dock,
+.mobile-measure-bar,
+.mobile-embedded-toolbar,
+.mobile-embedded-status,
+.mobile-tab-break { display: none; }
+
+.mobile-sheet {
+  padding: 0;
+  color: var(--ink);
+  background: #fff;
+  border: 1px solid #d6e3dc;
+  border-radius: 20px;
+  box-shadow: 0 16px 70px rgba(10, 35, 27, .3);
+}
+.mobile-sheet::backdrop { background: rgba(10, 28, 23, .42); }
+
+/* Reuse desktop controls in sheets while reserving the viewport for the map. */
+@media (max-width: 980px), (max-height: 600px) and (max-width: 1180px) {
+  .portal-home {
+    height: 100vh;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+  .portal-home .site-header {
+    position: relative;
+    flex: 0 0 auto;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    min-height: 52px;
+    padding: max(4px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) 4px max(12px, env(safe-area-inset-left));
+    z-index: 2;
+  }
+  .portal-home .brand { min-width: 0; gap: 8px; }
+  .portal-home .brand strong { font-size: 16px; white-space: nowrap; }
+  .portal-home .brand__mark { width: 32px; height: 32px; }
+  .portal-home .brand__mark img { width: 100%; height: 100%; object-fit: contain; }
+  .mobile-menu-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    flex: 0 0 auto;
+    min-width: 64px;
+    min-height: 44px;
+    padding: 8px;
+    border: 1px solid #d9e5de;
+    border-radius: 10px;
+    background: #f5f9f6;
+    color: #234b3b;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 750;
+  }
+  .portal-home #top,
+  .portal-home .home-landing,
+  .portal-home .home-landing__content,
+  .portal-home .portal-workspace {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    width: 100%;
+    min-width: 0;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+  .mobile-address-button {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    flex: 0 0 auto;
+    min-height: 44px;
+    margin: 4px max(10px, env(safe-area-inset-right)) 6px max(10px, env(safe-area-inset-left));
+    padding: 8px 12px;
+    color: #244f3f;
+    background: #f1f6f3;
+    border: 1px solid #d5e2da;
+    border-radius: 12px;
+    font: inherit;
+    text-align: left;
+  }
+  .mobile-address-button span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; }
+  .mobile-address-button strong { font-size: 13px; }
+  .mobile-menu-button svg, .mobile-address-button svg, .mobile-sheet svg { width: 18px; height: 18px; flex-shrink: 0; }
+  .portal-home .portal-tabs { position: static; display: block; flex: 0 0 auto; padding: 4px 6px 0; }
+  .portal-home .portal-tab-rail { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 3px; }
+  .portal-home .portal-tab { min-width: 0; min-height: 46px; padding: 5px 3px; font-size: 12.5px; line-height: 1.35; white-space: normal; word-break: normal; overflow-wrap: anywhere; }
+  .portal-home .portal-tab svg { display: none; }
+  .portal-home .mobile-tab-break { display: block; }
+  .portal-home .portal-panel { min-width: 0; min-height: 0; flex: 1; }
+  .portal-home .portal-view { height: 100%; overflow: hidden; }
+  .portal-home .aerial-portal,
+  .portal-home .aerial-portal.is-panel-collapsed,
+  .portal-home .farmland-portal {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto auto;
+    height: 100%;
+    min-height: 0;
+    min-width: 0;
+    overflow: hidden;
+  }
+  .portal-home .aerial-panel-toggle { display: none; }
+  .portal-home .vworld-map-shell,
+  .portal-home .farmland-portal__map-shell { grid-row: 1; height: 100%; min-height: 0; min-width: 0; }
+  .portal-home #vworld-map,
+  .portal-home #farmland-map { height: 100%; min-height: 0; }
+  .mobile-map-dock {
+    display: grid;
+    grid-row: 3;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px;
+    padding: 6px max(8px, env(safe-area-inset-right)) max(6px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+    border-top: 1px solid #d6e2db;
+    background: #fff;
+  }
+  .mobile-map-dock button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-width: 0;
+    min-height: 48px;
+    padding: 6px 3px;
+    color: #214c3a;
+    background: #f0f6f2;
+    border: 1px solid #dfebe3;
+    border-radius: 10px;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 800;
+  }
+  .mobile-map-dock svg { width: 17px; height: 17px; flex-shrink: 0; }
+  .mobile-sheet[open] {
+    position: fixed;
+    inset: auto 0 calc(8px + var(--mobile-keyboard-inset, 0px) + env(safe-area-inset-bottom));
+    display: flex;
+    flex-direction: column;
+    width: min(600px, calc(100% - 16px));
+    max-width: none;
+    max-height: min(85dvh, calc(var(--mobile-viewport-height, 100dvh) - 24px));
+    margin: 0 auto;
+    overflow: hidden;
+  }
+  .mobile-sheet__header { display: flex; align-items: center; justify-content: space-between; flex: 0 0 auto; gap: 8px; min-height: 56px; padding: 6px 12px 6px 18px; border-bottom: 1px solid #e2eae5; }
+  .mobile-sheet__header h2 { margin: 0; font-size: 16px; line-height: 1.4; }
+  .mobile-sheet__close { display: flex; align-items: center; gap: 5px; flex: 0 0 auto; min-height: 44px; padding: 8px 10px; border: 0; border-radius: 10px; background: #edf3ef; color: #294f3d; font: inherit; font-size: 13px; font-weight: 750; }
+  .mobile-sheet__body { min-height: 0; padding: 14px; overflow: auto; overscroll-behavior: contain; scroll-padding: 12px; }
+  .portal-home .mobile-sheet .aerial-portal__panel,
+  .portal-home .mobile-sheet .farmland-portal__sidebar { display: block; width: 100%; height: auto; max-height: none; min-height: 0; padding: 0; overflow: visible; border: 0; visibility: visible; opacity: 1; pointer-events: auto; }
+  .mobile-sheet .parcel-search { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; margin: 0; padding: 0; background: transparent; border: 0; }
+  .mobile-sheet .parcel-search > label,
+  .mobile-sheet .parcel-search > input,
+  .mobile-sheet .parcel-search > button,
+  .mobile-sheet .parcel-search__status { grid-column: 1 / -1; }
+  .mobile-sheet .parcel-search__status { position: static; display: block; width: auto; height: auto; margin: 0; clip: auto; overflow: visible; white-space: normal; font-size: 13px; line-height: 1.6; color: #51685c; }
+  .mobile-sheet .parcel-search__choice-list { grid-template-columns: minmax(0, 1fr); }
+  .mobile-sheet input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  .mobile-sheet select { width: 100%; min-width: 0; min-height: 44px; font-size: 16px; }
+  .mobile-sheet input[type="checkbox"], .mobile-sheet input[type="radio"] { width: 18px; height: 18px; }
+  .mobile-sheet .aerial-search__region { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .mobile-sheet .aerial-search__row, .mobile-sheet .aerial-search__lot-row { grid-template-columns: minmax(0, 1fr) 76px; }
+  .mobile-sheet .aerial-search button, .mobile-sheet .vworld-tools button, .mobile-sheet .farmland-info-tabs button { min-height: 44px; }
+  .mobile-sheet .vworld-urban-planning__layers > label { min-height: 44px; }
+  .mobile-sheet .site-search { order: initial; width: 100%; min-width: 0; max-width: none; margin-bottom: 16px; }
+  .mobile-sheet .site-search__results { position: static; max-height: none; }
+  .mobile-sheet .main-nav { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; width: 100%; }
+  .mobile-sheet .main-nav > a { display: flex; align-items: center; justify-content: center; min-height: 48px; padding: 10px; border: 1px solid #dce7df; border-radius: 10px; background: #f7faf8; }
+  .mobile-sheet .access-lock { margin: 0; }
+  .mobile-sheet .access-lock button { width: 100%; min-height: 48px; }
+  .mobile-measure-bar:not([hidden]) { display: block; grid-row: 2; padding: 8px 10px; background: #fff4f7; border-top: 1px solid #e5c6cf; }
+  .mobile-measure-bar output { display: block; margin-bottom: 6px; font-size: 12px; line-height: 1.5; color: #763b4c; }
+  .mobile-measure-bar > div { display: flex; gap: 6px; }
+  .mobile-measure-bar button { min-height: 44px; flex: 1; padding: 6px; border: 1px solid #dec3cb; border-radius: 8px; background: #fff; color: #763b4c; font: inherit; font-size: 13px; font-weight: 750; }
+  .mobile-measure-bar [data-mobile-measure-finish] { background: #804052; color: #fff; }
+  .mobile-measure-bar button:disabled { opacity: .45; }
+  .portal-home .aerial-status,
+  .portal-home .farmland-portal__status { right: 6px; bottom: 24px; left: 6px; max-width: none; max-height: 48px; margin: 0; padding: 6px 9px; overflow: auto; font-size: 11px; line-height: 1.45; }
+  .portal-home .vworld-info-panel { top: 10px; right: 10px; left: 10px; width: auto; max-height: calc(100% - 78px); }
+  .portal-home .vworld-info-panel__close { min-width: 44px; min-height: 44px; }
+  .portal-home .leaflet-control-zoom a { width: 40px; height: 40px; line-height: 40px; }
+  .portal-home .embedded-site { width: 100%; height: 100%; min-height: 0; overflow: hidden; }
+  .portal-home .embedded-site__frame,
+  .portal-home .embedded-site--eum .embedded-site__frame { width: 100%; min-width: 0; height: 0; min-height: 0; flex: 1 1 0; }
+  .mobile-embedded-toolbar { display: flex; align-items: center; flex: 0 0 auto; gap: 6px; padding: 4px 8px; background: #f3f7f4; border-bottom: 1px solid #d7e3db; }
+  .mobile-embedded-toolbar button, .mobile-embedded-toolbar a { display: inline-flex; align-items: center; justify-content: center; gap: 5px; min-height: 44px; padding: 6px 9px; color: #244d3b; background: #fff; border: 1px solid #d7e3db; border-radius: 8px; font: inherit; font-size: 12px; font-weight: 750; text-decoration: none; }
+  .mobile-embedded-toolbar [hidden] { display: none; }
+  .mobile-embedded-toolbar a { margin-left: auto; }
+  .mobile-embedded-toolbar svg { width: 15px; height: 15px; }
+  .mobile-embedded-status:not([hidden]) { display: block; position: absolute; right: 12px; bottom: max(12px, env(safe-area-inset-bottom)); left: 12px; z-index: 2; margin: 0; padding: 12px; border: 1px solid #d7e3db; border-radius: 10px; background: #f3f7f4; color: #395d4b; font-size: 13px; line-height: 1.6; pointer-events: none; }
+  .portal-home .embedded-site__tools { position: static; display: none; flex: 0 0 auto; flex-wrap: wrap; gap: 6px; min-height: 0; padding: 8px; }
+  .portal-home .embedded-site.is-tools-open .embedded-site__tools { display: flex; }
+  .portal-home .embedded-site__tools > span { display: none; }
+  .portal-home .embedded-site__tools button { min-height: 44px; }
+  .portal-home .portal-context--law { flex: 0 0 auto; padding: 6px 10px; font-size: 12px; }
+  .portal-home.is-mobile-content-expanded .site-header,
+  .portal-home.is-mobile-content-expanded .mobile-address-button,
+  .portal-home.is-mobile-content-expanded .portal-tabs { display: none; }
+  .portal-home.is-mobile-content-expanded .mobile-embedded-toolbar { padding-top: max(4px, env(safe-area-inset-top)); }
+  .portal-home :focus-visible { outline: 3px solid #458f71; outline-offset: 2px; }
+}
+
+@media (max-height: 600px) and (min-width: 600px) and (max-width: 1180px) {
+  .portal-home .portal-workspace { display: grid; grid-template-columns: minmax(220px, .85fr) minmax(350px, 1.5fr); grid-template-rows: auto minmax(0, 1fr); }
+  .portal-home .mobile-address-button { margin: 4px 6px; }
+  .portal-home .portal-tabs { padding-top: 4px; }
+  .portal-home .portal-panel { grid-column: 1 / -1; }
+  .portal-home .mobile-sheet[open] { max-height: calc(var(--mobile-viewport-height, 100dvh) - 16px); }
+  .mobile-map-dock { padding-top: 3px; padding-bottom: max(3px, env(safe-area-inset-bottom)); }
+  .mobile-map-dock button { min-height: 44px; }
+  .mobile-measure-bar:not([hidden]) { display: flex; align-items: center; gap: 8px; padding: 4px 8px; }
+  .mobile-measure-bar output { flex: 1; margin: 0; }
+  .mobile-measure-bar > div { flex: 1; }
+  .portal-home.is-mobile-content-expanded .portal-workspace { display: flex; }
+}
+
 @media print {
   .site-header,
   .page-title,
