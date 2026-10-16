@@ -1674,8 +1674,7 @@ function initPortalTabs() {
               </button>
             </div>
             <output class="vworld-measure" data-vworld-measure>거리 또는 면적을 선택한 뒤 도면을 클릭하세요.</output>
-            <div class="vworld-tool-group vworld-tool-group--inline vworld-tool-group--view">
-              <strong>보기</strong>
+            <div class="vworld-tool-group vworld-tool-group--inline vworld-tool-group--view" role="group" aria-label="항공사진 표시 도구">
               <button type="button" data-vworld-action="center">
                 <i data-lucide="crosshair"></i>
                 검색위치

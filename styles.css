@@ -2861,6 +2861,20 @@ body.fee-image-viewer-open {
   grid-column: auto;
 }
 
+.aerial-portal .vworld-tool-group--view {
+  grid-template-columns: 1.05fr .75fr 1.25fr 1fr;
+  gap: 5px;
+}
+
+.aerial-portal .vworld-tool-group--view button,
+.aerial-portal .vworld-tool-group--view .aerial-roadview-link {
+  min-width: 0;
+  padding-right: 4px;
+  padding-left: 4px;
+  font-size: .75rem;
+  white-space: nowrap;
+}
+
 .vworld-urban-planning {
   display: grid;
   gap: 8px;
@@ -5005,6 +5019,10 @@ body.fee-image-viewer-open {
   .mobile-measure-bar output { flex: 1; margin: 0; }
   .mobile-measure-bar > div { flex: 1; }
   .portal-home.is-mobile-content-expanded .portal-workspace { display: flex; }
+}
+
+@media (max-width: 360px) {
+  .portal-home .vworld-tool-group--view { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media print {
