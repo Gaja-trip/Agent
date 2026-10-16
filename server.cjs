@@ -4,6 +4,7 @@ const path = require("path");
 const { Readable } = require("node:stream");
 const { handleFarmlandRequest } = require("./farmland-service.cjs");
 const { handleVworldRequest } = require("./vworld-service.cjs");
+const { handleRoadviewRequest } = require("./roadview-service.cjs");
 const accessControl = import("./access-control.mjs");
 
 const root = __dirname;
@@ -28,18 +29,20 @@ function createSiteServer() {
     try {
       const { authorizeRequest, privateHeaders } = await accessControl;
       const origin = `http://${request.headers.host || `127.0.0.1:${port}`}`;
+      const requestUrl = new URL(request.url, origin);
       const init = { method: request.method, headers: request.headers };
-      if (request.method !== "GET" && request.method !== "HEAD") {
+      if (request.method !== "GET" && request.method !== "HEAD" && (requestUrl.pathname === "/login" || requestUrl.pathname === "/logout")) {
         init.body = Readable.toWeb(request);
         init.duplex = "half";
       }
-      const accessResponse = await authorizeRequest(new Request(new URL(request.url, origin), init));
+      const accessResponse = await authorizeRequest(new Request(requestUrl, init));
       for (const [name, value] of Object.entries(privateHeaders)) response.setHeader(name, value);
       if (accessResponse) {
         response.writeHead(accessResponse.status, Object.fromEntries(accessResponse.headers));
         response.end(request.method === "HEAD" ? undefined : Buffer.from(await accessResponse.arrayBuffer()));
         return;
       }
+      if (await handleRoadviewRequest(request, response, requestUrl)) return;
       if (request.method !== "GET" && request.method !== "HEAD") {
         response.writeHead(405, { Allow: "GET, HEAD" });
         response.end("Method not allowed");

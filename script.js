@@ -736,7 +736,21 @@ function initPortalTabs() {
 
   portalPanel.addEventListener("click", (event) => {
     if (event.target.closest("[data-aerial-roadview-link]")) {
+      event.preventDefault();
       syncAerialRoadviewLinks();
+      const form = document.createElement("form");
+      form.method = "post";
+      form.action = getAerialRoadviewUrl();
+      form.target = "_blank";
+      form.rel = "noopener";
+      form.hidden = true;
+      const launch = document.createElement("input");
+      launch.name = "launch";
+      launch.value = "1";
+      form.append(launch);
+      document.body.append(form);
+      form.submit();
+      form.remove();
       return;
     }
     const expand = event.target.closest("[data-mobile-expand]");

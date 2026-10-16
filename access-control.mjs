@@ -121,7 +121,8 @@ function permittedPath(pathname) {
     || /^\/assets\/.+\.(png|jpe?g|svg|webp|gif|ico|js|pdf)$/i.test(pathname)
     || /^\/cadastral\/.+\.(shp|shx|dbf|prj|bin)$/i.test(pathname)
     || /^\/api\/farmland\/(config|info|parcel|tile|wms)$/.test(pathname)
-    || pathname === "/api/vworld/parcel";
+    || pathname === "/api/vworld/parcel"
+    || /^\/api\/roadview\/(open|files\/[a-z-]+\.(mjs|html|css|svg))$/.test(pathname);
 }
 
 async function passwordMatches(value) {
@@ -159,6 +160,9 @@ export async function authorizeRequest(request) {
   const url = new URL(request.url);
   let pathname;
   try { pathname = decodeURIComponent(url.pathname); } catch { return textResponse("Bad request", 400); }
+
+  // Copied Roadview URLs return an entry notice, never the comparison screen.
+  if (pathname === "/api/roadview/open" && (request.method === "GET" || request.method === "HEAD")) return null;
 
   if (pathname === "/login" || pathname === "/logout") {
     if (request.method === "POST") {
