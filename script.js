@@ -516,6 +516,7 @@ function initPortalTabs() {
   const parcelCandidateBox = document.createElement("div");
   let parcelCandidateResults = [];
   let activePortalKey = "eum";
+  let aerialRoadviewPoint = null;
   const portalViews = new Map();
   const initialParams = new URLSearchParams(window.location.search);
   let selectedLaw = readSelectedLaw(initialParams);
@@ -734,6 +735,10 @@ function initPortalTabs() {
   }
 
   portalPanel.addEventListener("click", (event) => {
+    if (event.target.closest("[data-aerial-roadview-link]")) {
+      syncAerialRoadviewLinks();
+      return;
+    }
     const expand = event.target.closest("[data-mobile-expand]");
     if (expand) {
       const expanded = document.body.classList.toggle("is-mobile-content-expanded");
@@ -1166,6 +1171,10 @@ function initPortalTabs() {
   }
 
   async function selectAerialParcelDetails(point) {
+    if (Number.isFinite(point?.latitude) && Number.isFinite(point?.longitude)) {
+      aerialRoadviewPoint = { ...point };
+      syncAerialRoadviewLinks();
+    }
     const requestId = ++aerialParcelDetailsRequestId;
     let pnu = normalizePnu(point?.pnu);
     let label = point?.feature?.properties?.addr || point?.parcelAddress || point?.title || "선택한 필지";
@@ -1555,6 +1564,18 @@ function initPortalTabs() {
     `;
   }
 
+  function getAerialRoadviewUrl() {
+    const stored = getParcelState();
+    const point = [aerialRoadviewPoint, vworldCurrentPoint, stored].find((candidate) =>
+      Number.isFinite(candidate?.latitude) && Number.isFinite(candidate?.longitude)) || window.AerialRoadview.defaultPoint;
+    return window.AerialRoadview.buildUrl(point);
+  }
+
+  function syncAerialRoadviewLinks() {
+    const url = getAerialRoadviewUrl();
+    portalPanel.querySelectorAll("[data-aerial-roadview-link]").forEach((link) => { link.href = url; });
+  }
+
   function renderAerialPortalConnected() {
     const rawParcelAddress = getParcelAddress();
     const parcelAddress = escapeHtml(rawParcelAddress);
@@ -1667,11 +1688,13 @@ function initPortalTabs() {
                 <i data-lucide="map"></i>
                 편집지적도
               </button>
+              <a class="aerial-roadview-link" href="${escapeHtml(getAerialRoadviewUrl())}" data-aerial-roadview-link target="_blank" rel="noopener noreferrer" aria-label="선택 위치 로드뷰 새 창에서 열기" title="선택 위치 주변의 시기별 로드뷰를 새 창에서 엽니다"><i data-lucide="view"></i>로드뷰 ↗</a>
             </div>
           </div>
         </aside>
         <div class="vworld-map-shell">
           <div class="vworld-map" id="vworld-map" aria-label="V-World 항공사진과 연속지적도"></div>
+          <a class="aerial-roadview-launch" href="${escapeHtml(getAerialRoadviewUrl())}" data-aerial-roadview-link target="_blank" rel="noopener noreferrer" aria-label="선택 위치 로드뷰 새 창에서 열기" title="선택 위치 주변의 시기별 로드뷰를 새 창에서 엽니다"><i data-lucide="view"></i>로드뷰 ↗</a>
           <div class="vworld-map__empty" data-vworld-empty>
             <i data-lucide="satellite"></i>
             <strong>지도를 준비 중입니다.</strong>

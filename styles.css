@@ -4755,6 +4755,30 @@ body.fee-image-viewer-open {
 }
 
 .portal-tab-rail { display: contents; }
+.aerial-roadview-launch {
+  position: absolute;
+  top: 12px;
+  right: 64px;
+  z-index: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 44px;
+  padding: 9px 13px;
+  color: #214c3a;
+  background: #fff;
+  border: 1px solid #c9dacf;
+  border-radius: 10px;
+  box-shadow: 0 3px 12px rgba(10, 35, 27, .18);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+}
+.aerial-roadview-launch svg { width: 19px; height: 19px; }
+.vworld-tool-group .aerial-roadview-link { display: inline-flex; align-items: center; justify-content: center; gap: 5px; min-height: 34px; padding: 7px 10px; color: #244d3b; background: #fff; border: 1px solid #d2e0d6; border-radius: 7px; font: inherit; font-size: .82rem; font-weight: 800; text-decoration: none; }
+.vworld-tool-group .aerial-roadview-link svg { width: 16px; height: 16px; }
 .mobile-menu-button,
 .mobile-address-button,
 .mobile-map-dock,
@@ -4929,6 +4953,7 @@ body.fee-image-viewer-open {
   .mobile-sheet .aerial-search__region { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .mobile-sheet .aerial-search__row, .mobile-sheet .aerial-search__lot-row { grid-template-columns: minmax(0, 1fr) 76px; }
   .mobile-sheet .aerial-search button, .mobile-sheet .vworld-tools button, .mobile-sheet .farmland-info-tabs button { min-height: 44px; }
+  .mobile-sheet .aerial-roadview-link { min-height: 44px; }
   .mobile-sheet .vworld-urban-planning__layers > label { min-height: 44px; }
   .mobile-sheet .site-search { order: initial; width: 100%; min-width: 0; max-width: none; margin-bottom: 16px; }
   .mobile-sheet .site-search__results { position: static; max-height: none; }
