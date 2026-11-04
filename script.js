@@ -118,15 +118,19 @@ const landCategoryCodeLabels = {
   "28": "잡종지",
 };
 const defaultAerialCenter = [37.5665, 126.978];
-// V-World 도시계획시설도 WMS. 도로는 다른 시설보다 위에 표시합니다.
+// Roads use Eum's latest published geometry; other facilities retain V-World WMS.
 const vworldUrbanPlanningLayers = [
-  { id: "lt_c_upisuq151", title: "도시계획도로" },
+  { id: "lt_c_upisuq151", title: "도시계획도로", source: "eum" },
   { id: "lt_c_upisuq159", title: "기타 기반시설" },
 ];
 const vworldUrbanPlanningVisible = new Set(["lt_c_upisuq151"]);
 const vworldUrbanPlanningOverlays = new Map();
 const vworldUrbanPlanningStates = new Map();
 let vworldUrbanPlanningOpacity = 0.75;
+let eumRoadsController = null;
+let eumRoadsTimer;
+let eumRoadsRequestId = 0;
+let eumRoadsStatus = "토지이음 도로 조회 준비 중";
 let parcelDetailsRequestId = 0;
 let parcelDetailsState = { label: "필지를 선택해 주세요." };
 const parcelDetailsCache = new Map();
@@ -4002,6 +4006,7 @@ function initPortalTabs() {
           <input type="range" min="10" max="100" step="5" value="${vworldUrbanPlanningOpacity * 100}" data-vworld-urban-opacity aria-label="도시계획 레이어 선명도" />
           <output data-vworld-urban-opacity-value>${Math.round(vworldUrbanPlanningOpacity * 100)}%</output>
         </label>
+        <div class="eum-roads-source"><span data-eum-roads-status role="status">${escapeHtml(eumRoadsStatus)}</span><button type="button" data-eum-roads-refresh title="토지이음 최신 도면으로 도시계획도로 갱신">갱신</button></div>
       </fieldset>
       <section class="parcel-zoning" data-parcel-zoning aria-label="선택 필지 정보" aria-live="polite"></section>
     `;
@@ -4025,9 +4030,36 @@ function initPortalTabs() {
       vworldUrbanPlanningOverlays.delete(id);
       vworldUrbanPlanningStates.delete(id);
       if (existing) vworldMap.removeLayer(existing);
+      if (definition.source === "eum") setEumRoadsStatus("토지이음 · 도시계획도로 숨김");
     } else {
       vworldUrbanPlanningVisible.add(id);
       if (!existing) {
+        if (definition.source === "eum") {
+          const map = vworldMap;
+          if (!map.getPane("eum-roads")) {
+            const pane = map.createPane("eum-roads");
+            pane.style.zIndex = "350";
+            pane.style.pointerEvents = "none";
+          }
+          const layer = window.L.geoJSON(null, { pane: "eum-roads", interactive: false,
+            style: getEumRoadsStyle, attribution: "도시계획도로: 토지이음" });
+          vworldUrbanPlanningOverlays.set(id, layer);
+          const refresh = () => {
+            clearTimeout(eumRoadsTimer);
+            cancelEumRoadsRequest();
+            eumRoadsTimer = setTimeout(() => loadEumRoads(layer, map), 180);
+          };
+          map.on("moveend", refresh);
+          layer.on("remove", () => {
+            map.off("moveend", refresh);
+            clearTimeout(eumRoadsTimer);
+            cancelEumRoadsRequest();
+          });
+          layer.addTo(map);
+          refresh();
+          syncVworldUrbanPlanningControls();
+          return;
+        }
         const layer = window.L.tileLayer.wms("https://api.vworld.kr/req/wms", {
           service: "WMS",
           version: "1.3.0",
@@ -4065,6 +4097,60 @@ function initPortalTabs() {
     syncVworldUrbanPlanningControls();
   }
 
+  function getEumRoadsStyle() {
+    return { color: "#800020", weight: 2, opacity: vworldUrbanPlanningOpacity,
+      fillColor: "#c38394", fillOpacity: vworldUrbanPlanningOpacity * 0.14 };
+  }
+
+  function setEumRoadsStatus(message) {
+    eumRoadsStatus = message;
+    document.querySelectorAll("[data-eum-roads-status]").forEach((node) => { node.textContent = message; });
+  }
+
+  function cancelEumRoadsRequest() {
+    eumRoadsRequestId += 1;
+    eumRoadsController?.abort();
+    eumRoadsController = null;
+  }
+
+  async function loadEumRoads(layer, map, refresh = false) {
+    const id = "lt_c_upisuq151";
+    if (vworldUrbanPlanningOverlays.get(id) !== layer || vworldMap !== map) return;
+    cancelEumRoadsRequest();
+    const requestId = eumRoadsRequestId;
+    layer.clearLayers();
+    const bounds = map.getBounds();
+    if (map.getZoom() < 16 || map.distance(bounds.getSouthWest(), bounds.getSouthEast()) > 5500 || map.distance(bounds.getSouthWest(), bounds.getNorthWest()) > 5500) {
+      vworldUrbanPlanningStates.delete(id);
+      setEumRoadsStatus("토지이음 도로 · 지도를 확대해 주세요");
+      return;
+    }
+    const controller = new AbortController();
+    eumRoadsController = controller;
+    vworldUrbanPlanningStates.set(id, "loading");
+    setEumRoadsStatus("토지이음 도시계획도로 조회 중…");
+    try {
+      const params = new URLSearchParams({ bbox: bounds.toBBoxString() });
+      if (refresh) params.set("refresh", "1");
+      const response = await fetch(`/api/eum/roads?${params}`, { signal: controller.signal, cache: "no-store" });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "토지이음 도로 조회에 실패했습니다.");
+      if (requestId !== eumRoadsRequestId || vworldUrbanPlanningOverlays.get(id) !== layer || vworldMap !== map) return;
+      if (data.type !== "FeatureCollection" || !Array.isArray(data.features) || !/^\d{8}$/.test(data.version)) throw new Error("토지이음 도로 응답을 확인할 수 없습니다.");
+      layer.addData(data);
+      layer.setStyle(getEumRoadsStyle());
+      vworldUrbanPlanningStates.set(id, "ready");
+      const date = `${data.version.slice(0, 4)}.${data.version.slice(4, 6)}.${data.version.slice(6)}`;
+      setEumRoadsStatus(`토지이음 · 도면 ${date}${data.features.length ? "" : " · 현재 범위 도로 없음"}`);
+    } catch (error) {
+      if (controller.signal.aborted || requestId !== eumRoadsRequestId) return;
+      vworldUrbanPlanningStates.set(id, "error");
+      setEumRoadsStatus(error.message || "토지이음 도로 조회 실패 · 갱신을 눌러 주세요");
+    } finally {
+      if (eumRoadsController === controller) eumRoadsController = null;
+    }
+  }
+
   function bindVworldUrbanPlanningTools() {
     renderAerialParcelDetails();
     const group = document.querySelector(".vworld-urban-planning");
@@ -4077,8 +4163,17 @@ function initPortalTabs() {
       });
       group.querySelector("[data-vworld-urban-opacity]").addEventListener("input", (event) => {
         vworldUrbanPlanningOpacity = Number(event.target.value) / 100;
-        vworldUrbanPlanningOverlays.forEach((layer) => layer.setOpacity(vworldUrbanPlanningOpacity));
+        vworldUrbanPlanningOverlays.forEach((layer) => {
+          if (layer.setStyle) layer.setStyle(getEumRoadsStyle());
+          else layer.setOpacity(vworldUrbanPlanningOpacity);
+        });
         group.querySelector("[data-vworld-urban-opacity-value]").textContent = `${Math.round(vworldUrbanPlanningOpacity * 100)}%`;
+      });
+      group.querySelector("[data-eum-roads-refresh]").addEventListener("click", () => {
+        clearTimeout(eumRoadsTimer);
+        const layer = vworldUrbanPlanningOverlays.get("lt_c_upisuq151");
+        if (layer) loadEumRoads(layer, vworldMap, true);
+        else setEumRoadsStatus("도시계획도로를 선택한 뒤 갱신해 주세요");
       });
     }
     vworldUrbanPlanningVisible.forEach((id) => setVworldUrbanPlanningLayer(id, true));

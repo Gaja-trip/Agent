@@ -2960,6 +2960,32 @@ body.fee-image-viewer-open {
   color: #31463f;
 }
 
+.eum-roads-source {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: .7rem;
+  line-height: 1.4;
+}
+
+.eum-roads-source > span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+
+.eum-roads-source button {
+  flex: none;
+  min-height: 28px;
+  width: auto;
+  padding: 3px 7px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  color: #800020;
+  background: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+
+.mobile-sheet .eum-roads-source button { min-height: 44px; padding-inline: 12px; }
+
 .vworld-tool-group {
   display: grid;
   gap: 8px;
