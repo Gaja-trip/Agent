@@ -4099,7 +4099,7 @@ function initPortalTabs() {
 
   function getEumRoadsStyle() {
     return { color: "#800020", weight: 2, opacity: vworldUrbanPlanningOpacity,
-      fillColor: "#c38394", fillOpacity: vworldUrbanPlanningOpacity * 0.14 };
+      fill: true, fillColor: "#800020", fillOpacity: vworldUrbanPlanningOpacity * 0.28 };
   }
 
   function setEumRoadsStatus(message) {
