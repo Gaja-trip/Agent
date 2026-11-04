@@ -15,13 +15,13 @@ function fixture(options = {}) {
   const fetchImpl = async (input) => {
     const url = new URL(input);
     calls.push(url);
-    if (url.hostname === 'www.eum.go.kr') return new Response(page(currentVersion));
+    if (url.hostname === 'www.eum.go.kr') return options.metadataResponse ? options.metadataResponse() : new Response(page(currentVersion));
     if (url.searchParams.get('req') === 'code') return Response.json(options.legend || { layer: [{ name: 'CA', code: ['UQS121','UQS116','UQS121','UQT220'] }, { name: 'BA', code: ['UIA100'] }] });
     const code = url.searchParams.get('code');
     return options.geometryResponse ? options.geometryResponse(code) : Response.json({ type: 'FeatureCollection', features: [feature(code), feature(code)] });
   };
-  return { calls, fetchImpl, service: createRoadsService({ fetchImpl, now: () => clock }),
-    advance() { clock += 3600001; }, setVersion(value) { currentVersion = value; } };
+  return { calls, fetchImpl, service: createRoadsService({ fetchImpl, now: () => clock, cache: options.cache, retryDelay: async () => {} }),
+    advance(ms = 3600001) { clock += ms; }, setVersion(value) { currentVersion = value; } };
 }
 
 test('Eum metadata selects the latest valid published drawing date, scoped to its selector', () => {
@@ -107,4 +107,89 @@ test('Vercel roads endpoint uses the shared loader and rejects writes and malfor
   assert.equal(response.data.features.length, 2);
   assert.equal(response.headers['Cache-Control'], 'no-store');
   assert.equal((await run('/api/eum/arbitrary')).status, 404);
+});
+
+test('a timed-out drawing-date page uses only a previously verified date and discloses the delay', async () => {
+  const f = fixture({ metadataResponse() { throw new DOMException('The operation was aborted due to timeout', 'TimeoutError'); } });
+  const data = await f.service.load(bounds());
+  assert.equal(data.version, '20261014');
+  assert.equal(data.metadataVerified, false);
+  assert.match(data.warnings.join(' '), /마지막 확인 도면/);
+  assert.equal(data.features.length, 2);
+  assert.ok(f.calls.filter((url) => url.hostname === 'www.eum.ne.kr').every((url) => url.searchParams.get('version') === '20261014' && !url.searchParams.has('key')));
+});
+
+test('a transient geometry timeout retries once using a new attempt signal', async () => {
+  const signals = [];
+  const f = fixture({ legend: { layer: [{ name: 'CA', code: ['UQS121'] }] } });
+  let attempts = 0;
+  const service = createRoadsService({ retryDelay: async () => {}, fetchImpl: async (input, options) => {
+    const url = new URL(input);
+    if (url.searchParams.get('req') === 'search') {
+      signals.push(options.signal);
+      if (++attempts === 1) throw new DOMException('timeout', 'TimeoutError');
+    }
+    return f.fetchImpl(input, options);
+  } });
+  assert.equal((await service.load(bounds())).features.length, 1);
+  assert.equal(attempts, 2);
+  assert.notEqual(signals[0], signals[1]);
+});
+
+test('identical concurrent requests share upstream work and successful coverage is reused', async () => {
+  const f = fixture();
+  const data = await Promise.all([f.service.load(bounds()), f.service.load(bounds()), f.service.load(bounds())]);
+  assert.equal(data[0], data[1]);
+  assert.equal(f.calls.length, 4);
+  await f.service.load(bounds());
+  assert.equal(f.calls.length, 4);
+});
+
+test('successful coverage can be reused by a new server instance through the runtime cache', async () => {
+  const entries = new Map();
+  const cache = { get: async (key) => entries.get(key), set: async (key, value, options) => { assert.equal(options.ttl, 86400); entries.set(key, value); } };
+  const f = fixture({ cache });
+  await f.service.load(bounds());
+  const next = createRoadsService({ cache, now: () => 1, fetchImpl() { throw new Error('No upstream request expected'); } });
+  const data = await next.load(bounds());
+  assert.equal(data.version, '20261014');
+  assert.equal(data.features.length, 2);
+});
+
+test('outage fallback preserves the actual drawing date and never substitutes another area', async () => {
+  let failed = false;
+  const f = fixture({ geometryResponse(code) {
+    if (failed) throw new DOMException('timeout', 'TimeoutError');
+    return Response.json({ type: 'FeatureCollection', features: [feature(code)] });
+  } });
+  await f.service.load(bounds());
+  f.advance(360001); f.setVersion('20270114'); failed = true;
+  const refresh = bounds(); refresh.set('refresh', '1');
+  const data = await f.service.load(refresh);
+  assert.equal(data.stale, true);
+  assert.equal(data.version, '20261014');
+  assert.match(data.warnings.join(' '), /최근 정상 조회 자료/);
+  await assert.rejects(f.service.load(new URLSearchParams({ bbox: '127.145,35.821,127.151,35.827' })), { code: 'UPSTREAM_TIMEOUT' });
+  f.advance(86400001);
+  await assert.rejects(f.service.load(bounds()), { code: 'UPSTREAM_TIMEOUT' });
+});
+
+test('timeout errors sent by the deployed entry are Korean, bounded retries, and identify the failed stage', async (t) => {
+  let attempts = 0;
+  const f = fixture({ legend: { layer: [{ name: 'CA', code: ['UQS121'] }] }, geometryResponse() {
+    attempts++;
+    throw new DOMException('The operation was aborted due to timeout', 'TimeoutError');
+  } });
+  t.mock.method(globalThis, 'fetch', f.fetchImpl);
+  const result = {};
+  await handler({ url: '/api/eum/roads?bbox=126.524,35.665,126.530,35.671&refresh=1', method: 'GET' }, {
+    writeHead(status) { result.status = status; }, end(body) { result.data = JSON.parse(body); }
+  });
+  assert.equal(result.status, 503);
+  assert.equal(result.data.code, 'UPSTREAM_TIMEOUT');
+  assert.equal(result.data.stage, 'geometry');
+  assert.equal(result.data.retryable, true);
+  assert.match(result.data.error, /응답이 지연/);
+  assert.doesNotMatch(result.data.error, /operation|aborted|timeout/i);
+  assert.equal(attempts, 2);
 });

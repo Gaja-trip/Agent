@@ -4047,7 +4047,7 @@ function initPortalTabs() {
           const refresh = () => {
             clearTimeout(eumRoadsTimer);
             cancelEumRoadsRequest();
-            eumRoadsTimer = setTimeout(() => loadEumRoads(layer, map), 180);
+            eumRoadsTimer = setTimeout(() => loadEumRoads(layer, map), 350);
           };
           map.on("moveend", refresh);
           layer.on("remove", () => {
@@ -4113,14 +4113,15 @@ function initPortalTabs() {
     eumRoadsController = null;
   }
 
-  async function loadEumRoads(layer, map, refresh = false) {
+  async function loadEumRoads(layer, map, refresh = false, attempt = 0) {
     const id = "lt_c_upisuq151";
     if (vworldUrbanPlanningOverlays.get(id) !== layer || vworldMap !== map) return;
     cancelEumRoadsRequest();
     const requestId = eumRoadsRequestId;
-    layer.clearLayers();
     const bounds = map.getBounds();
     if (map.getZoom() < 16 || map.distance(bounds.getSouthWest(), bounds.getSouthEast()) > 5500 || map.distance(bounds.getSouthWest(), bounds.getNorthWest()) > 5500) {
+      layer.clearLayers();
+      layer.eumRoadsLabel = "";
       vworldUrbanPlanningStates.delete(id);
       setEumRoadsStatus("토지이음 도로 · 지도를 확대해 주세요");
       return;
@@ -4128,24 +4129,36 @@ function initPortalTabs() {
     const controller = new AbortController();
     eumRoadsController = controller;
     vworldUrbanPlanningStates.set(id, "loading");
-    setEumRoadsStatus("토지이음 도시계획도로 조회 중…");
+    setEumRoadsStatus(layer.getLayers().length ? "토지이음 도로 갱신 중 · 기존 자료 표시" : "토지이음 도시계획도로 조회 중…");
     try {
       const params = new URLSearchParams({ bbox: bounds.toBBoxString() });
       if (refresh) params.set("refresh", "1");
       const response = await fetch(`/api/eum/roads?${params}`, { signal: controller.signal, cache: "no-store" });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "토지이음 도로 조회에 실패했습니다.");
+      let data;
+      try { data = await response.json(); }
+      catch { throw Object.assign(new Error("토지이음 응답이 지연되고 있습니다. 잠시 후 갱신해 주세요."), { retryable: response.status >= 500 }); }
+      if (!response.ok) throw Object.assign(new Error(data.error || "토지이음 도로 조회에 실패했습니다."), { retryable: data.retryable || response.status >= 500 });
       if (requestId !== eumRoadsRequestId || vworldUrbanPlanningOverlays.get(id) !== layer || vworldMap !== map) return;
       if (data.type !== "FeatureCollection" || !Array.isArray(data.features) || !/^\d{8}$/.test(data.version)) throw new Error("토지이음 도로 응답을 확인할 수 없습니다.");
+      layer.clearLayers();
       layer.addData(data);
       layer.setStyle(getEumRoadsStyle());
       vworldUrbanPlanningStates.set(id, "ready");
       const date = `${data.version.slice(0, 4)}.${data.version.slice(4, 6)}.${data.version.slice(6)}`;
-      setEumRoadsStatus(`토지이음 · 도면 ${date}${data.features.length ? "" : " · 현재 범위 도로 없음"}`);
+      layer.eumRoadsLabel = `토지이음 · 도면 ${date}${data.features.length ? "" : " · 현재 범위 도로 없음"}`;
+      setEumRoadsStatus(`${layer.eumRoadsLabel}${data.stale ? " · 응답 지연(최근 자료)" : data.metadataVerified === false ? " · 생성일 재확인 지연" : ""}`);
     } catch (error) {
       if (controller.signal.aborted || requestId !== eumRoadsRequestId) return;
+      if (attempt === 0 && (error.retryable || error.name === "TypeError")) {
+        setEumRoadsStatus("토지이음 응답 지연 · 자동으로 다시 조회합니다");
+        eumRoadsTimer = setTimeout(() => loadEumRoads(layer, map, false, 1), 1200);
+        return;
+      }
       vworldUrbanPlanningStates.set(id, "error");
-      setEumRoadsStatus(error.message || "토지이음 도로 조회 실패 · 갱신을 눌러 주세요");
+      setEumRoadsStatus(layer.getLayers().length && layer.eumRoadsLabel
+        ? `${layer.eumRoadsLabel} · 응답 지연(기존 도로 유지)`
+        : /timeout|aborted|fetch/i.test(error.message) ? "토지이음 응답이 지연되고 있습니다. 갱신을 눌러 주세요."
+          : error.message || "토지이음 도로 조회 실패 · 갱신을 눌러 주세요");
     } finally {
       if (eumRoadsController === controller) eumRoadsController = null;
     }

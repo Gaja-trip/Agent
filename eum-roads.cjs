@@ -2,6 +2,9 @@ const MAP_PAGE = 'https://www.eum.go.kr/web/mp/mpMapDet.jsp';
 const MAP_SERVICE = 'https://www.eum.ne.kr:9003/MapPlan/MapPlan';
 const MAX_SPAN_METRES = 6000;
 const MAX_POINTS = 60000;
+const verifiedSource = require('./eum-road-source.json');
+const HOUR = 3600000;
+const DAY = 24 * HOUR;
 const a = 6378137;
 const f = 1 / 298.257222101;
 const e2 = 2 * f - f * f;
@@ -90,29 +93,84 @@ function convertFeatures(data, code, budget) {
   });
 }
 
-function createRoadsService({ fetchImpl = (...args) => fetch(...args), now = Date.now } = {}) {
+function createRoadsService({ fetchImpl = (...args) => fetch(...args), now = Date.now, cache = null,
+  fallbackVersion = verifiedSource.version, retryDelay = () => new Promise((resolve) => setTimeout(resolve, 350)) } = {}) {
   let metadata;
   let metadataPending;
-  async function read(url, json = true, signal) {
-    const timeout = AbortSignal.timeout(10000);
-    const result = await fetchImpl(url, { signal: signal ? AbortSignal.any([signal, timeout]) : timeout, redirect: 'error' });
-    if (!result.ok) throw new Error('토지이음 지도 서버에 연결하지 못했습니다. 잠시 후 갱신해 주세요.');
-    if (Number(result.headers.get('content-length')) > 4000000) throw new Error('도로 경계가 많습니다. 지도를 더 확대해 주세요.');
-    const buffer = await result.arrayBuffer();
-    if (buffer.byteLength > 4000000) throw new Error('도로 경계가 많습니다. 지도를 더 확대해 주세요.');
-    const text = new TextDecoder(json ? 'utf-8' : 'euc-kr').decode(buffer);
-    return json ? JSON.parse(text) : text;
+  const memory = new Map();
+  const pending = new Map();
+  async function cached(key) {
+    let entry = memory.get(key);
+    if (!entry && cache) { try { entry = await cache.get(key); } catch { /* Cache availability must not block the map. */ } }
+    if (!entry || !Number.isFinite(entry.time) || now() - entry.time > DAY) return null;
+    memory.delete(key);
+    memory.set(key, entry);
+    if (memory.size > 16) memory.delete(memory.keys().next().value);
+    return entry;
+  }
+  async function remember(key, entry) {
+    memory.delete(key);
+    memory.set(key, entry);
+    if (memory.size > 16) memory.delete(memory.keys().next().value);
+    if (cache && Buffer.byteLength(JSON.stringify(entry)) < 1800000) {
+      try { await cache.set(key, entry, { ttl: 86400, tags: ['eum-roads'], name: 'eum-roads' }); } catch { /* Use the live result if caching fails. */ }
+    }
+  }
+  function failed(stage, code, retryable = true) {
+    const name = stage === 'metadata' ? '도면 생성일 확인' : '도로 정보 조회';
+    return Object.assign(new Error(code === 'UPSTREAM_TIMEOUT' ? `토지이음 ${name} 응답이 지연되고 있습니다. 잠시 후 다시 시도해 주세요.` : `토지이음 ${name}에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.`),
+      { status: 503, code, stage, retryable });
+  }
+  async function read(input, { signal, metadataOnly = false } = {}) {
+    const url = new URL(input);
+    const stage = metadataOnly ? 'metadata' : url.searchParams.get('req') === 'code' ? 'legend' : 'geometry';
+    const attempts = metadataOnly ? 1 : 2;
+    for (let attempt = 0; attempt < attempts; attempt++) {
+      const started = now();
+      try {
+        const timeout = AbortSignal.timeout(metadataOnly ? 5000 : attempt ? 16000 : 12000);
+        const result = await fetchImpl(url, { signal: signal ? AbortSignal.any([signal, timeout]) : timeout, redirect: 'error' });
+        if (!result.ok) throw failed(stage, 'UPSTREAM_UNAVAILABLE', [429,500,502,503,504].includes(result.status));
+        if (Number(result.headers.get('content-length')) > 4000000) throw new Error('도로 경계가 많습니다. 지도를 더 확대해 주세요.');
+        const buffer = await result.arrayBuffer();
+        if (buffer.byteLength > 4000000) throw new Error('도로 경계가 많습니다. 지도를 더 확대해 주세요.');
+        const text = new TextDecoder(metadataOnly ? 'euc-kr' : 'utf-8').decode(buffer);
+        return metadataOnly ? text : JSON.parse(text);
+      } catch (error) {
+        const transient = ['AbortError','TimeoutError','TypeError'].includes(error.name);
+        const failure = transient ? failed(stage, error.name === 'TimeoutError' || error.name === 'AbortError' ? 'UPSTREAM_TIMEOUT' : 'UPSTREAM_UNAVAILABLE') : error;
+        if (failure.retryable && attempt + 1 < attempts && !signal?.aborted) { await retryDelay(); continue; }
+        if (failure.code) console.warn('[eum-roads]', { stage, code: failure.code, attempts: attempt + 1, elapsedMs: now() - started });
+        throw failure;
+      }
+    }
   }
   async function version(refresh) {
-    if (!refresh && metadata && now() - metadata.time < 3600000) return metadata.value;
-    if (!metadataPending) metadataPending = read(MAP_PAGE, false).then(parseVersion).then((value) => { metadata = { value, time: now() }; return value; }).finally(() => { metadataPending = null; });
+    if (!metadata) metadata = await cached('metadata');
+    if (!refresh && metadata && now() - metadata.time < (metadata.verified ? HOUR : 300000)) return metadata;
+    if (!metadataPending) metadataPending = (async () => {
+      try {
+        const value = parseVersion(await read(MAP_PAGE, { metadataOnly: true }));
+        metadata = { value, time: now(), verified: true };
+        await remember('metadata', metadata);
+      } catch (error) {
+        const value = metadata?.value || fallbackVersion;
+        if (!/^20\d{6}$/.test(value || '')) throw error;
+        // This is a previously verified Eum drawing, never an invented "latest" date.
+        metadata = { value, time: now(), verified: false };
+      }
+      return metadata;
+    })().finally(() => { metadataPending = null; });
     return metadataPending;
   }
-  async function load(params) {
-    const mbr = readBounds(params);
-    const signal = AbortSignal.timeout(22000);
-    const currentVersion = await version(params.get('refresh') === '1');
-    const query = (values) => { const url = new URL(MAP_SERVICE); url.search = new URLSearchParams({ version: currentVersion, mbr, ...values }).toString(); return read(url, true, signal); };
+  async function loadBounds(mbr, refresh) {
+    const previous = await cached(`roads:${mbr}`);
+    // Reuse the same complete, successfully fetched coverage; refresh bypasses this shortcut.
+    if (!refresh && previous && now() - previous.time < 300000) return previous.data;
+    const signal = AbortSignal.timeout(50000);
+    const current = await version(refresh);
+    const query = (values) => { const url = new URL(MAP_SERVICE); url.search = new URLSearchParams({ version: current.value, mbr, ...values }).toString(); return read(url, { signal }); };
+    try {
     const available = await query({ req: 'code', tiles: 'tile6', levelId: '14', accuracy: 'true' });
     if (!Array.isArray(available?.layer) || available.layer.some((item) => !Array.isArray(item?.code))) throw new Error('토지이음 도로 범례 응답이 올바르지 않습니다.');
     const codes = [...new Set(available.layer.filter((item) => item.name === 'CA').flatMap((item) => item.code).filter((code) => /^UQS1\d{2}$/.test(code)))];
@@ -123,18 +181,44 @@ function createRoadsService({ fetchImpl = (...args) => fetch(...args), now = Dat
       features.push(...batches.flat());
     }
     const seen = new Set();
-    return { type: 'FeatureCollection', source: '토지이음', version: currentVersion,
-      sourceUrl: MAP_PAGE, features: features.filter((feature) => {
+    const data = { type: 'FeatureCollection', source: '토지이음', version: current.value,
+      sourceUrl: MAP_PAGE, metadataVerified: current.verified,
+      warnings: current.verified ? [] : ['도면 생성일 재확인 지연 · 마지막 확인 도면 표시'],
+      features: features.filter((feature) => {
         const key = feature.id ? `${feature.properties.code}:${feature.id}` : JSON.stringify(feature.geometry);
         if (seen.has(key)) return false;
         seen.add(key);
         return true;
       }) };
+    await remember(`roads:${mbr}`, { data, time: now() });
+    return data;
+    } catch (error) {
+      if (error.retryable && previous) return { ...previous.data, stale: true,
+        warnings: ['토지이음 응답 지연 · 최근 정상 조회 자료 표시'] };
+      throw error;
+    }
+  }
+  async function load(params) {
+    const exact = readBounds(params).split(',').map(Number);
+    // Identical coverage for nearby pans prevents duplicate upstream requests.
+    const mbr = exact.map((value, index) => (index < 2 ? Math.floor(value / 200) : Math.ceil(value / 200)) * 200).join(',');
+    const refresh = params.get('refresh') === '1';
+    const key = `${mbr}:${refresh}`;
+    if (pending.has(key)) return pending.get(key);
+    const work = loadBounds(mbr, refresh).finally(() => { pending.delete(key); });
+    pending.set(key, work);
+    return work;
   }
   return { load };
 }
 
-const service = createRoadsService();
+function runtimeCache() {
+  if (!process.env.VERCEL) return null;
+  const { getCache } = require('@vercel/functions');
+  const { createHash } = require('node:crypto');
+  return getCache({ namespace: 'land-info-eum-roads-v2', keyHashFunction: (key) => createHash('sha256').update(key).digest('hex') });
+}
+const service = createRoadsService({ cache: runtimeCache() });
 async function handleEumRoadsRequest(request, response, url) {
   if (url.pathname !== '/api/eum/roads') return false;
   const send = (status, data) => {
@@ -143,7 +227,8 @@ async function handleEumRoadsRequest(request, response, url) {
   };
   if (request.method !== 'GET') { send(405, { error: '조회 요청만 지원합니다.' }); return true; }
   try { send(200, await service.load(url.searchParams)); }
-  catch (error) { send(error.status || 502, { error: error.status ? error.message : `토지이음 도로 조회 실패: ${error.message}` }); }
+  catch (error) { send(error.status || 502, { error: error.status ? error.message : '토지이음 도로 자료를 확인하지 못했습니다. 갱신을 눌러 주세요.',
+    code: error.code || 'INVALID_UPSTREAM_RESPONSE', stage: error.stage, retryable: Boolean(error.retryable) }); }
   return true;
 }
 
