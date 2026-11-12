@@ -397,8 +397,8 @@ const siteSearchIndex = [
     title: "측량의뢰 및 절차",
     section: "상담지식",
     url: "knowledge.html#request-process",
-    summary: "측량 의뢰부터 접수, 일정, 성과 안내까지의 절차입니다.",
-    keywords: "측량의뢰 절차 접수 일정 성과",
+    summary: "측량 의뢰 절차와 대리 의뢰 시 필요한 위임장 작성·제출 및 공식 서식 다운로드를 안내합니다.",
+    keywords: "측량의뢰 절차 접수 일정 성과 대리인 대리의뢰 위임장 다운로드 LX 지적측량신청포털 지적업무처리규정 별지 제3호서식 별지3호",
   },
   {
     title: "수수료",
