@@ -5178,3 +5178,112 @@ body.fee-image-viewer-open {
     animation-iteration-count: 1 !important;
   }
 }
+
+.aerial-map-actions {
+  position: absolute;
+  z-index: 500;
+  top: 12px;
+  right: 64px;
+  display: flex;
+  gap: 8px;
+}
+.aerial-map-actions .aerial-roadview-launch { position: static; }
+.aerial-compare-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 9px 13px;
+  color: #334f58;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  box-shadow: var(--shadow);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.aerial-compare-toggle.is-active { color: #124e48; background: #e8f4ef; border-color: #8dbbad; }
+.aerial-compare-toggle svg { width: 19px; height: 19px; }
+.aerial-compare {
+  --compare-position: 50%;
+  position: absolute;
+  inset: 0;
+  z-index: 450;
+  pointer-events: none;
+}
+.aerial-compare[hidden], .aerial-compare [hidden] { display: none; }
+.aerial-compare__cover {
+  position: absolute;
+  inset: 0;
+  background: #edf1f4;
+  clip-path: inset(0 0 0 var(--compare-position));
+}
+.aerial-compare__label {
+  position: absolute;
+  top: 68px;
+  max-width: calc(50% - 24px);
+  padding: 6px 10px;
+  color: #284750;
+  background: rgba(255, 255, 255, .96);
+  border: 1px solid #dce5e9;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(27, 54, 68, .08);
+  font-size: 12px;
+  font-weight: 700;
+}
+.aerial-compare__label--latest { left: 12px; }
+.aerial-compare__label--history { right: 12px; }
+.aerial-compare__divider {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--compare-position);
+  width: 3px;
+  background: #fff;
+  box-shadow: 0 0 0 1px rgba(27, 54, 68, .12), 0 0 12px rgba(27, 54, 68, .24);
+  transform: translateX(-50%);
+}
+.aerial-compare__handle {
+  position: absolute;
+  top: 112px;
+  left: var(--compare-position);
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  color: #176b60;
+  background: #fff;
+  border: 1px solid #bed8cf;
+  border-radius: 50%;
+  box-shadow: 0 3px 14px rgba(27, 54, 68, .22);
+  cursor: ew-resize;
+  touch-action: none;
+  pointer-events: auto;
+  transform: translateX(-50%);
+}
+.aerial-compare__handle svg { width: 22px; height: 22px; pointer-events: none; }
+.aerial-compare__status {
+  position: absolute;
+  top: 166px;
+  right: 12px;
+  width: min(280px, calc(45% - 12px));
+  margin: 0;
+  padding: 10px;
+  color: #526873;
+  background: rgba(255, 255, 255, .96);
+  border: 1px solid #dce5e9;
+  border-radius: 9px;
+  font-size: 12px;
+  line-height: 1.6;
+}
+@media (max-width: 600px) {
+  .aerial-map-actions { right: 58px; gap: 6px; }
+  .aerial-map-actions .aerial-roadview-launch, .aerial-compare-toggle { gap: 4px; padding: 8px 9px; font-size: 12px; }
+  .aerial-compare__label { max-width: calc(50% - 16px); padding: 5px 7px; font-size: 11px; }
+  .aerial-compare__label--latest { left: 8px; }
+  .aerial-compare__label--history { right: 8px; }
+}

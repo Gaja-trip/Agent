@@ -33,9 +33,14 @@ Vercel 배포에는 `middleware.ts`가 같은 암호 확인을 적용합니다. 
 - `knowledge.html`: 상담지식 요약
 - `styles.css`: 반응형 화면 스타일
 - `assets/service-theme.css`: 밝은 공공서비스 공통 디자인과 모바일 메뉴 스타일(화면 전용)
+- `assets/aerial-compare.js`: 최신·2007년 항공사진 분할 비교, 경계 드래그·키보드 조절
 - `script.js`: 메인 탭, 절차 탭, 안내자료 출력, 체크리스트 상호작용
 - `server.cjs`: 정적 파일과 농지공간포털 연동 API를 제공하는 Node 서버
 - `farmland-service.cjs`: 농지공간포털 항공영상·연속지적도·공개 필지 속성 조회
+
+항공사진 우측 상단의 `도면 분할`을 누르면 왼쪽 최신 영상과 오른쪽 2007년 영상을 비교합니다.
+2007년 영상은 [V-World 공식 과거영상 카탈로그](https://map.vworld.kr/js/dtkmap/map.tree.js?ver=2026061901)의 `https://cdn.vworld.kr/2d/Satellite/2007/{z}/{x}/{y}.png`를 사용합니다.
+부안 지역에서 실제 제공되는 최대 타일 단계 17(약 1m)을 기준으로 더 높은 확대에서는 확대 표시합니다. 제공되지 않는 구역은 영상 없음으로 표시합니다.
 
 ## 모바일 지도 화면
 

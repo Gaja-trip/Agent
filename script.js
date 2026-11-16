@@ -151,6 +151,7 @@ let vworldMap = null;
 let vworldMarker = null;
 let vworldBaseLayer = null;
 let vworldHybridLayer = null;
+let vworldComparison = null;
 let vworldParcelLayer = null;
 let vworldRadiusLayer = null;
 let vworldCadastralLayer = null;
@@ -1727,7 +1728,11 @@ function initPortalTabs() {
         </aside>
         <div class="vworld-map-shell">
           <div class="vworld-map" id="vworld-map" aria-label="V-World 항공사진과 연속지적도"></div>
-          <a class="aerial-roadview-launch" href="${escapeHtml(getAerialRoadviewUrl())}" data-aerial-roadview-link target="_blank" rel="noopener noreferrer" aria-label="선택 위치 로드뷰 새 창에서 열기" title="선택 위치 주변의 시기별 로드뷰를 새 창에서 엽니다"><i data-lucide="view"></i>로드뷰 ↗</a>
+          <div class="aerial-map-actions">
+            <a class="aerial-roadview-launch" href="${escapeHtml(getAerialRoadviewUrl())}" data-aerial-roadview-link target="_blank" rel="noopener noreferrer" aria-label="선택 위치 로드뷰 새 창에서 열기" title="선택 위치 주변의 시기별 로드뷰를 새 창에서 엽니다"><i data-lucide="view"></i>로드뷰 ↗</a>
+            <button class="aerial-compare-toggle" type="button" data-aerial-compare-toggle aria-pressed="false" title="최신·2007년 항공사진 분할 비교"><i data-lucide="columns-2"></i><span>도면 분할</span></button>
+          </div>
+          ${window.AerialCompare.render()}
           <div class="vworld-map__empty" data-vworld-empty>
             <i data-lucide="satellite"></i>
             <strong>지도를 준비 중입니다.</strong>
@@ -3963,6 +3968,7 @@ function initPortalTabs() {
       {
         maxZoom: vworldMapMaxZoom,
         maxNativeZoom: vworldTileNativeMaxZoom,
+        zIndex: layerName === "Hybrid" ? 3 : 1,
         attribution: "V-World",
       }
     );
@@ -4238,6 +4244,8 @@ function initPortalTabs() {
       return;
     }
 
+    if (layerKey === "base") vworldComparison?.setEnabled(false);
+
     if (vworldBaseLayer) {
       vworldMap.removeLayer(vworldBaseLayer);
     }
@@ -4256,6 +4264,21 @@ function initPortalTabs() {
 
     document.querySelectorAll("[data-vworld-layer]").forEach((button) => {
       button.classList.toggle("is-active", button.dataset.vworldLayer === layerKey);
+    });
+  }
+
+  function bindAerialComparison() {
+    const shell = vworldMap.getContainer().closest(".vworld-map-shell");
+    if (!shell?.querySelector("[data-aerial-compare]")) return;
+    vworldComparison = window.AerialCompare.create({
+      map: vworldMap,
+      shell,
+      loadLayer: () => window.L.tileLayer(window.AerialCompare.tileTemplate, {
+        minZoom: 9, maxZoom: vworldMapMaxZoom, maxNativeZoom: 17,
+        noWrap: true, zIndex: 2, errorTileUrl: window.AerialCompare.emptyTile,
+        attribution: '<a href="https://www.vworld.kr/" target="_blank" rel="noopener">V-World · 국토지리정보원 / 2007년 항공사진</a>',
+      }),
+      onEnable: () => setVworldLayer("satellite"),
     });
   }
 
@@ -5682,6 +5705,8 @@ function initPortalTabs() {
     const parcelAddress = getParcelAddress();
 
     if (vworldMap) {
+      vworldComparison?.destroy();
+      vworldComparison = null;
       vworldMap.remove();
       vworldMap = null;
       vworldMarker = null;
@@ -5737,6 +5762,7 @@ function initPortalTabs() {
     syncVworldLotNumberLabelScale();
 
     setVworldLayer(vworldCurrentLayer);
+    bindAerialComparison();
     bindVworldTools();
     bindAerialPanelToggle();
 
@@ -5771,6 +5797,8 @@ function initPortalTabs() {
     const parcelAddress = getParcelAddress();
 
     if (vworldMap) {
+      vworldComparison?.destroy();
+      vworldComparison = null;
       vworldMap.remove();
       vworldMap = null;
       vworldMarker = null;
@@ -5819,6 +5847,7 @@ function initPortalTabs() {
     syncVworldLotNumberLabelScale();
 
     setVworldLayer("satellite");
+    bindAerialComparison();
     setVworldCadastralLayer();
     bindVworldTools();
     bindAerialPanelToggle();
