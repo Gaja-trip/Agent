@@ -1,8 +1,47 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { load, normalize, readPage, formatLocation } = require('../vworld-parcel.js');
+const { load, normalize, readPage, formatLocation, getSubdivisionStandards } = require('../vworld-parcel.js');
 const pnu = '1111011900100010000';
 const characteristic = { pnu, stdrYear: '2026', stdrMt: '01', lndpclAr: '238881.8', prposArea1Nm: '제1종일반주거지역', prposArea2Nm: '자연녹지지역' };
+
+test('subdivision reference follows checklist values for each selected zoning family', () => {
+  for (const [name, minimumArea, coverage] of [
+    ['제2종일반주거지역', 60, 70], ['중심상업지역', 150, 90], ['준공업지역', 150, 70],
+    ['자연녹지지역', 200, 20], ['보전관리지역', 60, 20], ['생산관리지역', 60, 20],
+    ['계획관리지역', 60, 40], ['농림지역', 60, 20], ['자연환경보전지역', 60, 20],
+  ]) {
+    assert.deepEqual(getSubdivisionStandards([{ kind: 'region', name, relation: '포함' }]).regions, [{ name, minimumArea, coverage }]);
+  }
+});
+
+test('mixed regions retain separate limits and discard redundant broad zoning names', () => {
+  const zones = ['도시지역', '주거지역', '제2종 일반주거지역 (설명)', '자연녹지지역', '제2종일반주거지역'].map((name) => ({ name, kind: 'region' }));
+  assert.deepEqual(getSubdivisionStandards(zones).regions, [
+    { name: '제2종일반주거지역', minimumArea: 60, coverage: 70 },
+    { name: '자연녹지지역', minimumArea: 200, coverage: 20 },
+  ]);
+  assert.deepEqual(getSubdivisionStandards(['관리지역', '계획관리지역'].map((name) => ({ name, kind: 'region' }))).regions,
+    [{ name: '계획관리지역', minimumArea: 60, coverage: 40 }]);
+});
+
+test('adjacent zones and failed or unspecified zoning do not become applicable limits', () => {
+  const zones = [{ kind: 'region', name: '계획관리지역', relation: '접함' }, { kind: 'region', name: '도시지역' }];
+  assert.deepEqual(getSubdivisionStandards(zones).regions, [{ name: '도시지역', minimumArea: null, coverage: null }]);
+  assert.deepEqual(getSubdivisionStandards(zones, { region: '조회 실패' }).regions, []);
+  assert.deepEqual(getSubdivisionStandards().regions, []);
+});
+
+test('natural settlement distinguishes whole, partial and adjacent districts and respects plan failure', () => {
+  const region = { kind: 'region', name: '자연녹지지역' };
+  const district = { kind: 'district', name: '자연 취락지구 (지정)' };
+  assert.equal(getSubdivisionStandards([region, { ...district, relation: '포함' }]).naturalSettlement, 'included');
+  assert.equal(getSubdivisionStandards([region, { ...district, relation: '저촉' }]).naturalSettlement, 'partial');
+  assert.equal(getSubdivisionStandards([region, { ...district, relation: '접함' }]).naturalSettlement, '');
+  const failed = getSubdivisionStandards([region, district], { district: '계획 조회 실패' });
+  assert.equal(failed.naturalSettlement, '');
+  assert.equal(failed.districtUnavailable, true);
+  assert.equal(failed.regions[0].coverage, 20);
+});
 
 test('parcel location shows town, village and lot without province or county', () => {
   assert.equal(formatLocation('전북특별자치도 부안군 부안읍 동중리 351-2', '351-2'), '부안읍 동중리 351-2');

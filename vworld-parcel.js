@@ -5,6 +5,31 @@
   const regionNames = new Set(['도시지역', '관리지역', '농림지역', '자연환경보전지역', '보전관리지역', '생산관리지역', '계획관리지역', '주거지역', '상업지역', '공업지역', '녹지지역', '전용주거지역', '일반주거지역', '제1종전용주거지역', '제2종전용주거지역', '제1종일반주거지역', '제2종일반주거지역', '제3종일반주거지역', '준주거지역', '중심상업지역', '일반상업지역', '근린상업지역', '유통상업지역', '전용공업지역', '일반공업지역', '준공업지역', '보전녹지지역', '생산녹지지역', '자연녹지지역']);
   const clean = (value) => value == null ? '' : String(value).trim();
 
+  // Reference values from 안내자료 → 사전체크리스트 → 분할측량 안내자료.
+  const subdivisionRules = [
+    [/^(?:제[123]종)?(?:전용|일반|준)?주거지역$/, 60, 70, '주거지역'],
+    [/^(?:중심|일반|근린|유통)?상업지역$/, 150, 90, '상업지역'],
+    [/^(?:전용|일반|준)?공업지역$/, 150, 70, '공업지역'],
+    [/^(?:보전|생산|자연)?녹지지역$/, 200, 20, '녹지지역'],
+    [/^(?:보전|생산)관리지역$/, 60, 20, '관리지역'],
+    [/^계획관리지역$/, 60, 40, '관리지역'],
+    [/^(?:농림지역|자연환경보전지역)$/, 60, 20, ''],
+  ];
+
+  function getSubdivisionStandards(zones = [], errors = {}) {
+    const baseName = (name) => clean(name).replace(/\s/g, '').split(/[（(]/)[0];
+    const inside = zones.filter((zone) => !/접함/.test(clean(zone.relation)));
+    const settlement = errors.district ? [] : inside.filter((zone) => zone.kind === 'district' && baseName(zone.name) === '자연취락지구');
+    const naturalSettlement = settlement.length ? settlement.some((zone) => clean(zone.relation) === '포함') ? 'included' : 'partial' : '';
+    const names = errors.region ? [] : [...new Set(inside.filter((zone) => zone.kind === 'region').map((zone) => baseName(zone.name)).filter(Boolean))];
+    const matches = names.map((name) => ({ name, rule: subdivisionRules.find(([pattern]) => pattern.test(name)) }));
+    const regions = matches.filter(({ name }) => {
+      if (name === '도시지역' && matches.some((item) => item.rule && ['주거지역', '상업지역', '공업지역', '녹지지역'].includes(item.rule[3]))) return false;
+      return !matches.some((item) => item.name !== name && item.rule?.[3] === name);
+    }).map(({ name, rule }) => ({ name, minimumArea: rule?.[1] ?? null, coverage: rule?.[2] ?? null }));
+    return { regions, naturalSettlement, districtUnavailable: Boolean(errors.district) };
+  }
+
   function formatLocation(address, lotNumber = '') {
     const tokens = clean(address).replace(/\s+/g, ' ').split(' ');
     const localityToken = /^[가-힣0-9·]+(?:읍|면|리|동|가)$/;
@@ -93,5 +118,5 @@
     );
   }
 
-  return { load, normalize, readPage, formatLocation };
+  return { load, normalize, readPage, formatLocation, getSubdivisionStandards };
 });

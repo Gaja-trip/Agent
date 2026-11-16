@@ -1166,9 +1166,17 @@ function initPortalTabs() {
       return zones.length ? zones.map((zone) => `${zone.name}${zone.relation ? ` (${zone.relation})` : ""}`).join(", ") : "조회된 정보 없음";
     };
     const errors = [...new Set([error, ...Object.values(data?.errors || {})].filter(Boolean))];
+    const standards = data ? window.VworldParcel.getSubdivisionStandards(data.zones, data.errors) : null;
+    const standardValues = (key, suffix) => {
+      if (!standards.regions.length) return "확인 필요";
+      return standards.regions.map((region) => `<span>${standards.regions.length > 1 ? `${escapeHtml(region.name)}: ` : ""}${region[key] == null ? "확인 필요" : `${region[key]}${suffix}`}</span>`).join("");
+    };
+    const coverage = standards?.naturalSettlement === "included" ? "60% 이하 (자연취락지구)" : standards ? `${standardValues("coverage", "% 이하")}${standards.naturalSettlement === "partial" ? "<span>자연취락지구 내: 60% 이하</span>" : ""}` : "";
     document.querySelectorAll(".aerial-portal [data-parcel-zoning]").forEach((node) => {
       node.innerHTML = `<dl><dt>토지소재지</dt><dd>${escapeHtml(location)}</dd>
-        <dt>면적</dt><dd>${escapeHtml(value("area"))}</dd><dt>용도지역</dt><dd>${escapeHtml(value("region"))}</dd><dt>용도지구</dt><dd>${escapeHtml(value("district"))}</dd></dl>
+        <dt>면적</dt><dd>${escapeHtml(value("area"))}</dd><dt>용도지역</dt><dd>${escapeHtml(value("region"))}</dd><dt>용도지구</dt><dd>${escapeHtml(value("district"))}</dd>
+        ${standards ? `<dt class="parcel-subdivision-label">분할제한면적</dt><dd class="parcel-subdivision-value">${standardValues("minimumArea", " ㎡ 이상")}</dd><dt class="parcel-subdivision-label">건폐율</dt><dd class="parcel-subdivision-value">${coverage}</dd>` : ""}</dl>
+        ${standards ? `<small class="parcel-subdivision-note"><a href="checklist.html#prechecklist" target="_blank" rel="noopener">사전체크리스트 기준</a> · 건축물이 있는 대지의 분할 · 조례 확인${standards.districtUnavailable ? "<br>지구 미확인: 건폐율은 용도지역 기본 기준" : ""}</small>` : ""}
         ${errors.map((message) => `<p role="alert">${escapeHtml(message)}</p>`).join("")}
         ${data ? `<small>자료: V-World${data.year ? ` · 토지특성 ${escapeHtml(data.year)}년` : ""}</small>` : ""}`;
     });

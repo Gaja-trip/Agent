@@ -2847,6 +2847,26 @@ body.fee-image-viewer-open {
   margin-top: 5px;
 }
 
+.aerial-portal .parcel-zoning .parcel-subdivision-label,
+.aerial-portal .parcel-zoning .parcel-subdivision-value,
+.aerial-portal .parcel-zoning .parcel-subdivision-note,
+.aerial-portal .parcel-zoning .parcel-subdivision-note a {
+  color: #1d4ed8;
+}
+
+.aerial-portal .parcel-subdivision-value {
+  font-weight: 700;
+}
+
+.aerial-portal .parcel-subdivision-value span {
+  display: block;
+}
+
+.aerial-portal .parcel-subdivision-note a {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .aerial-portal .vworld-tool-group--map {
   grid-template-columns: 32px minmax(0, 1fr);
   align-items: center;
