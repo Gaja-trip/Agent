@@ -1188,7 +1188,7 @@ function initPortalTabs() {
       const zones = data.zones.filter((zone) => zone.kind === kind);
       return zones.length ? zones.map((zone) => `${zone.name}${zone.relation ? ` (${zone.relation})` : ""}`).join(", ") : "조회된 정보 없음";
     };
-    const errors = [...new Set([error, ...Object.values(data?.errors || {})].filter(Boolean))];
+    const errors = [...new Set([error, ...Object.values(data?.errors || {})].filter((message) => message && message !== "V-World 속성정보 응답 형식을 확인할 수 없습니다."))];
     const standards = data ? window.VworldParcel.getSubdivisionStandards(data.zones, data.errors) : null;
     const standardValues = (key, suffix) => {
       if (!standards.regions.length) return "확인 필요";
