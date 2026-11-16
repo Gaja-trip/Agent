@@ -68,6 +68,7 @@
   .parcel-search { gap: 6px; padding: 5px; background: #f5f7fa; border: 1px solid #e3e9ed; border-radius: 12px; }
   .parcel-search > label { padding-inline: 5px; font-size: .8rem; font-weight: 700; color: #526873; }
   .parcel-search input, .parcel-search select { min-height: 40px; padding-block: 8px; font-size: .82rem; border-radius: 8px; }
+  .parcel-search input, .aerial-search input[type="search"] { font-size: .9375rem; font-weight: 500; line-height: 1.4; }
   .parcel-search select { font-weight: 600; background-color: #fff; }
   .parcel-search > .button { min-height: 40px; padding: 8px 13px; font-size: .85rem; }
   .parcel-search__choices { background: #fff; border-color: var(--line); }
@@ -178,6 +179,7 @@
   .portal-home .brand strong { color: #223e43; font-size: 16px; }
   .mobile-menu-button { color: #45636c; background: #f5f8fa; border-color: var(--line); border-radius: 10px; }
   .mobile-address-button { background: #f5f8fa; border-color: #dce6e9; color: #45636c; }
+  .mobile-address-button span { font-size: 15px; font-weight: 500; }
   .mobile-address-button strong { color: var(--green-dark); }
   .portal-home .portal-tabs { padding: 4px 8px 7px; border-bottom-color: var(--line); }
   .portal-home .portal-tab-rail { gap: 4px; }
