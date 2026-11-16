@@ -1590,7 +1590,6 @@ function initPortalTabs() {
 
   function renderAerialPortalConnected() {
     const rawParcelAddress = getParcelAddress();
-    const parcelAddress = escapeHtml(rawParcelAddress);
     const selectedCity = getParcelCity() || "부안군";
     const townOptions = getLocalAerialTownOptions(selectedCity);
     const initialTown = townOptions.find((town) => rawParcelAddress.includes(town)) || "";
@@ -1604,9 +1603,12 @@ function initPortalTabs() {
         </button>
         <aside class="aerial-portal__panel" data-aerial-panel>
           <form class="aerial-search" data-aerial-parcel-form>
-            <label>지번 검색</label>
-            <div class="aerial-search__parcel" data-aerial-parcel-fields>
-              <div class="aerial-search__region">
+            <div class="aerial-search__modes" role="radiogroup" aria-label="검색 방식">
+              <label><input type="radio" name="vworldSearchMode" value="parcel" checked /><span>지번</span></label>
+              <label><input type="radio" name="vworldSearchMode" value="road" /><span>도로명</span></label>
+              <label><input type="radio" name="vworldSearchMode" value="place" /><span>명칭</span></label>
+            </div>
+            <div class="aerial-search__region" data-aerial-region-fields>
               <select aria-label="시군 선택" data-aerial-city>
                 ${renderOptionList(jeonbukCityNames, selectedCity, "시군 선택")}
               </select>
@@ -1616,7 +1618,8 @@ function initPortalTabs() {
               <select aria-label="리 선택" data-aerial-village>
                 ${renderOptionList(initialVillages, initialVillage, "리 선택")}
               </select>
-              </div>
+            </div>
+            <div class="aerial-search__parcel" data-aerial-parcel-fields>
               <div class="aerial-search__lot-row">
               <input
                 type="search"
@@ -1632,25 +1635,15 @@ function initPortalTabs() {
               </button>
               </div>
             </div>
-            <label for="aerial-parcel-address">도로명·명칭 검색</label>
-            <div class="aerial-search__modes" role="radiogroup" aria-label="검색 방식">
-              <label>
-                <input type="radio" name="vworldSearchMode" value="address" checked />
-                <span>도로명</span>
-              </label>
-              <label>
-                <input type="radio" name="vworldSearchMode" value="place" />
-                <span>명칭</span>
-              </label>
-            </div>
-            <div class="aerial-search__row">
+            <div class="aerial-search__row" data-aerial-text-fields hidden>
+              <label class="visually-hidden" for="aerial-parcel-address" data-aerial-text-label>도로명 검색</label>
               <input
                 id="aerial-parcel-address"
                 type="search"
                 name="aerialParcel"
                 data-aerial-parcel-input
-                value="${parcelAddress}"
-                placeholder="예: 매창로 76 또는 현대오일뱅크"
+                data-aerial-search-text
+                placeholder="도로명 입력 (예: 매창로 76)"
                 autocomplete="street-address"
               />
               <button class="button button--primary" type="submit" data-aerial-submit="text">
@@ -2010,7 +2003,7 @@ function initPortalTabs() {
     return null;
   }
 
-  function toVworldSearchResult(item, searchType, fallbackQuery) {
+  function toVworldSearchResult(item, searchType, fallbackQuery, category = "") {
     const longitude = Number(item?.point?.x);
     const latitude = Number(item?.point?.y);
 
@@ -2023,7 +2016,9 @@ function initPortalTabs() {
     const parcelAddress = item?.address?.parcel || "";
     const title =
       searchType === "address"
-        ? parcelAddress || item?.title || roadAddress || fallbackQuery
+        ? category === "road"
+          ? roadAddress || item?.title || parcelAddress || fallbackQuery
+          : parcelAddress || item?.title || roadAddress || fallbackQuery
         : item?.title || parcelAddress || roadAddress || fallbackQuery;
     const subtitle = [roadAddress, parcelAddress, item?.category].filter(Boolean).join(" · ");
 
@@ -2057,7 +2052,7 @@ function initPortalTabs() {
 
     const aerialInput = document.querySelector("[data-aerial-parcel-input]");
 
-    if (aerialInput && aerialInput.value !== nextAddress) {
+    if (aerialInput && !aerialInput.hasAttribute("data-aerial-search-text") && aerialInput.value !== nextAddress) {
       aerialInput.value = nextAddress;
     }
 
@@ -2200,6 +2195,8 @@ function initPortalTabs() {
     const requests =
       searchMode === "place"
         ? [{ type: "place" }]
+        : searchMode === "parcel" || searchMode === "road"
+          ? [{ type: "address", category: searchMode }]
         : [
             { type: "address", category: "parcel" },
             { type: "address", category: "road" },
@@ -2236,7 +2233,7 @@ function initPortalTabs() {
       const items = data?.response?.result?.items || [];
 
       for (const item of items) {
-        const result = toVworldSearchResult(item, request.type, query);
+        const result = toVworldSearchResult(item, request.type, query, request.category);
 
         if (!result) {
           continue;
@@ -3424,10 +3421,43 @@ function initPortalTabs() {
     const resultsNode = document.querySelector("[data-aerial-results]");
     const parcelSubmitButton = aerialForm?.querySelector('[data-aerial-submit="parcel"]');
     const textSubmitButton = aerialForm?.querySelector('[data-aerial-submit="text"]');
+    const parcelFields = aerialForm?.querySelector("[data-aerial-parcel-fields]");
+    const textFields = aerialForm?.querySelector("[data-aerial-text-fields]");
+    const regionFields = aerialForm?.querySelector("[data-aerial-region-fields]");
+    const textLabel = aerialForm?.querySelector("[data-aerial-text-label]");
 
     if (!aerialForm || !resultsNode) {
       return;
     }
+
+    let searchMode = "parcel";
+    let searchRequestId = 0;
+    const modeQueries = { road: getParcelState().roadAddress || "", place: "" };
+
+    function setSearchMode(mode) {
+      if (searchMode !== "parcel") modeQueries[searchMode] = aerialInput.value;
+      searchMode = mode;
+      searchRequestId += 1;
+      const parcel = mode === "parcel";
+      parcelFields.hidden = !parcel;
+      textFields.hidden = parcel;
+      aerialTownSelect.hidden = !parcel;
+      aerialVillageSelect.hidden = !parcel;
+      regionFields.classList.toggle("aerial-search__region--text", !parcel);
+      if (!parcel) {
+        aerialInput.value = modeQueries[mode];
+        textLabel.textContent = mode === "road" ? "도로명 검색" : "명칭 검색";
+        aerialInput.placeholder = mode === "road" ? "도로명 입력 (예: 매창로 76)" : "명칭 입력 (예: 부안군청)";
+        aerialInput.autocomplete = mode === "road" ? "street-address" : "off";
+      }
+      vworldSearchResults = [];
+      resultsNode.replaceChildren();
+    }
+
+    aerialForm.querySelectorAll("input[name='vworldSearchMode']").forEach((input) => {
+      input.addEventListener("change", () => { if (input.checked) setSearchMode(input.value); });
+    });
+    setSearchMode(searchMode);
 
     function requestAerialSubmit(button) {
       if (!button || button.disabled) {
@@ -3779,6 +3809,9 @@ function initPortalTabs() {
 
     if (aerialCitySelect) {
       aerialCitySelect.addEventListener("change", () => {
+        searchRequestId += 1;
+        vworldSearchResults = [];
+        resultsNode.replaceChildren();
         writeStoredValue(parcelCityStorageKey, aerialCitySelect.value);
         syncAerialTownOptions(true);
         updateAerialStatus(`${aerialCitySelect.value || "선택한 시군"} 기준으로 항공사진 검색을 진행합니다.`);
@@ -3787,9 +3820,18 @@ function initPortalTabs() {
 
     if (aerialTownSelect) {
       aerialTownSelect.addEventListener("change", () => {
+        searchRequestId += 1;
+        vworldSearchResults = [];
+        resultsNode.replaceChildren();
         syncAerialVillageOptions(true);
       });
     }
+
+    aerialVillageSelect?.addEventListener("change", () => {
+      searchRequestId += 1;
+      vworldSearchResults = [];
+      resultsNode.replaceChildren();
+    });
 
     syncAerialTownOptions(false);
 
@@ -3806,9 +3848,14 @@ function initPortalTabs() {
         return;
       }
 
+      const requestId = ++searchRequestId;
+      const displayTitle = result.title;
+      const selected = { ...result };
       updateAerialStatus("선택한 위치의 지번주소를 확인하는 중입니다.");
-      const query = await ensureResultParcelAddress(result, result.title);
+      const query = await ensureResultParcelAddress(selected, displayTitle);
+      if (requestId !== searchRequestId) return;
       setSharedParcelAddress(query);
+      if (searchMode !== "parcel") aerialInput.value = modeQueries[searchMode] = displayTitle;
       writeStoredJson(parcelStateStorageKey, {
         query,
         originalQuery: result.roadAddress || result.rawTitle || "",
@@ -3818,47 +3865,51 @@ function initPortalTabs() {
         title: query,
         subtitle: result.subtitle,
         roadAddress: result.roadAddress,
-        parcelAddress: result.parcelAddress,
+        parcelAddress: selected.parcelAddress,
       });
-      moveVworldToResult({ ...result, query, title: query });
+      moveVworldToResult({ ...selected, query, title: displayTitle });
     });
 
     aerialForm.addEventListener("submit", async (event) => {
       event.preventDefault();
 
-      const activeElement = document.activeElement;
-      const submitType = event.submitter?.dataset.aerialSubmit || (activeElement === aerialLotInput ? "parcel" : "text");
-      const searchMode = submitType === "parcel" ? "address" : aerialForm.querySelector("input[name='vworldSearchMode']:checked")?.value || "address";
-      const rawQuery = submitType === "parcel" ? buildAerialParcelQuery() : aerialInput?.value.trim() || "";
+      const requestId = ++searchRequestId;
+      const submitType = searchMode === "parcel" ? "parcel" : "text";
+      const rawQuery = submitType === "parcel"
+        ? aerialLotInput?.value.trim() ? buildAerialParcelQuery() : ""
+        : aerialInput?.value.trim() || "";
       const query =
         submitType === "parcel"
           ? rawQuery
-          : searchMode === "address"
+          : searchMode === "road"
             ? buildAerialAddressQuery(rawQuery)
             : buildAerialPlaceQuery(rawQuery);
 
       if (!query) {
         vworldSearchResults = [];
         renderAerialResults([], submitType === "parcel" ? "읍면·리와 번지를 선택 또는 입력해 주세요." : "검색어를 입력해 주세요.");
-        updateAerialStatus(submitType === "parcel" ? "읍면·리와 번지를 입력해 주세요." : "도로명 또는 명칭을 입력해 주세요.");
+        updateAerialStatus(submitType === "parcel" ? "읍면·리와 번지를 입력해 주세요." : searchMode === "road" ? "도로명을 입력해 주세요." : "명칭을 입력해 주세요.");
         return;
       }
 
-      if (searchMode === "address") {
+      if (searchMode !== "place") {
         saveParcelAddress(query);
       }
 
-      if (submitType === "text" && searchMode === "address" && aerialInput && aerialInput.value !== query) {
+      if (searchMode === "road" && aerialInput && aerialInput.value !== query) {
         aerialInput.value = query;
       }
       renderAerialResults([], "검색 중입니다.");
       updateAerialStatus(rawQuery && rawQuery !== query ? `"${rawQuery}"을 "${query}" 기준으로 검색 중입니다.` : `"${query}" 검색 중입니다.`);
 
       try {
-        vworldSearchResults = await searchVworldIntegrated(query, searchMode);
+        const results = await searchVworldIntegrated(query, searchMode);
+        if (requestId !== searchRequestId) return;
+        vworldSearchResults = results;
         renderAerialResults(vworldSearchResults);
         updateAerialStatus(vworldSearchResults.length ? "검색 결과를 선택해 주세요." : "검색 결과가 없습니다.");
       } catch (error) {
+        if (requestId !== searchRequestId) return;
         vworldSearchResults = [];
         renderAerialResults([], "V-World 검색 API를 불러오지 못했습니다.");
         updateAerialStatus("V-World 검색 API를 불러오지 못했습니다. API 키와 네트워크 상태를 확인해 주세요.");
