@@ -12,7 +12,7 @@ export const privateHeaders = {
 };
 
 const pages = new Set(["/", "/index.html", "/info.html", "/process.html", "/checklist.html", "/manual.html", "/knowledge.html"]);
-const publicScripts = new Set(["/styles.css", "/script.js", "/vworld-config.js", "/vworld-parcel.js"]);
+const publicScripts = new Set(["/styles.css", "/assets/service-theme.css", "/script.js", "/vworld-config.js", "/vworld-parcel.js"]);
 let signingKey;
 
 function getSigningKey() {

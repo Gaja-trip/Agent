@@ -1,0 +1,194 @@
+/* Shared screen theme; document printing and map symbology use their existing styles. */
+@media screen {
+  :root {
+    --ink: #23313f;
+    --muted: #647582;
+    --line: #dce5e9;
+    --paper: #fff;
+    --soft: #f4f7f9;
+    --green: #176b60;
+    --green-dark: #124e48;
+    --teal: #147c79;
+    --shadow: 0 12px 36px rgba(27, 54, 68, .08);
+    --service-tint: #edf6f3;
+    --service-radius: 12px;
+    --service-shadow: 0 3px 14px rgba(27, 54, 68, .045);
+  }
+
+  body { background: #f5f7fa; -webkit-font-smoothing: antialiased; }
+  button, input, select, textarea { font-family: inherit; }
+  button, a, input, select { -webkit-tap-highlight-color: transparent; }
+  :where(button, a, input, select, textarea):focus-visible {
+    outline: 3px solid #399888;
+    outline-offset: 3px;
+  }
+  ::selection { color: #124e48; background: #d9eee8; }
+
+  .site-header {
+    min-height: 72px;
+    gap: 24px;
+    padding: 12px clamp(18px, 2.5vw, 40px);
+    background: #fff;
+    border-bottom: 1px solid var(--line);
+    box-shadow: 0 2px 12px rgba(27, 54, 68, .035);
+  }
+  .brand { gap: 10px; }
+  .brand__mark { flex: 0 0 44px; width: 44px; height: 44px; }
+  .brand strong { color: #223e43; font-size: clamp(1.15rem, 1.65vw, 1.4rem); letter-spacing: -.045em; line-height: 1.25; }
+  .main-nav { gap: 6px; font-size: .86rem; font-weight: 700; }
+  .main-nav > a { min-height: 36px; padding: 6px 10px; border: 0; border-radius: 8px; color: #52646f; }
+  .main-nav > a:hover, .main-nav > a.is-active { color: var(--green-dark); background: var(--service-tint); border: 0; }
+  .access-lock button { border-radius: 10px; background: #f5f8fa; color: #5b7479; }
+  .site-search { max-width: 400px; }
+  .site-search__row { min-height: 40px; background: #f5f7fa; border-color: #e5ebef; border-radius: 10px; }
+  .site-search__row:focus-within { border-color: #8fbbaf; box-shadow: 0 0 0 3px #edf6f3; }
+  .site-search__row input, .site-search__row input::placeholder { font-size: .82rem; font-weight: 500; }
+  .site-search__row button { border-radius: 7px; font-size: .78rem; font-weight: 700; }
+  .site-search__results { border-radius: var(--service-radius); box-shadow: var(--shadow); }
+  .button { border-radius: 10px; font-weight: 700; }
+  .button:hover { transform: none; }
+  .button--primary { background: var(--green); box-shadow: 0 2px 5px rgba(23, 107, 96, .12); }
+  .button--primary:hover { background: var(--green-dark); }
+
+  /* A quiet toolbar keeps the map as the main visual focus. */
+  .portal-tabs { gap: 6px; padding: 8px 12px; background: #fff; border-bottom: 1px solid var(--line); }
+  .portal-tab {
+    min-height: 48px;
+    gap: 7px;
+    padding: 8px;
+    color: #586d77;
+    background: #f6f8fa;
+    border: 1px solid #e6ecef;
+    border-radius: 10px;
+    font-size: .84rem;
+    font-weight: 700;
+  }
+  .portal-tab:hover { color: var(--green-dark); background: #f0f6f4; border-color: #c9ded7; }
+  .portal-tab.is-active { color: var(--green-dark); background: #e8f4ef; border-color: #aed2c5; box-shadow: inset 0 -2px 0 var(--green); }
+  .parcel-search { gap: 6px; padding: 5px; background: #f5f7fa; border: 1px solid #e3e9ed; border-radius: 12px; }
+  .parcel-search > label { padding-inline: 5px; font-size: .8rem; font-weight: 700; color: #526873; }
+  .parcel-search input, .parcel-search select { min-height: 40px; padding-block: 8px; font-size: .82rem; border-radius: 8px; }
+  .parcel-search select { font-weight: 600; background-color: #fff; }
+  .parcel-search > .button { min-height: 40px; padding: 8px 13px; font-size: .85rem; }
+  .parcel-search__choices { background: #fff; border-color: var(--line); }
+  .portal-context { background: #f5f8fa; border-color: var(--line); }
+
+  .aerial-portal__panel, .farmland-portal__sidebar { background: #f7f9fb; scrollbar-width: thin; scrollbar-color: #bdcecf transparent; }
+  .aerial-search { padding: 8px; background: #fff; border: 1px solid var(--line); border-radius: var(--service-radius); box-shadow: var(--service-shadow); }
+  .aerial-search select, .aerial-search input { border-color: #dfe7ec; border-radius: 8px; }
+  .aerial-search select { font-weight: 600; }
+  .aerial-search__modes { gap: 3px; padding: 3px; background: #f2f5f7; border-radius: 9px; }
+  .aerial-search__modes label { min-height: 30px; padding-inline: 3px; background: transparent; border-color: transparent; border-radius: 7px; font-weight: 700; }
+  .aerial-search__modes label:has(input:checked) { color: var(--green-dark); background: #fff; border-color: #d3e4de; box-shadow: 0 1px 4px rgba(27, 54, 68, .07); }
+  .aerial-search__modes input { accent-color: var(--green); }
+  .vworld-urban-planning, .parcel-zoning { background: #fff; border-color: var(--line); border-radius: var(--service-radius); box-shadow: var(--service-shadow); }
+  .vworld-urban-planning { padding: 10px; }
+  .vworld-urban-planning legend { color: #334f58; font-weight: 700; }
+  .vworld-tool-group strong, .vworld-tool-group button, .vworld-tool-group .aerial-roadview-link { font-weight: 700; }
+  .vworld-tool-group button, .vworld-tool-group .aerial-roadview-link { border-color: var(--line); border-radius: 8px; }
+  .vworld-tool-group button:hover, .vworld-tool-group button.is-active { color: var(--green-dark); background: var(--service-tint); border-color: #a9ccc1; }
+  .aerial-portal .parcel-zoning { padding: 12px; }
+  .parcel-zoning dd, .farmland-attributes dd { font-variant-numeric: tabular-nums; }
+  .aerial-portal .parcel-coverage-relief { border-radius: 9px; box-shadow: none; }
+  .aerial-panel-toggle { border-color: var(--line); box-shadow: 4px 2px 12px rgba(27, 54, 68, .08); }
+  .farmland-info-tabs { padding: 4px; gap: 3px; background: #eaf0f2; border: 1px solid var(--line); border-radius: 11px; }
+  .farmland-info-tabs button { color: #526873; background: transparent; border-color: transparent; border-radius: 8px; font-weight: 700; }
+  .farmland-info-tabs button[aria-selected="true"] { color: var(--green-dark); background: #fff; border-color: #d0e1da; box-shadow: 0 1px 4px rgba(27, 54, 68, .06); }
+  .aerial-roadview-launch { color: #334f58; border-color: var(--line); border-radius: 11px; box-shadow: var(--shadow); }
+  .vworld-info-panel { border-color: var(--line); border-radius: 14px; box-shadow: var(--shadow); }
+  .vworld-info-panel__header { background: #f4f8f8; border-color: var(--line); }
+  .vworld-info-table th { background: #f5f8fa; }
+
+  /* The same surfaces and typography carry through the guidance pages. */
+  .page-main { background: #f5f7fa; }
+  .page-title {
+    color: #223e43;
+    background: #f0f6f5;
+    border-bottom: 1px solid #d9e7e3;
+  }
+  .page-title h1 { color: #223e43; letter-spacing: -.045em; font-weight: 750; }
+  .page-title .eyebrow { color: #478078; font-size: .72rem; font-weight: 700; letter-spacing: .1em; }
+  .page-title p:not(.eyebrow) { color: #617680; font-size: .95rem; }
+  .page-search { border-color: var(--line); border-radius: var(--service-radius); box-shadow: none; }
+  .page-search input { border-color: var(--line); border-radius: 9px; }
+  .page-search label { color: #46616a; font-weight: 700; }
+  .section--process, .section--intro, .section--final { background: #f5f7fa; }
+  .source-card, .step-detail, .guide-card, .manual-step-card, .knowledge-item,
+  .manual-definition-card, .manual-law-box, .checklist, .readiness, .final-panel {
+    border-color: var(--line);
+    border-radius: 14px;
+    box-shadow: var(--service-shadow);
+  }
+  .source-card h3, .knowledge-item h2, .manual-step-card h2, .step-detail h2, .guide-card__toolbar h2 { color: #284750; font-weight: 750; letter-spacing: -.025em; }
+  .guide-card__toolbar { background: #f8fafb; border-color: var(--line); }
+  .timeline__step { background: #fff; border-color: var(--line); border-radius: 12px; box-shadow: var(--service-shadow); }
+  .timeline__step strong { font-weight: 700; }
+  .timeline__step:hover, .timeline__step.is-active { background: var(--service-tint); border-color: #9fc8ba; }
+  .timeline__step span { border-radius: 10px; }
+  .step-detail__badge, .manual-step-card__number { border-radius: 12px; background: var(--service-tint); color: var(--green-dark); }
+  .guide-page-tabs, .content-tabs, .knowledge-subnav, .manual-document-options { background: #edf2f5; border-color: var(--line); border-radius: 12px; box-shadow: none; }
+  .guide-page-tabs button, .content-tabs button, .knowledge-subnav button, .manual-document-options button { color: #506773; border-color: #dce5e9; border-radius: 9px; font-weight: 700; }
+  .guide-page-tabs button:hover, .content-tabs button:hover, .knowledge-subnav button:hover, .manual-document-options button:hover { color: var(--green-dark); background: #f8fcfa; border-color: #accfc1; }
+  .guide-page-tabs button.is-active, .content-tabs button.is-active, .knowledge-subnav button.is-active,
+  .manual-document-options button.is-active { color: #fff; background: var(--green); border-color: var(--green); box-shadow: 0 2px 5px rgba(23, 107, 96, .12); }
+  .manual-document-options button:hover:not(.is-active) small { color: var(--muted); }
+  .knowledge-table, .authority-staff-table-wrap { border-radius: 12px; border-color: var(--line); }
+  .knowledge-table thead th, .authority-staff-table thead th { color: #28564f; background: #eaf4f0; font-weight: 700; }
+  .knowledge-table tbody th, .authority-staff-table tbody th { background: #f6f9fa; font-weight: 700; }
+  .knowledge-table tbody tr:hover td { background: #fbfdfc; }
+  .manual-definition-card strong, .manual-law-box strong { font-weight: 700; }
+
+  .mobile-sheet { border-color: #dce6e8; border-radius: 20px; box-shadow: 0 20px 70px rgba(27, 54, 68, .2); }
+  .mobile-sheet::backdrop { background: rgba(22, 43, 52, .38); }
+  .mobile-sheet__header { background: #f7fafb; }
+  .mobile-sheet__close { color: var(--green-dark); background: #e9f2ee; }
+}
+
+@media screen and (min-width: 1241px) {
+  .portal-tabs { grid-template-columns: minmax(560px, 1.6fr) repeat(5, minmax(98px, .3fr)); }
+  .parcel-search { grid-template-columns: auto minmax(108px, .65fr) minmax(86px, .45fr) minmax(140px, 1.5fr) auto; }
+}
+
+@media screen and (min-width: 1181px) {
+  .content-tabs--knowledge, .content-tabs--manual { top: 72px; }
+}
+
+@media screen and (max-width: 1180px) {
+  .site-header { gap: 12px; }
+}
+
+@media screen and (max-width: 720px) {
+  .site-header { padding: 12px 16px; }
+  .main-nav { gap: 3px; }
+  .main-nav > a { padding: 6px; font-size: .8rem; }
+  .brand__mark { flex-basis: 38px; width: 38px; height: 38px; }
+  .brand strong { font-size: 1.15rem; }
+  .page-title { padding-inline: 20px; }
+  .page-title--compact { min-height: 0; gap: 12px; padding-block: 18px; }
+  .page-title.page-title--compact h1 { flex: 0 0 auto; max-width: none; font-size: 1.65rem; }
+  .page-title--with-search .page-search { flex: 0 0 auto; width: 100%; }
+  .content-tabs--manual, .content-tabs--knowledge { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .content-tabs.content-tabs--manual button, .content-tabs.content-tabs--knowledge button { min-height: 44px; line-height: 1.35; }
+}
+
+@media screen and (max-width: 980px), screen and (max-height: 600px) and (max-width: 1180px) {
+  .portal-home .site-header { min-height: 52px; gap: 8px; box-shadow: none; }
+  .portal-home .brand { gap: 8px; }
+  .portal-home .brand__mark { flex-basis: 32px; width: 32px; height: 32px; }
+  .portal-home .brand strong { color: #223e43; font-size: 16px; }
+  .mobile-menu-button { color: #45636c; background: #f5f8fa; border-color: var(--line); border-radius: 10px; }
+  .mobile-address-button { background: #f5f8fa; border-color: #dce6e9; color: #45636c; }
+  .mobile-address-button strong { color: var(--green-dark); }
+  .portal-home .portal-tabs { padding: 4px 8px 7px; border-bottom-color: var(--line); }
+  .portal-home .portal-tab-rail { gap: 4px; }
+  .portal-home .portal-tab { min-height: 46px; padding: 5px 2px; font-size: 12px; border-radius: 9px; }
+  .mobile-map-dock { gap: 6px; border-top-color: var(--line); box-shadow: 0 -3px 12px rgba(27, 54, 68, .04); }
+  .mobile-map-dock button { background: #f3f8f6; border-color: #d9e7e1; color: #315e54; border-radius: 11px; font-weight: 700; }
+  .mobile-sheet .main-nav > a { background: #f6f9fa; border-color: var(--line); }
+  .mobile-sheet .main-nav > a.is-active { background: var(--service-tint); color: var(--green-dark); border-color: #bad8cd; }
+  .mobile-sheet .aerial-portal__panel, .mobile-sheet .farmland-portal__sidebar { background: #fff; }
+  .mobile-sheet .site-search { max-width: none; }
+  .mobile-sheet .parcel-search { background: transparent; border: 0; }
+  .mobile-embedded-toolbar { background: #f5f8fa; border-color: var(--line); }
+  .mobile-embedded-toolbar button, .mobile-embedded-toolbar a { color: #45636c; border-color: var(--line); border-radius: 9px; }
+}

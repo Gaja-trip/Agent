@@ -32,6 +32,7 @@ Vercel 배포에는 `middleware.ts`가 같은 암호 확인을 적용합니다. 
 - `manual.html`: 통합 화면 사용 매뉴얼
 - `knowledge.html`: 상담지식 요약
 - `styles.css`: 반응형 화면 스타일
+- `assets/service-theme.css`: 밝은 공공서비스 공통 디자인과 모바일 메뉴 스타일(화면 전용)
 - `script.js`: 메인 탭, 절차 탭, 안내자료 출력, 체크리스트 상호작용
 - `server.cjs`: 정적 파일과 농지공간포털 연동 API를 제공하는 Node 서버
 - `farmland-service.cjs`: 농지공간포털 항공영상·연속지적도·공개 필지 속성 조회

@@ -16,7 +16,7 @@ test("private site requires a password for pages, assets and APIs", async (t) =>
     assert.match(response.headers.get("location"), /^\/login\?next=/);
     assert.doesNotMatch(await response.text(), /data-portal|data-guide-page/);
   }
-  for (const route of ["/script.js", "/styles.css", "/assets/survey-checks.png", "/cadastral/example.shp", "/api/vworld/parcel?pnu=bad", "/api/farmland/config", "/api/eum/roads?bbox=bad"]) {
+  for (const route of ["/script.js", "/styles.css", "/assets/service-theme.css", "/assets/survey-checks.png", "/cadastral/example.shp", "/api/vworld/parcel?pnu=bad", "/api/farmland/config", "/api/eum/roads?bbox=bad"]) {
     assert.equal((await get(route)).status, 401, route);
   }
   const page = await get("/login");
@@ -37,7 +37,7 @@ test("private site requires a password for pages, assets and APIs", async (t) =>
   assert.match(setCookie, /Max-Age=28800/);
   const cookie = setCookie.split(";")[0];
 
-  for (const route of ["/", "/manual.html", "/styles.css", "/script.js", "/vworld-config.js", "/vworld-parcel.js", "/assets/land-info-logo.png", "/assets/jeonbuk-town-village-map.js", "/assets/survey-checks.png"]) {
+  for (const route of ["/", "/manual.html", "/styles.css", "/assets/service-theme.css", "/script.js", "/vworld-config.js", "/vworld-parcel.js", "/assets/land-info-logo.png", "/assets/jeonbuk-town-village-map.js", "/assets/survey-checks.png"]) {
     const response = await get(route, { headers: { cookie } });
     assert.equal(response.status, 200, route);
     assert.match(response.headers.get("cache-control"), /no-store/);
