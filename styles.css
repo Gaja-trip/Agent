@@ -3131,6 +3131,8 @@ body.fee-image-viewer-open {
   line-height: 1.4;
 }
 
+.vworld-measure:empty { display: none; }
+
 .vworld-measure.is-result {
   color: #d71920;
   font-weight: 900;

@@ -1589,7 +1589,7 @@ function initPortalTabs() {
                 초기화
               </button>
             </div>
-            <output class="vworld-measure" data-vworld-measure>지도 도구를 선택하세요.</output>
+            <output class="vworld-measure" data-vworld-measure></output>
           </div>
         </aside>
         <div class="vworld-map-shell">
@@ -1708,7 +1708,7 @@ function initPortalTabs() {
                 초기화
               </button>
             </div>
-            <output class="vworld-measure" data-vworld-measure>거리 또는 면적을 선택한 뒤 도면을 클릭하세요.</output>
+            <output class="vworld-measure" data-vworld-measure></output>
             <div class="vworld-tool-group vworld-tool-group--inline vworld-tool-group--view" role="group" aria-label="항공사진 표시 도구">
               <button type="button" data-vworld-action="center">
                 <i data-lucide="crosshair"></i>
@@ -5353,7 +5353,7 @@ function initPortalTabs() {
       button.classList.remove("is-active");
     });
     syncVworldMeasureCursor();
-    updateMeasureOutput("거리 또는 면적을 선택한 뒤 도면을 클릭하세요.");
+    updateMeasureOutput("");
   }
 
   function renderVworldMeasure() {
