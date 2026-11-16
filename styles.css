@@ -5243,28 +5243,43 @@ body.fee-image-viewer-open {
   top: 12px;
   right: 64px;
   display: flex;
-  gap: 8px;
+  gap: 2px;
+  padding: 3px;
+  background: #fff;
+  border: 1px solid #dce5e9;
+  border-radius: 8px;
+  box-shadow: 0 3px 14px rgba(27, 54, 68, .12);
 }
-.aerial-map-actions .aerial-roadview-launch { position: static; }
-.aerial-compare-toggle {
+.aerial-map-actions > .aerial-roadview-launch,
+.aerial-map-actions > .aerial-compare-toggle {
+  position: relative;
+  inset: auto;
   display: inline-flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 3px;
+  width: 62px;
   min-height: 44px;
-  padding: 9px 13px;
-  color: #334f58;
-  background: #fff;
-  border: 1px solid var(--line);
-  border-radius: 11px;
-  box-shadow: var(--shadow);
+  padding: 4px 6px;
+  color: #61707b;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  box-shadow: none;
   font: inherit;
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.25;
+  white-space: nowrap;
+  text-decoration: none;
   cursor: pointer;
 }
-.aerial-compare-toggle.is-active { color: #124e48; background: #e8f4ef; border-color: #8dbbad; }
-.aerial-compare-toggle svg { width: 19px; height: 19px; }
+.aerial-map-actions > .aerial-roadview-launch::after { content: ""; position: absolute; right: -2px; top: 8px; bottom: 8px; width: 1px; background: #e1e7eb; }
+.aerial-map-actions > :hover { color: #16796f; background: #f0f7f4; }
+.aerial-map-actions > :focus-visible { outline: 2px solid #27877a; outline-offset: 1px; }
+.aerial-map-actions > .aerial-compare-toggle[aria-pressed="true"] { color: #0f766e; background: #e4f3ef; font-weight: 700; }
+.aerial-map-actions svg { width: 20px; height: 20px; stroke-width: 1.7; }
 .aerial-compare {
   --compare-position: 50%;
   position: absolute;
@@ -5281,7 +5296,7 @@ body.fee-image-viewer-open {
 }
 .aerial-compare__label {
   position: absolute;
-  top: 68px;
+  top: 76px;
   max-width: calc(50% - 24px);
   padding: 6px 10px;
   color: #284750;
@@ -5339,9 +5354,11 @@ body.fee-image-viewer-open {
   line-height: 1.6;
 }
 @media (max-width: 600px) {
-  .aerial-map-actions { right: 58px; gap: 6px; }
-  .aerial-map-actions .aerial-roadview-launch, .aerial-compare-toggle { gap: 4px; padding: 8px 9px; font-size: 12px; }
-  .aerial-compare__label { max-width: calc(50% - 16px); padding: 5px 7px; font-size: 11px; }
+  .aerial-map-actions { right: 58px; }
+  .aerial-map-actions > .aerial-roadview-launch, .aerial-map-actions > .aerial-compare-toggle { width: 56px; }
+  .aerial-compare__label { top: 102px; max-width: calc(50% - 16px); padding: 5px 7px; font-size: 11px; }
+  .aerial-compare__handle { top: 146px; }
+  .aerial-compare__status { top: 202px; }
   .aerial-compare__label--latest { left: 8px; }
   .aerial-compare__label--history { right: 8px; }
 }

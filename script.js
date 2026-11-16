@@ -1710,8 +1710,8 @@ function initPortalTabs() {
         </aside>
         <div class="vworld-map-shell">
           <div class="vworld-map" id="vworld-map" aria-label="V-World 항공사진과 연속지적도"></div>
-          <div class="aerial-map-actions">
-            <a class="aerial-roadview-launch" href="${escapeHtml(getAerialRoadviewUrl())}" data-aerial-roadview-link target="_blank" rel="noopener noreferrer" aria-label="선택 위치 로드뷰 새 창에서 열기" title="선택 위치 주변의 시기별 로드뷰를 새 창에서 엽니다"><i data-lucide="view"></i>로드뷰 ↗</a>
+          <div class="aerial-map-actions" role="group" aria-label="항공사진 보기 도구">
+            <a class="aerial-roadview-launch" href="${escapeHtml(getAerialRoadviewUrl())}" data-aerial-roadview-link target="_blank" rel="noopener noreferrer" aria-label="선택 위치 로드뷰 새 창에서 열기" title="선택 위치 주변의 시기별 로드뷰를 새 창에서 엽니다"><i data-lucide="view"></i><span>로드뷰</span></a>
             <button class="aerial-compare-toggle" type="button" data-aerial-compare-toggle aria-pressed="false" title="최신·2007년 항공사진 분할 비교"><i data-lucide="columns-2"></i><span>도면 분할</span></button>
           </div>
           ${window.AerialCompare.render()}
