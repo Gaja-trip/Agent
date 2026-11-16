@@ -57,8 +57,7 @@ const duplicateParcelVillageCandidates = {
 const vworldApiKey = window.VworldConfig?.key || "";
 const vworldParcelDataId = "LP_PA_CBND_BUBUN";
 const vworldParcelWfsDataIds = ["lp_pa_cbnd_bubun", "lt_c_landinfobasemap"];
-const vworldBuildingDataIds = ["LT_C_SPBD"];
-const vworldBuildingWfsDataIds = ["lt_c_spbd"];
+const vworldBuildingDataIds = ["LT_C_BLDGINFO", "LT_C_SPBD"];
 const vworldAdminTownDataId = "LT_C_ADEMD_INFO";
 const vworldAdminVillageDataId = "LT_C_ADRI_INFO";
 const jeonbukSigunguCodes = {
@@ -78,7 +77,6 @@ const jeonbukSigunguCodes = {
   "부안군": ["52800", "45800"],
 };
 const vworldParcelRadiusMeters = 80;
-const vworldBuildingQueryRadiusMeters = 24;
 const vworldPoiQueryRadiusMeters = 180;
 const eumDefaultScale = "1200";
 const vworldLotNumberMinZoom = 18;
@@ -163,6 +161,8 @@ let vworldCurrentPoint = null;
 let vworldSearchResults = [];
 let vworldLabelRequestId = 0;
 let vworldInfoRequestId = 0;
+let vworldInfoSelection = null;
+const vworldPoiSearchCache = new Map();
 let vworldPoiMarkerRequestId = 0;
 let vworldMarkerVisible = true;
 let vworldCadastralVisible = true;
@@ -1183,6 +1183,7 @@ function initPortalTabs() {
   }
 
   async function selectAerialParcelDetails(point) {
+    clearVworldClickInfo();
     if (Number.isFinite(point?.latitude) && Number.isFinite(point?.longitude)) {
       aerialRoadviewPoint = { ...point };
       syncAerialRoadviewLinks();
@@ -1205,6 +1206,7 @@ function initPortalTabs() {
       }
       if (requestId !== aerialParcelDetailsRequestId) return;
       label = feature?.properties?.addr || label;
+      if (!vworldMeasureMode) loadVworldClickInfo({ ...point, pnu, feature, parcelAddress: label });
       aerialParcelDetailsState = { label, pnu, loading: true };
       renderAerialParcelDetails();
       const cached = aerialParcelDetailsCache.get(pnu);
@@ -1429,6 +1431,9 @@ function initPortalTabs() {
             <button class="is-active" type="button" role="tab" aria-selected="true" data-vworld-info-tab="building">건축물정보</button>
             <button type="button" role="tab" aria-selected="false" data-vworld-info-tab="poi">POI정보</button>
           </div>
+          <button class="vworld-info-panel__refresh" type="button" data-vworld-info-refresh aria-label="건축물·POI 정보 새로고침" title="등록된 기본개요 다시 조회">
+            <i data-lucide="refresh-cw"></i>
+          </button>
           <button class="vworld-info-panel__close" type="button" data-vworld-info-close aria-label="정보 패널 닫기">
             <i data-lucide="x"></i>
           </button>
@@ -1936,9 +1941,9 @@ function initPortalTabs() {
     });
   }
 
-  async function requestVworldJson(url) {
+  async function requestVworldJson(url, options = {}) {
     try {
-      const response = await fetch(url.toString(), { signal: AbortSignal.timeout(8000) });
+      const response = await fetch(url.toString(), { signal: AbortSignal.timeout(8000), cache: options.cache || "default" });
 
       if (response.ok) {
         return await response.json();
@@ -2351,60 +2356,46 @@ function initPortalTabs() {
     });
   }
 
-  async function searchVworldBuildingInfo(latitude, longitude) {
-    const point = { latitude, longitude };
-    let features = [];
-
-    try {
-      features = await searchVworldFeaturesByLayers(
-        vworldBuildingDataIds,
-        vworldBuildingWfsDataIds,
-        latitude,
-        longitude,
-        vworldBuildingQueryRadiusMeters,
-        12
-      );
-    } catch (error) {
-      return [];
-    }
-
-    return sortFeaturesByClickPoint(features, point).slice(0, 3);
-  }
-
   async function searchVworldBuildingInfoForParcel(parcelContext, latitude, longitude) {
-    if (!parcelContext?.feature) {
-      return searchVworldBuildingInfo(latitude, longitude);
-    }
-
+    if (!parcelContext?.feature) throw new Error("선택한 필지의 경계를 확인하지 못했습니다. 지번을 다시 선택해 주세요.");
     const queryPoint = parcelContext.queryPoint || parcelContext.clickPoint || { latitude, longitude };
-    let features = [];
-
-    try {
-      features = await searchVworldFeaturesByLayers(
-        vworldBuildingDataIds,
-        vworldBuildingWfsDataIds,
-        queryPoint.latitude,
-        queryPoint.longitude,
-        Math.max(vworldBuildingQueryRadiusMeters, 80),
-        24
-      );
-    } catch (error) {
-      return [];
-    }
     const parcelPnu = normalizePnu(parcelContext.pnu);
     const parcelFeature = parcelContext.feature;
-    const filteredFeatures = features.filter((feature) => {
+    const bounds = getCoordinateBounds(collectGeometryCoordinates(parcelFeature.geometry?.coordinates));
+    if (!bounds) throw new Error("선택한 필지의 경계를 확인하지 못했습니다.");
+    const belongsToParcel = (feature) => {
       const featurePnu = getFeaturePnu(feature);
+      if (parcelPnu && featurePnu) return featurePnu === parcelPnu;
       const featurePoint = getFeatureLabelPoint(feature);
-
-      if (parcelPnu && featurePnu && featurePnu === parcelPnu) {
-        return true;
-      }
-
       return Boolean(featurePoint && isPointInParcelFeature(featurePoint, parcelFeature));
-    });
-
-    return sortFeaturesByClickPoint(filteredFeatures, parcelContext.clickPoint || queryPoint).slice(0, 3);
+    };
+    let lookupError = null;
+    for (const dataId of vworldBuildingDataIds) {
+      try {
+        const features = [];
+        for (let page = 1; page <= 10; page += 1) {
+          const url = createVworldDataFeatureUrl(dataId, queryPoint.latitude, queryPoint.longitude, 80, 100);
+          url.searchParams.set("geomFilter", `BOX(${bounds.minLongitude},${bounds.minLatitude},${bounds.maxLongitude},${bounds.maxLatitude})`);
+          url.searchParams.set("domain", vworldAttributeDomain);
+          url.searchParams.set("page", String(page));
+          const data = await requestVworldJson(url, { cache: "no-store" });
+          const status = data?.response?.status;
+          if (status === "NOT_FOUND") break;
+          if (status !== "OK") throw new Error("V-World 건축물 기본개요를 조회하지 못했습니다. 잠시 후 새로고침해 주세요.");
+          features.push(...extractVworldFeatures(data));
+          const totalPages = Number(data.response.page?.total || 1);
+          if (page >= totalPages) break;
+          if (page === 10) throw new Error("건축물이 많아 전체 기본개요를 확인하지 못했습니다. 조회 범위를 확인해 주세요.");
+        }
+        const matches = features.filter(belongsToParcel).filter((feature) => dataId !== "LT_C_BLDGINFO" ||
+          ["bld_nm", "dong_nm", "usability", "strct_cd", "useapr_day"].some((key) => String(feature.properties?.[key] || "").trim()) || Number(feature.properties?.archarea) > 0);
+        if (matches.length) return sortFeaturesByClickPoint(matches, parcelContext.clickPoint || queryPoint);
+      } catch (error) {
+        lookupError = error;
+      }
+    }
+    if (lookupError) throw lookupError;
+    return [];
   }
 
   function getPoiSearchQueries(pointAddress = "") {
@@ -2420,12 +2411,23 @@ function initPortalTabs() {
   }
 
   async function searchVworldNearbyPois(latitude, longitude, pointAddress = "") {
+    const key = `${latitude.toFixed(5)}:${longitude.toFixed(5)}`;
+    const cached = vworldPoiSearchCache.get(key);
+    if (cached && Date.now() - cached.time < 60000) return cached.promise;
+    const promise = queryVworldNearbyPois(latitude, longitude, pointAddress);
+    if (vworldPoiSearchCache.size >= 50) vworldPoiSearchCache.delete(vworldPoiSearchCache.keys().next().value);
+    vworldPoiSearchCache.set(key, { time: Date.now(), promise });
+    try { return await promise; } catch (error) { vworldPoiSearchCache.delete(key); throw error; }
+  }
+
+  async function queryVworldNearbyPois(latitude, longitude, pointAddress = "") {
     const bbox = getRadiusBbox(latitude, longitude, vworldPoiQueryRadiusMeters);
     const queries = getPoiSearchQueries(pointAddress);
     const seen = new Set();
     const results = [];
+    let completed = 0;
 
-    for (const query of queries) {
+    await Promise.all(queries.map(async (query) => {
       const url = new URL("https://api.vworld.kr/req/search");
 
       url.searchParams.set("service", "search");
@@ -2445,8 +2447,10 @@ function initPortalTabs() {
 
       try {
         data = await requestVworldJson(url);
+        if (!["OK", "NOT_FOUND"].includes(data?.response?.status)) return;
+        completed += 1;
       } catch (error) {
-        continue;
+        return;
       }
 
       const items = data?.response?.result?.items || [];
@@ -2477,8 +2481,9 @@ function initPortalTabs() {
           keyword: query,
         });
       }
-    }
+    }));
 
+    if (!completed) throw new Error("주변 POI 정보를 조회하지 못했습니다. 새로고침해 주세요.");
     return results.sort((first, second) => first.distance - second.distance).slice(0, 8);
   }
 
@@ -2528,55 +2533,11 @@ function initPortalTabs() {
   }
 
   function getBuildingAddressItems(feature, pointAddress = "") {
-    const properties = feature?.properties || {};
-    const roadAddress = getBuildingDisplayValue(properties, [
-      "road_addr",
-      "rn_addr",
-      "roadAddr",
-      "road_address",
-      "rds_man_no",
-      "rn",
-      "road_nm",
-      "rd_nm",
-      "newPlatPlc",
-      "NEW_PLAT_PLC",
-    ]);
-    const parcelAddress =
-      pointAddress ||
-      getBuildingDisplayValue(properties, [
-        "jibun_addr",
-        "jibun",
-        "lot_no",
-        "addr",
-        "platPlc",
-        "PLAT_PLC",
-        "pnu",
-      ]);
-
-    return [
-      roadAddress && roadAddress !== "-" ? ["도로명", roadAddress] : null,
-      parcelAddress && parcelAddress !== "-" ? ["지번", parcelAddress] : null,
-    ].filter(Boolean);
+    return window.VworldBuilding.getAddressItems(feature, pointAddress);
   }
 
   function getBuildingInfoRows(feature) {
-    const properties = feature?.properties || {};
-
-    return [
-      ["건물명칭", getBuildingDisplayValue(properties, ["buld_nm", "bld_nm", "bd_nm", "pos_bul_nm", "building_nm", "name", "bldNm", "BLD_NM"], "건물명칭")],
-      ["건물용도", getBuildingDisplayValue(properties, ["main_purps_cd_nm", "mainPurpsCdNm", "use_nm", "bdtyp_cd_nm", "buld_use", "용도"], "건물용도")],
-      ["건물동명칭", getBuildingDisplayValue(properties, ["buld_nm_dc", "dong_nm", "bld_dong_nm", "dongNm", "동명칭"], "건물동명칭")],
-      ["구조", getBuildingDisplayValue(properties, ["strct_cd_nm", "strctCdNm", "strct_nm", "structure", "구조"], "구조")],
-      ["지상층수", getBuildingDisplayValue(properties, ["gro_flo_co", "grnd_flr_cnt", "grndFlrCnt", "ground_flr", "지상층수"], "지상층수")],
-      ["지하층수", getBuildingDisplayValue(properties, ["und_flo_co", "ugrnd_flr_cnt", "ugrndFlrCnt", "underground_flr", "지하층수"], "지하층수")],
-      ["건물면적", getBuildingDisplayValue(properties, ["archarea", "arch_area", "archArea", "bd_ar", "building_area", "건물면적"], "건물면적")],
-      ["건물높이", getBuildingDisplayValue(properties, ["heit", "hgt", "height", "건물높이"], "건물높이")],
-      ["용적률", getBuildingDisplayValue(properties, ["vl_rat", "vlRat", "vlrat", "far", "용적률"], "용적률")],
-      ["건폐율", getBuildingDisplayValue(properties, ["bc_rat", "bcRat", "bcrat", "bld_coverage", "건폐율"], "건폐율")],
-      ["연면적", getBuildingDisplayValue(properties, ["totarea", "tot_ar", "totArea", "gfa", "연면적"], "연면적")],
-      ["대지면적", getBuildingDisplayValue(properties, ["plot_ar", "plat_area", "platArea", "platarea", "site_area", "대지면적"], "대지면적")],
-      ["사용승인일자", getBuildingDisplayValue(properties, ["use_apr_day", "useAprDay", "use_confm_de", "apprv_de", "사용승인일자"], "사용승인일자")],
-    ];
+    return window.VworldBuilding.getInfoRows(feature);
   }
 
   function renderVworldInfoTable(rows = []) {
@@ -2648,7 +2609,7 @@ function initPortalTabs() {
 
       return `
         ${renderBuildingAddressList(fallbackAddresses)}
-        <p class="vworld-info-empty">해당 필지에서 등재된 건축물정보를 찾지 못했습니다.</p>
+        <p class="vworld-info-empty">해당 필지에서 조회된 건축물 기본개요가 없습니다.</p>
         <small class="vworld-info-note">좌표: ${escapeHtml(formatVworldCoordinate(latitude, longitude))}</small>
       `;
     }
@@ -2657,15 +2618,17 @@ function initPortalTabs() {
       .map((feature, index) => {
         const addressItems = getBuildingAddressItems(feature, pointAddress);
         const rows = getBuildingInfoRows(feature);
+        const registry = window.VworldBuilding.isRegistryFeature(feature);
 
         return `
           <article class="vworld-info-card">
-            <h4>${index === 0 ? "건축물정보" : `건축물정보 ${index + 1}`}</h4>
+            <h4>${registry ? "건축물대장 기본개요" : "건물 기본정보"}${features.length > 1 ? ` ${index + 1} / ${features.length}` : ""}</h4>
             ${renderBuildingAddressList(addressItems)}
             ${renderVworldInfoTable(rows)}
             <p class="vworld-info-note vworld-info-note--building">
-              건축물 대장 조회 시 일부 건축물은 여러건이 조회될 수 있습니다. 일부 건축물 대장 조회가 안될 경우, 건축물 상담(속성) 공지사항을 확인하시기 바랍니다.
+              자료: V-World ${registry ? "GIS건물통합정보 · 건축물대장 연계 공개자료" : "도로명주소 건물정보 · 대장 기본개요 미확인"}
             </p>
+            <a class="vworld-register-link" href="https://www.gov.kr/mw/AA020InfoCappView.do?CappBizCD=15000000098" target="_blank" rel="noopener noreferrer">건축물대장 열람·발급 <i data-lucide="external-link"></i></a>
           </article>
         `;
       })
@@ -2772,7 +2735,7 @@ function initPortalTabs() {
     vworldPoiLayer = null;
   }
 
-  async function loadVworldPoiMarkerInfo(poi) {
+  function loadVworldPoiMarkerInfo(poi) {
     const latitude = Number(poi?.latitude);
     const longitude = Number(poi?.longitude);
 
@@ -2780,49 +2743,7 @@ function initPortalTabs() {
       return;
     }
 
-    const requestId = ++vworldInfoRequestId;
-    const loadingHtml = `
-      <p class="vworld-info-empty">마커 위치의 POI정보와 건축물정보를 조회하는 중입니다.</p>
-      <small class="vworld-info-note">좌표: ${escapeHtml(formatVworldCoordinate(latitude, longitude))}</small>
-    `;
-
-    showVworldInfoPanel();
-    setVworldInfoTab("poi");
-    setVworldInfoContent("poi", renderPoiInfo([poi], latitude, longitude));
-    setVworldInfoContent("building", loadingHtml);
-    syncVworldInfoMarker({ lat: latitude, lng: longitude });
-    updateAerialStatus(`${poi.title || "선택한 마커"} 기준으로 POI정보와 건축물정보를 조회하는 중입니다.`);
-
-    const parcelContext = await getClickedParcelContext(latitude, longitude);
-    const queryPoint = parcelContext.queryPoint || { latitude, longitude };
-    let pointAddress = parcelContext.address || poi.parcelAddress || poi.subtitle || "";
-
-    if (!pointAddress) {
-      try {
-        pointAddress = await reverseGeocodeParcelAddress(latitude, longitude);
-      } catch (error) {
-        pointAddress = "";
-      }
-    }
-
-    if (requestId !== vworldInfoRequestId) {
-      return;
-    }
-
-    const buildingFeatures = await searchVworldBuildingInfoForParcel(parcelContext, queryPoint.latitude, queryPoint.longitude);
-
-    if (requestId !== vworldInfoRequestId) {
-      return;
-    }
-
-    setVworldInfoContent("poi", renderPoiInfo([poi], latitude, longitude));
-    setVworldInfoContent("building", renderBuildingInfo(buildingFeatures, pointAddress, queryPoint.latitude, queryPoint.longitude));
-    updateAerialStatus(
-      buildingFeatures.length
-        ? `${poi.title || "선택한 마커"} POI정보와 해당 필지 건축물정보 ${buildingFeatures.length}건을 표시했습니다.`
-        : `${poi.title || "선택한 마커"} POI정보를 표시했습니다. 해당 필지의 건축물정보는 찾지 못했습니다.`
-    );
-    refreshIcons();
+    selectAerialParcelDetails({ ...poi, latitude, longitude, preferredPoi: poi });
   }
 
   function renderVworldPoiMarkers(pois = []) {
@@ -2851,6 +2772,7 @@ function initPortalTabs() {
         });
 
         marker.on("click", (event) => {
+          if (vworldMeasureMode) { handleVworldMapClick(event); return; }
           if (event?.originalEvent && window.L?.DomEvent) {
             window.L.DomEvent.stopPropagation(event.originalEvent);
           }
@@ -4487,9 +4409,11 @@ function initPortalTabs() {
       return null;
     }
 
-    return window.L.marker([latitude, longitude], {
-      interactive: false,
-      keyboard: false,
+    const marker = window.L.marker([latitude, longitude], {
+      interactive: true,
+      keyboard: true,
+      bubblingMouseEvents: false,
+      title: `${label.lotNumber} 필지 정보`,
       zIndexOffset: 900,
       icon: window.L.divIcon({
         className: "vworld-lot-number-label",
@@ -4498,6 +4422,12 @@ function initPortalTabs() {
         iconAnchor: [38, 20],
       }),
     });
+    marker.on("click", (event) => {
+      if (vworldMeasureMode) { handleVworldMapClick(event); return; }
+      if (event.originalEvent) window.L.DomEvent.stopPropagation(event.originalEvent);
+      selectAerialParcelDetails({ ...label, latitude, longitude, title: label.parcelAddress || label.lotNumber });
+    });
+    return marker;
   }
 
   function getVworldLotNumberLabelBox(label) {
@@ -5011,6 +4941,8 @@ function initPortalTabs() {
         lotNumber,
         jimok: getJimokLabel(feature?.properties),
         pnu,
+        feature,
+        parcelAddress: getParcelFeatureAddress(feature),
         distance: getPointDistanceMeters(point, labelPoint),
       });
     });
@@ -5172,7 +5104,7 @@ function initPortalTabs() {
     try {
       const features = await searchVworldParcels(latitude, longitude, 24);
       const sortedFeatures = sortFeaturesByClickPoint(features, clickPoint);
-      const feature = sortedFeatures.find((item) => isPointInParcelFeature(clickPoint, item)) || sortedFeatures[0];
+      const feature = sortedFeatures.find((item) => isPointInParcelFeature(clickPoint, item));
 
       if (!feature) {
         return {
@@ -5519,15 +5451,18 @@ function initPortalTabs() {
   }
 
   function hideVworldInfoPanel() {
+    vworldInfoRequestId += 1;
     const panel = getVworldInfoPanel();
 
     if (panel) {
       panel.hidden = true;
+      const refresh = panel.querySelector("[data-vworld-info-refresh]");
+      if (refresh) refresh.disabled = false;
     }
   }
 
   function clearVworldClickInfo() {
-    vworldInfoRequestId += 1;
+    vworldInfoSelection = null;
     hideVworldInfoPanel();
 
     if (vworldInfoMarker && vworldMap) {
@@ -5557,76 +5492,56 @@ function initPortalTabs() {
     }).addTo(vworldMap);
   }
 
-  async function loadVworldClickInfo(latlng) {
-    if (!vworldMap || !latlng) {
-      return;
-    }
-
-    const latitude = Number(latlng.lat);
-    const longitude = Number(latlng.lng);
-
-    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
-      return;
-    }
-
+  async function loadVworldClickInfo(point, options = {}) {
+    const latitude = Number(point?.latitude), longitude = Number(point?.longitude);
+    if (!vworldMap || !Number.isFinite(latitude) || !Number.isFinite(longitude)) return;
     const requestId = ++vworldInfoRequestId;
-    const loadingHtml = `
-      <p class="vworld-info-empty">V-World 정보를 조회하는 중입니다.</p>
-      <small class="vworld-info-note">좌표: ${escapeHtml(formatVworldCoordinate(latitude, longitude))}</small>
-    `;
-
-    showVworldInfoPanel();
-    setVworldInfoTab("building");
+    vworldInfoSelection = { ...point };
+    if (options.force) vworldPoiSearchCache.clear();
+    const refresh = getVworldInfoPanel()?.querySelector("[data-vworld-info-refresh]");
+    if (refresh) refresh.disabled = true;
+    const loadingHtml = '<p class="vworld-info-empty">선택한 필지의 기본개요를 조회하는 중입니다.</p>';
+    setVworldInfoTab(point.preferredPoi ? "poi" : "building");
     setVworldInfoContent("building", loadingHtml);
-    setVworldInfoContent("poi", loadingHtml);
-    syncVworldInfoMarker(latlng);
-    updateAerialStatus("클릭한 지점의 건축물정보와 POI 정보를 조회하는 중입니다.");
-
-    const parcelContext = await getClickedParcelContext(latitude, longitude);
-    const queryPoint = parcelContext.queryPoint || { latitude, longitude };
-    let pointAddress = parcelContext.address || "";
-
-    if (!pointAddress) {
-      try {
-        pointAddress = await reverseGeocodeParcelAddress(latitude, longitude);
-      } catch (error) {
-        pointAddress = "";
+    setVworldInfoContent("poi", point.preferredPoi && !options.force ? renderPoiInfo([point.preferredPoi], latitude, longitude) : '<p class="vworld-info-empty">주변 POI 정보를 조회하는 중입니다.</p>');
+    if (point.preferredPoi || options.open) showVworldInfoPanel();
+    try {
+      let feature = point.feature;
+      const pnu = normalizePnu(point.pnu);
+      if (feature && pnu && getFeaturePnu(feature) !== pnu) feature = null;
+      if (!feature && pnu) feature = (await searchVworldParcelByPnu(pnu)).find((item) => getFeaturePnu(item) === pnu);
+      const parcelContext = feature
+        ? { feature, pnu: getFeaturePnu(feature) || pnu, clickPoint: { latitude, longitude }, queryPoint: getFeatureLabelPoint(feature) || { latitude, longitude }, address: feature.properties?.addr || getParcelFeatureAddress(feature, point.parcelAddress) }
+        : !pnu ? await getClickedParcelContext(latitude, longitude) : null;
+      if (requestId !== vworldInfoRequestId) return;
+      if (!parcelContext?.feature) throw new Error("선택한 지번의 필지 경계를 찾지 못했습니다. 지번을 다시 선택해 주세요.");
+      const pointAddress = parcelContext.address || point.parcelAddress || "";
+      const queryPoint = parcelContext.queryPoint;
+      vworldInfoSelection = { ...point, feature: parcelContext.feature, pnu: parcelContext.pnu, parcelAddress: pointAddress };
+      syncVworldInfoMarker({ lat: latitude, lng: longitude });
+      // POI lookup runs independently so the registered building overview appears first.
+      const poiPromise = point.preferredPoi && !options.force ? Promise.resolve([point.preferredPoi]) : searchVworldNearbyPois(latitude, longitude, pointAddress);
+      poiPromise.then((pois) => {
+        if (requestId === vworldInfoRequestId) setVworldInfoContent("poi", renderPoiInfo(pois, latitude, longitude));
+      }).catch(() => {
+        if (requestId === vworldInfoRequestId) setVworldInfoContent("poi", renderVworldInfoError("POI정보", latitude, longitude));
+      });
+      const features = await searchVworldBuildingInfoForParcel(parcelContext, queryPoint.latitude, queryPoint.longitude);
+      if (requestId !== vworldInfoRequestId) return;
+      setVworldInfoContent("building", renderBuildingInfo(features, pointAddress, latitude, longitude));
+      if (features.length || point.preferredPoi || options.open) {
+        if (mobileMedia.matches) closeMobileSheets();
+        showVworldInfoPanel();
       }
+      refreshIcons();
+      updateAerialStatus(features.length ? `${pointAddress} 건축물 기본개요 ${features.length}건을 조회했습니다.` : `${pointAddress} 필지에서 조회된 건축물 기본개요가 없습니다.`);
+    } catch (error) {
+      if (requestId !== vworldInfoRequestId) return;
+      setVworldInfoContent("building", `<p class="vworld-info-empty" role="alert">${escapeHtml(error.message || "건축물 기본개요를 조회하지 못했습니다.")}</p>`);
+      showVworldInfoPanel();
+    } finally {
+      if (requestId === vworldInfoRequestId && refresh) refresh.disabled = false;
     }
-
-    if (!pointAddress) {
-      pointAddress = getParcelAddress() || getParcelState().title || "";
-    }
-
-    const [buildingResult, poiResult] = await Promise.allSettled([
-      searchVworldBuildingInfoForParcel(parcelContext, queryPoint.latitude, queryPoint.longitude),
-      searchVworldNearbyPois(queryPoint.latitude, queryPoint.longitude, pointAddress),
-    ]);
-
-    if (requestId !== vworldInfoRequestId) {
-      return;
-    }
-
-    const buildingFeatures = buildingResult.status === "fulfilled" ? buildingResult.value : [];
-    const pois = poiResult.status === "fulfilled" ? poiResult.value : [];
-
-    setVworldInfoContent(
-      "building",
-      buildingResult.status === "fulfilled"
-        ? renderBuildingInfo(buildingFeatures, pointAddress, queryPoint.latitude, queryPoint.longitude)
-        : renderBuildingInfo([], pointAddress, queryPoint.latitude, queryPoint.longitude)
-    );
-    setVworldInfoContent(
-      "poi",
-      poiResult.status === "fulfilled" ? renderPoiInfo(pois, queryPoint.latitude, queryPoint.longitude) : renderVworldInfoError("POI정보", latitude, longitude)
-    );
-
-    if (!buildingFeatures.length && !pois.length) {
-      updateAerialStatus("클릭한 지점의 V-World 건축물정보와 POI 정보를 찾지 못했습니다.");
-      return;
-    }
-
-    updateAerialStatus(`건축물정보 ${buildingFeatures.length}건, POI정보 ${pois.length}건을 조회했습니다.`);
   }
 
   function handleVworldMapClick(event) {
@@ -5639,7 +5554,7 @@ function initPortalTabs() {
 
     selectAerialParcelDetails({ latitude: event.latlng.lat, longitude: event.latlng.lng, title: "선택한 필지" });
 
-    updateAerialStatus("POI 마커를 클릭하면 POI정보와 해당 필지의 건축물정보를 확인할 수 있습니다.");
+    updateAerialStatus("선택한 필지의 건축물 기본개요와 POI 정보를 확인하는 중입니다.");
   }
 
   function setVworldMeasureMode(mode) {
@@ -5669,6 +5584,12 @@ function initPortalTabs() {
       infoPanel.addEventListener("click", (event) => {
         const tabButton = event.target.closest("[data-vworld-info-tab]");
         const closeButton = event.target.closest("[data-vworld-info-close]");
+        const refreshButton = event.target.closest("[data-vworld-info-refresh]");
+
+        if (refreshButton && vworldInfoSelection) {
+          loadVworldClickInfo(vworldInfoSelection, { force: true, open: true });
+          return;
+        }
 
         if (tabButton) {
           setVworldInfoTab(tabButton.dataset.vworldInfoTab);
