@@ -2906,8 +2906,7 @@ body.fee-image-viewer-open {
   font-size: 0.78rem;
   line-height: 1.5;
 }
-.aerial-portal .parcel-zoning .parcel-coverage-relief p,
-.aerial-portal .parcel-zoning .parcel-coverage-relief small { margin: 0; color: inherit; }
+.aerial-portal .parcel-coverage-relief[data-relief-status="estimated"] strong { color: #800020; }
 .aerial-portal .parcel-coverage-relief a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
 
 .aerial-portal .vworld-tool-group--map {

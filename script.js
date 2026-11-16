@@ -1168,13 +1168,8 @@ function initPortalTabs() {
     });
     if (!relief) return "";
     const estimated = relief.status === "estimated";
-    const candidates = relief.candidates.slice(0, 3).map((item) => escapeHtml([item.name, item.purpose].filter(Boolean).join(" · ")));
-    const lookupStatus = building.status === "loading" ? "건축물 용도를 확인하는 중입니다." : building.status === "error" ? "건축물 용도 조회 실패 · 대상 건축물 여부 확인 필요" : "대상 건축물 여부와 세부 요건을 확인해 주세요.";
     return `<section class="parcel-coverage-relief" data-aerial-coverage-relief data-relief-status="${relief.status}" aria-label="농지법상 건폐율 완화 안내">
       <strong>${estimated ? "최대 60% 완화 검토 대상 추정 · 확인 필요" : "농지법 요건·조례 충족 시 최대 60% 완화 가능"}</strong>
-      <p>대상 지역: ${escapeHtml(relief.regions.join(", "))}${relief.partial ? " (해당 구역에 한함)" : ""}</p>
-      ${estimated ? `<p>조회 용도·명칭: ${candidates.join(" / ")}${relief.candidates.length > 3 ? ` 외 ${relief.candidates.length - 3}건` : ""}</p><small>용도·명칭에 따른 참고 추정이며 농지법 요건 충족이 확인된 값은 아닙니다.</small>` : `<p>${lookupStatus}</p>`}
-      <small>설치자 자격·실제 용도·규모·입지·관할 조례와 인허가 조건을 확인하세요.${relief.partial ? " 건물 위치와 적용 구역도 확인해야 합니다." : ""}</small>
       <a href="checklist.html#prechecklist" target="_blank" rel="noopener">60% 완화 적용 조건 보기</a>
     </section>`;
   }
