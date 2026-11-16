@@ -2400,6 +2400,62 @@ body.fee-image-viewer-open {
   background: #fff;
 }
 
+.embedded-site__frame[hidden] { display: none; }
+.embedded-site--eum { height: calc(100dvh - var(--site-header-height, 83px) - var(--portal-toolbar-height, 78px)); overflow: hidden; }
+.eum-view-toolbar { display: flex; flex: 0 0 auto; align-items: center; gap: 8px; padding: 9px 16px; background: #fff; border-bottom: 1px solid var(--line); }
+.eum-view-tabs { display: flex; gap: 4px; margin-right: auto; padding: 3px; background: #edf2f5; border-radius: 10px; }
+.eum-view-toolbar button, .eum-view-toolbar > a { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 38px; padding: 7px 12px; border: 1px solid var(--line); border-radius: 8px; background: #fff; color: #46616a; font: inherit; font-size: .83rem; font-weight: 650; cursor: pointer; }
+.eum-view-tabs button { border-color: transparent; background: transparent; }
+.eum-view-tabs button[aria-selected="true"] { color: var(--green-dark); background: #fff; border-color: #c3dcd1; box-shadow: 0 1px 4px rgba(27, 54, 68, .06); }
+.eum-view-toolbar svg { width: 16px; height: 16px; }
+.eum-plan { min-width: 0; min-height: 0; flex: 1; padding: 18px clamp(12px, 2vw, 28px); overflow: auto; overscroll-behavior: contain; background: #f5f7fa; color: var(--ink); }
+.eum-plan[hidden] { display: none; }
+.eum-plan__heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+.eum-plan__eyebrow { color: var(--muted); font-size: .76rem; }
+.eum-plan__heading h2 { margin: 4px 0 0; font-size: clamp(1.02rem, 1.6vw, 1.35rem); font-weight: 700; }
+.eum-plan__scale { flex: 0 0 auto; padding: 4px 9px; color: #456b61; background: #e9f3ee; border: 1px solid #d0e4da; border-radius: 7px; font-size: .78rem; }
+.eum-plan__facts { display: grid; grid-template-columns: .6fr 1fr 1.2fr; gap: 1px; margin: 0 0 16px; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--line); }
+.eum-plan__facts > div { display: grid; gap: 5px; padding: 12px 16px; background: #fff; }
+.eum-plan__facts dt { color: var(--muted); font-size: .76rem; }
+.eum-plan__facts dd { margin: 0; font-size: .9rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.eum-plan__drawing { display: grid; grid-template-columns: minmax(0, 1fr) minmax(180px, .3fr); gap: 16px; align-items: start; }
+.eum-plan__map, .eum-plan__legend, .eum-plan__zones { min-width: 0; overflow: hidden; background: #fff; border: 1px solid var(--line); border-radius: 12px; }
+.eum-plan__drawing h3, .eum-plan__zones > h3 { margin: 0; padding: 12px 16px; border-bottom: 1px solid var(--line); color: #334f58; font-size: .9rem; font-weight: 700; }
+.eum-plan__map > img { display: block; width: 100%; height: auto; max-height: clamp(260px, calc(100dvh - var(--site-header-height, 83px) - var(--portal-toolbar-height, 78px) - 320px), 640px); object-fit: contain; background: #fff; }
+.eum-plan__legend ul { display: grid; gap: 12px; margin: 0; padding: 16px; list-style: none; }
+.eum-plan__legend li { display: flex; align-items: flex-start; gap: 9px; font-size: .85rem; }
+.eum-plan__legend img { flex: 0 0 auto; width: auto; height: auto; max-width: 40px; max-height: 32px; margin-top: 2px; }
+.eum-plan__zones { margin-top: 16px; }
+.eum-plan__zones dl { margin: 0; }
+.eum-plan__zones dl > div { display: grid; grid-template-columns: minmax(180px, .4fr) minmax(0, 1fr); border-bottom: 1px solid var(--line); }
+.eum-plan__zones dl > div:last-child { border-bottom: 0; }
+.eum-plan__zones dt, .eum-plan__zones dd { margin: 0; padding: 12px 16px; font-size: .84rem; }
+.eum-plan__zones dt { color: #5a707a; background: #f8fafb; }
+.eum-plan__note { margin: 14px 0 0; color: var(--muted); font-size: .76rem; line-height: 1.6; }
+.eum-plan__empty { display: grid; justify-items: center; align-content: center; gap: 12px; min-height: 260px; padding: 28px; text-align: center; background: #fff; border: 1px solid var(--line); border-radius: 12px; }
+.eum-plan__empty h2, .eum-plan__empty p { margin: 0; }
+.eum-plan__empty h2 { font-size: 1.05rem; }
+.eum-plan__empty p { max-width: 520px; font-size: .88rem; color: var(--muted); }
+.eum-plan__loading { width: 25px; height: 25px; border: 3px solid #dce9e4; border-top-color: var(--green); border-radius: 50%; animation: eum-plan-loading .8s linear infinite; }
+@keyframes eum-plan-loading { to { transform: rotate(360deg); } }
+@media (max-width: 980px), (max-height: 600px) and (max-width: 1180px) {
+  .eum-view-toolbar { gap: 6px; padding: 6px 8px; }
+  .eum-view-toolbar button { min-height: 44px; padding: 7px 9px; font-size: 12px; }
+  .eum-view-toolbar > a { display: none; }
+  .eum-plan { padding: 12px 10px; }
+}
+@media (max-width: 600px) {
+  .eum-plan__heading { align-items: flex-start; }
+  .eum-plan__scale { margin-top: 3px; font-size: 11px; }
+  .eum-plan__facts { grid-template-columns: 1fr 1fr; }
+  .eum-plan__facts > div { padding: 10px; }
+  .eum-plan__facts > div:last-child { grid-column: 1 / -1; }
+  .eum-plan__drawing { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .eum-plan__map > img { max-height: none; }
+  .eum-plan__legend ul { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 12px; }
+  .eum-plan__zones dl > div { grid-template-columns: minmax(0, 1fr); }
+}
+
 .embedded-site--eum .embedded-site__frame {
   min-width: 1440px;
   min-height: 1080px;

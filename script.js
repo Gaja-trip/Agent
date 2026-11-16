@@ -526,7 +526,8 @@ function initPortalTabs() {
   const portalViews = new Map();
   const initialParams = new URLSearchParams(window.location.search);
   let selectedLaw = readSelectedLaw(initialParams);
-  let eumWarmupTimer = 0;
+  let eumFrameRequestId = 0;
+  const eumPlanViews = new WeakMap();
   const vworldParseResponseQueue = [];
   let vworldOriginalParseResponse = null;
 
@@ -673,6 +674,7 @@ function initPortalTabs() {
       let loadingTimer;
       const showLoading = () => {
         window.clearTimeout(loadingTimer);
+        if (portalKey === "eum" && view.dataset.eumMode !== "original") { status.hidden = true; return; }
         status.hidden = false;
         status.textContent = "페이지를 불러오는 중입니다.";
         loadingTimer = window.setTimeout(() => {
@@ -955,12 +957,6 @@ function initPortalTabs() {
     return portalData.eum.url;
   }
 
-  function getEumWarmupUrl() {
-    const url = new URL(portalData.eum.url);
-    url.searchParams.set("_warmup", String(Date.now()));
-    return url.toString();
-  }
-
   function renderSharedParcel(label = "토지이음 검색 주소") {
     const parcelAddress = escapeHtml(getParcelAddress());
     const displayText = parcelAddress || "아직 입력 전";
@@ -1027,28 +1023,15 @@ function initPortalTabs() {
     `;
   }
 
-  function renderEumRecoveryTools() {
-    const state = getParcelState();
-
-    if (!state.pnu) {
-      return "";
-    }
-
+  function renderEumViewToolbar() {
     return `
-      <div class="embedded-site__tools" aria-label="토지이음 도면 복구 도구">
-        <span>확인도면·범례는 토지이음 내부 이미지라 깨질 수 있습니다. 안정 도면 보기는 항공사진에서 확인하세요.</span>
-        <button type="button" data-eum-action="reload">
-          <i data-lucide="refresh-cw"></i>
-          도면 다시 불러오기
-        </button>
-        <button type="button" data-eum-action="reset">
-          <i data-lucide="rotate-ccw"></i>
-          토지이음 초기화 후 다시 열기
-        </button>
-        <button type="button" data-eum-action="stable-map">
-          <i data-lucide="satellite"></i>
-          안정 도면 보기
-        </button>
+      <div class="eum-view-toolbar">
+        <div class="eum-view-tabs" role="tablist" aria-label="토지이음 보기 방식">
+          <button type="button" role="tab" data-eum-view="plan" aria-selected="true">확인도면·범례</button>
+          <button type="button" role="tab" data-eum-view="original" aria-selected="false">전체 열람</button>
+        </div>
+        <button type="button" data-eum-action="reload" aria-label="확인도면·범례 새로고침"><i data-lucide="refresh-cw"></i>새로고침</button>
+        <a href="${escapeHtml(getEumUrl())}" data-eum-original-link target="_blank" rel="noopener noreferrer">원문 열기 <i data-lucide="external-link"></i></a>
       </div>
     `;
   }
@@ -1486,20 +1469,18 @@ function initPortalTabs() {
             : portal.url;
     const isEumPortal = portal === portalData.eum;
     const isLawPortal = portal === portalData.law;
-    const isEumDetail = isEumPortal && Boolean(getParcelState().pnu);
-    const initialIframeUrl = isEumDetail ? "about:blank" : iframeUrl;
+    const initialIframeUrl = isEumPortal ? "about:blank" : iframeUrl;
 
     return `
       <div class="embedded-site${isEumPortal ? " embedded-site--eum" : ""}${isLawPortal ? " embedded-site--law" : ""}">
         <div class="mobile-embedded-toolbar">
           <button type="button" data-mobile-expand aria-pressed="false">화면 확대</button>
-          ${isEumPortal ? '<button type="button" data-mobile-embed-tools aria-expanded="false">도면 도구</button>' : ""}
           <a href="${escapeHtml(iframeUrl)}" data-mobile-original target="_blank" rel="noopener noreferrer">원문 열기 <i data-lucide="external-link"></i></a>
         </div>
         <p class="mobile-embedded-status" data-mobile-embed-status role="status">페이지를 불러오는 중입니다.</p>
-        ${isEumPortal ? renderEumRecoveryTools() : ""}
+        ${isEumPortal ? renderEumViewToolbar() : ""}
         ${isLawPortal ? renderLawContext() : ""}
-        ${isEumPortal ? `<iframe class="embedded-site__warmup" title="토지이음 연결 준비" src="${escapeHtml(getEumWarmupUrl())}" aria-hidden="true" tabindex="-1"></iframe>` : ""}
+        ${isEumPortal ? '<div class="eum-plan" data-eum-plan></div>' : ""}
         <iframe
           class="embedded-site__frame"
           title="${portal.frameTitle}"
@@ -1508,6 +1489,7 @@ function initPortalTabs() {
           loading="eager"
           allow="geolocation; fullscreen"
           referrerpolicy="strict-origin-when-cross-origin"
+          ${isEumPortal ? "hidden" : ""}
         ></iframe>
       </div>
     `;
@@ -1765,61 +1747,49 @@ function initPortalTabs() {
     return portalViews.get("eum")?.querySelector(".embedded-site__frame") || null;
   }
 
-  function scheduleEumDetailLoad(view, detailUrl, options = {}) {
+  function scheduleEumDetailLoad(view, detailUrl) {
     const iframe = view?.querySelector(".embedded-site__frame");
-    const warmupFrame = view?.querySelector(".embedded-site__warmup");
-
-    if (!iframe || !detailUrl || !getParcelState().pnu) {
-      return;
-    }
-
-    window.clearTimeout(eumWarmupTimer);
-
-    let navigated = false;
-    const navigateToDetail = () => {
-      if (navigated || !iframe.isConnected) {
-        return;
-      }
-
-      navigated = true;
+    if (!iframe || !detailUrl) return;
+    const request = ++eumFrameRequestId;
+    const pnu = getParcelState().pnu;
+    window.requestAnimationFrame(() => {
+      if (request !== eumFrameRequestId || !iframe.isConnected || view.hidden || view.dataset.eumMode !== "original" || getParcelState().pnu !== pnu) return;
+      if (iframe.dataset.currentSrc === detailUrl) return;
       iframe.src = detailUrl;
       iframe.dataset.currentSrc = detailUrl;
-    };
-
-    if (warmupFrame) {
-      warmupFrame.addEventListener(
-        "load",
-        () => {
-          window.setTimeout(navigateToDetail, options.afterWarmupDelay ?? 250);
-        },
-        { once: true }
-      );
-      warmupFrame.src = getEumWarmupUrl();
-    }
-
-    eumWarmupTimer = window.setTimeout(navigateToDetail, options.delay ?? 1100);
+    });
   }
 
-  function refreshEumIframe(options = {}) {
-    const iframe = getEumIframe();
-    const state = getParcelState();
-
-    if (!iframe || !state.pnu) {
-      updateParcelStatus("먼저 주소를 검색한 뒤 토지이음 도면을 다시 불러올 수 있습니다.");
-      return;
+  function loadEumPlan(view, refresh = false) {
+    if (!view) return;
+    let controller = eumPlanViews.get(view);
+    if (!controller) {
+      controller = window.EumPlanView.create(view.querySelector("[data-eum-plan]"));
+      eumPlanViews.set(view, controller);
     }
+    controller.load(getParcelState().pnu, { refresh });
+  }
 
-    const detailUrl = getEumUrl({ refresh: true });
+  function setEumView(view, mode) {
+    if (!view) return;
+    view.querySelectorAll("[data-eum-original-link]").forEach(link => { link.href = getEumUrl(); });
+    const original = mode === "original";
+    view.dataset.eumMode = original ? "original" : "plan";
+    view.querySelector("[data-eum-plan]").hidden = original;
+    view.querySelector(".embedded-site__frame").hidden = !original;
+    view.querySelectorAll("[data-eum-view]").forEach(button => button.setAttribute("aria-selected", String(button.dataset.eumView === view.dataset.eumMode)));
+    if (original) scheduleEumDetailLoad(view, getEumUrl());
+    else {
+      eumFrameRequestId += 1;
+      view.querySelector("[data-mobile-embed-status]").hidden = true;
+      loadEumPlan(view);
+    }
+  }
+
+  function refreshEumIframe() {
     const view = portalViews.get("eum");
-
-    if (options.resetSession) {
-      updateParcelStatus("토지이음 기본 화면을 다시 연결한 뒤 확인도면을 재요청합니다.");
-      scheduleEumDetailLoad(view, detailUrl, { delay: 1300, afterWarmupDelay: 420 });
-      return;
-    }
-
-    scheduleEumDetailLoad(view, detailUrl, { delay: 900, afterWarmupDelay: 250 });
-    updateParcelStatus("토지이음 확인도면과 범례를 다시 요청했습니다.");
+    loadEumPlan(view, true);
+    if (view?.dataset.eumMode === "original") scheduleEumDetailLoad(view, getEumUrl({ refresh: true }));
   }
 
   function ensurePortalView(portalKey) {
@@ -1840,38 +1810,16 @@ function initPortalTabs() {
       portalPanel.append(view);
       portalViews.set(portalKey, view);
 
-      if (portal === portalData.eum && getParcelState().pnu) {
-        scheduleEumDetailLoad(view, getEumUrl(), { delay: 1100, afterWarmupDelay: 250 });
-      }
-
       return { view, isNew: true };
     }
 
     if (portal.type !== "farmland" && portal.type !== "aerial") {
       if (portal === portalData.eum) {
-        const wrapper = view.querySelector(".embedded-site");
-        const tools = view.querySelector(".embedded-site__tools");
-        const nextTools = renderEumRecoveryTools();
-
-        if (tools) {
-          tools.remove();
-        }
-
-        if (wrapper && nextTools) {
-          wrapper.insertAdjacentHTML("afterbegin", nextTools);
-        }
+        return { view, isNew: false };
       }
 
       const iframe = view.querySelector(".embedded-site__frame");
       const nextUrl = getEmbeddedPortalUrl(portal);
-
-      if (portal === portalData.eum && getParcelState().pnu) {
-        if (iframe && iframe.dataset.currentSrc !== nextUrl) {
-          scheduleEumDetailLoad(view, nextUrl, { delay: 1100, afterWarmupDelay: 250 });
-        }
-
-        return { view, isNew: false };
-      }
 
       if (iframe && iframe.dataset.currentSrc !== nextUrl) {
         iframe.src = nextUrl;
@@ -2819,6 +2767,7 @@ function initPortalTabs() {
 
     vworldPoiLayer = window.L.layerGroup(markers).addTo(vworldMap);
     refreshIcons();
+
     return markers.length;
   }
 
@@ -5907,6 +5856,8 @@ function initPortalTabs() {
 
     refreshIcons();
 
+    if (portalKey === "eum") setEumView(view, view.dataset.eumMode || "plan");
+
     if (portal.type === "farmland") {
       renderParcelDetails();
       initFarmlandMap();
@@ -6119,6 +6070,8 @@ function initPortalTabs() {
       }).catch(() => { document.querySelector("[data-farmland-status]").textContent = "주소를 확인하지 못했습니다. 다시 검색해 주세요."; });
       return;
     }
+    const eumViewButton = event.target.closest("[data-eum-view]");
+    if (eumViewButton) { setEumView(portalViews.get("eum"), eumViewButton.dataset.eumView); return; }
     const eumActionButton = event.target.closest("[data-eum-action]");
     const copyButton = event.target.closest("[data-farmland-copy]");
 

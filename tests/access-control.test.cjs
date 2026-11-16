@@ -16,7 +16,7 @@ test("private site requires a password for pages, assets and APIs", async (t) =>
     assert.match(response.headers.get("location"), /^\/login\?next=/);
     assert.doesNotMatch(await response.text(), /data-portal|data-guide-page/);
   }
-  for (const route of ["/script.js", "/styles.css", "/assets/service-theme.css", "/assets/survey-checks.png", "/cadastral/example.shp", "/api/vworld/parcel?pnu=bad", "/api/farmland/config", "/api/eum/roads?bbox=bad"]) {
+  for (const route of ["/script.js", "/styles.css", "/assets/service-theme.css", "/assets/survey-checks.png", "/cadastral/example.shp", "/api/vworld/parcel?pnu=bad", "/api/farmland/config", "/api/eum/roads?bbox=bad", "/api/eum/plan?pnu=bad"]) {
     assert.equal((await get(route)).status, 401, route);
   }
   const page = await get("/login");
@@ -49,6 +49,8 @@ test("private site requires a password for pages, assets and APIs", async (t) =>
   assert.equal((await get("/api/vworld/parcel?pnu=bad", { headers: { cookie } })).status, 400);
   assert.equal((await get("/api/farmland/info?pnu=bad", { headers: { cookie } })).status, 400);
   assert.equal((await get("/api/eum/roads?bbox=bad", { headers: { cookie } })).status, 400);
+  assert.equal((await get("/api/eum/plan?pnu=bad", { headers: { cookie } })).status, 400);
+  assert.equal((await get("/eum-plan.cjs", { headers: { cookie } })).status, 404);
   assert.equal((await get("/eum-roads.cjs", { headers: { cookie } })).status, 404);
   const restoredHome = await (await get("/", { headers: { cookie } })).text();
   assert.deepEqual([...restoredHome.matchAll(/data-portal="([^"]+)"/g)].map((match) => match[1]), ["eum", "map", "aerial", "farmland", "law"]);

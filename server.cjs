@@ -5,6 +5,7 @@ const { Readable } = require("node:stream");
 const { handleFarmlandRequest } = require("./farmland-service.cjs");
 const { handleVworldRequest } = require("./vworld-service.cjs");
 const { handleEumRoadsRequest } = require("./eum-roads.cjs");
+const { handleEumPlanRequest } = require("./eum-plan.cjs");
 const accessControl = import("./access-control.mjs");
 
 const root = __dirname;
@@ -50,6 +51,7 @@ function createSiteServer() {
     if (await handleFarmlandRequest(request, response, parsedUrl)) return;
     if (await handleVworldRequest(request, response, parsedUrl)) return;
     if (await handleEumRoadsRequest(request, response, parsedUrl)) return;
+    if (await handleEumPlanRequest(request, response, parsedUrl)) return;
     const pathname = decodeURIComponent(parsedUrl.pathname === "/" ? "/index.html" : parsedUrl.pathname);
     const filePath = path.resolve(root, `.${pathname}`);
 
