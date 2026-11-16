@@ -1600,7 +1600,7 @@ function initPortalTabs() {
             <span>토지이음에서 마지막으로 저장한 주소 기준으로 항공사진 위치를 표시합니다.</span>
           </div>
           ${renderVworldInfoPanel()}
-          <p class="aerial-status" data-aerial-status>항공사진을 준비 중입니다.</p>
+          <p class="visually-hidden" data-aerial-status role="status">항공사진을 준비 중입니다.</p>
         </div>
       </div>
     `;
@@ -1739,7 +1739,7 @@ function initPortalTabs() {
             <span>주소 또는 명칭을 검색해 주세요.</span>
           </div>
           ${renderVworldInfoPanel()}
-          <p class="aerial-status" data-aerial-status>항공사진과 연속지적도를 준비 중입니다.</p>
+          <p class="visually-hidden" data-aerial-status role="status">항공사진과 연속지적도를 준비 중입니다.</p>
         </div>
       </div>
     `;
