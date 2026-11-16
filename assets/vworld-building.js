@@ -116,5 +116,52 @@
     return /(?:^|[:/])lt_c_bldginfo(?:[.:/]|$)/i.test(clean(feature?.id)) || Boolean(read(feature?.properties, registryFields));
   }
 
-  return { getInfoRows, getAddressItems, isRegistryFeature };
+  const reliefRegions = new Set(['보전관리지역', '생산관리지역', '농림지역', '자연환경보전지역']);
+  const compact = (value) => clean(value).replace(/[\s·ㆍ]/g, '');
+  const explicitFarmPurposes = [
+    /(?:농업인|어업인|농어업인)주택/,
+    /(?:농업용|농업관련|축산업용|어업용)(?:시설|창고|작업장|보관|건조)/,
+    /축사|가축시설|작물재배사|종묘배양시설|버섯재배사|동물(?:및|과)?식물관련시설/,
+    /마을회관|어린이놀이터/,
+    /(?:농수산물|농산물|수산물|축산물|임산물).*(?:가공|처리|건조|보관)/,
+    /농(?:업|수산업).*(?:시험|연구)/,
+  ];
+  const namedFarmUses = [
+    [/(?:농수산물|농산물|수산물|축산물|미곡|쌀|곡물).*(?:가공|처리)/, /공장|제조업소|가공시설|처리시설/],
+    [/(?:농업용|농수산물|농산물|수산물|축산물|미곡|쌀|곡물).*(?:창고|보관|저장|건조)/, /창고|보관시설|저장시설/],
+    [/농(?:업|수산업).*(?:시험|연구)/, /시험|연구/],
+    [/마을회관|농업인(?:공동)?(?:작업장|편의시설)/, /근린생활시설|공동생활시설|주민공동시설/],
+  ];
+
+  function getFarmBuildingCandidate(feature) {
+    // Road-address map objects alone cannot substantiate a register-based estimate.
+    if (!isRegistryFeature(feature) || /(?:^|[:/])lt_c_spbd(?:[.:/]|$)/i.test(clean(feature?.id))) return null;
+    const properties = feature?.properties;
+    const purpose = display(read(properties, fields[1][1]), 'purpose');
+    const names = [...new Set([read(properties, fields[0][1]), read(properties, fields[2][1])].filter(Boolean))];
+    const name = names.join(' · ') || '건물명칭 미확인';
+    const purposeText = compact(purpose);
+    if (explicitFarmPurposes.some((pattern) => pattern.test(purposeText))) return { name, purpose, evidence: `건물용도: ${purpose}` };
+    const nameText = compact(names.join(' '));
+    if (namedFarmUses.some(([namePattern, purposePattern]) => namePattern.test(nameText) && purposePattern.test(purposeText))) {
+      return { name, purpose, evidence: `건물명칭: ${name} / 건물용도: ${purpose}` };
+    }
+    return null;
+  }
+
+  function getFarmlandCoverageRelief({ zones = [], regionError = '', buildings = [], buildingStatus = 'idle' } = {}) {
+    if (regionError) return null;
+    const inside = (Array.isArray(zones) ? zones : []).filter((zone) => zone?.kind === 'region' && !/접함/.test(clean(zone.relation)));
+    const regionName = (zone) => compact(zone.name).split(/[（(]/)[0];
+    const eligible = inside.filter((zone) => reliefRegions.has(regionName(zone)));
+    const regions = [...new Set(eligible.map(regionName))];
+    if (!regions.length) return null;
+    const leafRegions = new Set(inside.map(regionName).filter((name) => name && !['도시지역', '관리지역'].includes(name)));
+    const partial = leafRegions.size > 1 || eligible.some((zone) => /저촉|일부/.test(clean(zone.relation)));
+    // This screens for a review candidate only; farmer status, siting and ordinance conditions remain unverified.
+    const candidates = buildingStatus === 'loaded' && Array.isArray(buildings) ? buildings.map(getFarmBuildingCandidate).filter(Boolean) : [];
+    return { regions, partial, status: candidates.length ? 'estimated' : 'possible', candidates };
+  }
+
+  return { getInfoRows, getAddressItems, isRegistryFeature, getFarmlandCoverageRelief };
 });

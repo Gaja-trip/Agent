@@ -2894,6 +2894,22 @@ body.fee-image-viewer-open {
   text-underline-offset: 2px;
 }
 
+.aerial-portal .parcel-coverage-relief {
+  display: grid;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 10px;
+  color: #1d4ed8;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+.aerial-portal .parcel-zoning .parcel-coverage-relief p,
+.aerial-portal .parcel-zoning .parcel-coverage-relief small { margin: 0; color: inherit; }
+.aerial-portal .parcel-coverage-relief a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+
 .aerial-portal .vworld-tool-group--map {
   grid-template-columns: 32px minmax(0, 1fr);
   align-items: center;

@@ -134,6 +134,7 @@ let parcelDetailsState = { label: "필지를 선택해 주세요." };
 const parcelDetailsCache = new Map();
 let aerialParcelDetailsRequestId = 0;
 let aerialParcelDetailsState = { label: "필지를 선택해 주세요." };
+let aerialBuildingDetailsState = { pnu: "", status: "idle", features: [] };
 const aerialParcelDetailsCache = new Map();
 // Registered service domain for this project's V-World NED API key.
 const vworldAttributeDomain = window.VworldConfig?.domain || window.location.origin;
@@ -1152,6 +1153,32 @@ function initPortalTabs() {
     renderParcelDetails();
   }
 
+  function setAerialBuildingDetails(pnu, status, features = []) {
+    if (!pnu || pnu !== aerialParcelDetailsState.pnu) return;
+    aerialBuildingDetailsState = { pnu, status, features };
+    renderAerialParcelDetails();
+  }
+
+  function renderAerialCoverageRelief(data, pnu) {
+    if (!data) return "";
+    const building = aerialBuildingDetailsState.pnu === pnu ? aerialBuildingDetailsState : { status: "idle", features: [] };
+    const relief = window.VworldBuilding.getFarmlandCoverageRelief({
+      zones: data.zones, regionError: data.errors?.region,
+      buildings: building.features, buildingStatus: building.status,
+    });
+    if (!relief) return "";
+    const estimated = relief.status === "estimated";
+    const candidates = relief.candidates.slice(0, 3).map((item) => escapeHtml([item.name, item.purpose].filter(Boolean).join(" · ")));
+    const lookupStatus = building.status === "loading" ? "건축물 용도를 확인하는 중입니다." : building.status === "error" ? "건축물 용도 조회 실패 · 대상 건축물 여부 확인 필요" : "대상 건축물 여부와 세부 요건을 확인해 주세요.";
+    return `<section class="parcel-coverage-relief" data-aerial-coverage-relief data-relief-status="${relief.status}" aria-label="농지법상 건폐율 완화 안내">
+      <strong>${estimated ? "최대 60% 완화 검토 대상 추정 · 확인 필요" : "농지법 요건·조례 충족 시 최대 60% 완화 가능"}</strong>
+      <p>대상 지역: ${escapeHtml(relief.regions.join(", "))}${relief.partial ? " (해당 구역에 한함)" : ""}</p>
+      ${estimated ? `<p>조회 용도·명칭: ${candidates.join(" / ")}${relief.candidates.length > 3 ? ` 외 ${relief.candidates.length - 3}건` : ""}</p><small>용도·명칭에 따른 참고 추정이며 농지법 요건 충족이 확인된 값은 아닙니다.</small>` : `<p>${lookupStatus}</p>`}
+      <small>설치자 자격·실제 용도·규모·입지·관할 조례와 인허가 조건을 확인하세요.${relief.partial ? " 건물 위치와 적용 구역도 확인해야 합니다." : ""}</small>
+      <a href="checklist.html#prechecklist" target="_blank" rel="noopener">60% 완화 적용 조건 보기</a>
+    </section>`;
+  }
+
   function renderAerialParcelDetails() {
     const { label, pnu, data, loading, error } = aerialParcelDetailsState;
     const address = window.VworldParcel.formatLocation(label, getLotNumberFromPnu(pnu));
@@ -1176,6 +1203,7 @@ function initPortalTabs() {
       node.innerHTML = `<dl><dt>토지소재지</dt><dd>${escapeHtml(location)}</dd>
         <dt>면적</dt><dd>${escapeHtml(value("area"))}</dd><dt>용도지역</dt><dd>${escapeHtml(value("region"))}</dd><dt>용도지구</dt><dd>${escapeHtml(value("district"))}</dd>
         ${standards ? `<dt class="parcel-subdivision-label">분할제한면적</dt><dd class="parcel-subdivision-value">${standardValues("minimumArea", " ㎡ 이상")}</dd><dt class="parcel-subdivision-label">건폐율</dt><dd class="parcel-subdivision-value">${coverage}</dd>` : ""}</dl>
+        ${renderAerialCoverageRelief(data, pnu)}
         ${standards ? `<small class="parcel-subdivision-note"><a href="checklist.html#prechecklist" target="_blank" rel="noopener">사전체크리스트 기준</a> · 건축물이 있는 대지의 분할 · 조례 확인${standards.districtUnavailable ? "<br>지구 미확인: 건폐율은 용도지역 기본 기준" : ""}</small>` : ""}
         ${errors.map((message) => `<p role="alert">${escapeHtml(message)}</p>`).join("")}
         ${data ? `<small>자료: V-World${data.year ? ` · 토지특성 ${escapeHtml(data.year)}년` : ""}</small>` : ""}`;
@@ -1184,6 +1212,7 @@ function initPortalTabs() {
 
   async function selectAerialParcelDetails(point) {
     clearVworldClickInfo();
+    aerialBuildingDetailsState = { pnu: "", status: "idle", features: [] };
     if (Number.isFinite(point?.latitude) && Number.isFinite(point?.longitude)) {
       aerialRoadviewPoint = { ...point };
       syncAerialRoadviewLinks();
@@ -1206,9 +1235,9 @@ function initPortalTabs() {
       }
       if (requestId !== aerialParcelDetailsRequestId) return;
       label = feature?.properties?.addr || label;
-      if (!vworldMeasureMode) loadVworldClickInfo({ ...point, pnu, feature, parcelAddress: label });
       aerialParcelDetailsState = { label, pnu, loading: true };
       renderAerialParcelDetails();
+      if (!vworldMeasureMode) loadVworldClickInfo({ ...point, pnu, feature, parcelAddress: label });
       const cached = aerialParcelDetailsCache.get(pnu);
       const data = cached && Date.now() - cached.time < 60000 ? cached.data : await fetchAerialParcelDetails(pnu);
       if (requestId !== aerialParcelDetailsRequestId) return;
@@ -5452,6 +5481,7 @@ function initPortalTabs() {
 
   function hideVworldInfoPanel() {
     vworldInfoRequestId += 1;
+    if (aerialBuildingDetailsState.status === "loading") setAerialBuildingDetails(aerialBuildingDetailsState.pnu, "idle");
     const panel = getVworldInfoPanel();
 
     if (panel) {
@@ -5496,6 +5526,8 @@ function initPortalTabs() {
     const latitude = Number(point?.latitude), longitude = Number(point?.longitude);
     if (!vworldMap || !Number.isFinite(latitude) || !Number.isFinite(longitude)) return;
     const requestId = ++vworldInfoRequestId;
+    const pnu = normalizePnu(point.pnu);
+    setAerialBuildingDetails(pnu, "loading");
     vworldInfoSelection = { ...point };
     if (options.force) vworldPoiSearchCache.clear();
     const refresh = getVworldInfoPanel()?.querySelector("[data-vworld-info-refresh]");
@@ -5507,7 +5539,6 @@ function initPortalTabs() {
     if (point.preferredPoi || options.open) showVworldInfoPanel();
     try {
       let feature = point.feature;
-      const pnu = normalizePnu(point.pnu);
       if (feature && pnu && getFeaturePnu(feature) !== pnu) feature = null;
       if (!feature && pnu) feature = (await searchVworldParcelByPnu(pnu)).find((item) => getFeaturePnu(item) === pnu);
       const parcelContext = feature
@@ -5528,6 +5559,7 @@ function initPortalTabs() {
       });
       const features = await searchVworldBuildingInfoForParcel(parcelContext, queryPoint.latitude, queryPoint.longitude);
       if (requestId !== vworldInfoRequestId) return;
+      setAerialBuildingDetails(pnu, "loaded", features);
       setVworldInfoContent("building", renderBuildingInfo(features, pointAddress, latitude, longitude));
       if (features.length || point.preferredPoi || options.open) {
         if (mobileMedia.matches) closeMobileSheets();
@@ -5537,6 +5569,7 @@ function initPortalTabs() {
       updateAerialStatus(features.length ? `${pointAddress} 건축물 기본개요 ${features.length}건을 조회했습니다.` : `${pointAddress} 필지에서 조회된 건축물 기본개요가 없습니다.`);
     } catch (error) {
       if (requestId !== vworldInfoRequestId) return;
+      setAerialBuildingDetails(pnu, "error");
       setVworldInfoContent("building", `<p class="vworld-info-empty" role="alert">${escapeHtml(error.message || "건축물 기본개요를 조회하지 못했습니다.")}</p>`);
       showVworldInfoPanel();
     } finally {

@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { getInfoRows, getAddressItems, isRegistryFeature } = require('../assets/vworld-building.js');
+const { getInfoRows, getAddressItems, isRegistryFeature, getFarmlandCoverageRelief } = require('../assets/vworld-building.js');
 
 test('building-register GIS fields populate all overview rows with confirmed code names', () => {
   const feature = { id: 'lt_c_bldginfo.123', properties: {
@@ -69,4 +69,70 @@ test('address display does not mistake management identifiers for a street or lo
   assert.equal(isRegistryFeature({ properties: { MAIN_PURPS_CD_NM: '단독주택' } }), true);
   assert.equal(isRegistryFeature({ properties: { archarea: 0 } }), true);
   assert.equal(isRegistryFeature(), false);
+});
+
+const reliefZone = (name = '농림지역', relation = '포함') => ({ name, relation, kind: 'region' });
+const registerBuilding = (properties, id = 'LT_C_BLDGINFO.1') => ({ id, properties });
+
+test('farmland coverage notice applies only to the four interior regions', () => {
+  for (const name of ['보전관리지역', '생산관리지역', '농림지역', '자연환경보전지역']) {
+    assert.deepEqual(getFarmlandCoverageRelief({ zones: [reliefZone(name)] }), {
+      regions: [name], partial: false, status: 'possible', candidates: [],
+    });
+  }
+  for (const name of ['계획관리지역', '생산녹지지역', '자연녹지지역', '관리지역', '도시지역']) {
+    assert.equal(getFarmlandCoverageRelief({ zones: [reliefZone(name)] }), null);
+  }
+  assert.equal(getFarmlandCoverageRelief(), null);
+});
+
+test('adjacent and failed regions are not eligible while mixed parcels remain explicitly partial', () => {
+  assert.equal(getFarmlandCoverageRelief({ zones: [reliefZone('농림지역', '접함')] }), null);
+  assert.equal(getFarmlandCoverageRelief({ zones: [reliefZone()], regionError: '조회 실패' }), null);
+  assert.deepEqual(getFarmlandCoverageRelief({ zones: [reliefZone('관리지역'), reliefZone('농 림 지역 (농업진흥구역)'), reliefZone()] }).regions, ['농림지역']);
+  assert.equal(getFarmlandCoverageRelief({ zones: [reliefZone('농림지역', '저촉')] }).partial, true);
+  assert.equal(getFarmlandCoverageRelief({ zones: [reliefZone(), reliefZone('계획관리지역')] }).partial, true);
+  assert.equal(getFarmlandCoverageRelief({ zones: [reliefZone('보전관리지역'), reliefZone('생산관리지역')] }).partial, true);
+  assert.equal(getFarmlandCoverageRelief({ zones: [reliefZone('관리지역'), reliefZone()] }).partial, false);
+});
+
+test('ordinary housing, warehouses and factories do not imply farmland relief', () => {
+  for (const [bld_nm, usability] of [['농가주택', '01000'], ['농업인 주택', '01000'], ['일반 창고', '18000'], ['농업회사법인', '17000'], ['연구소', '10000']]) {
+    const relief = getFarmlandCoverageRelief({ zones: [reliefZone()], buildings: [registerBuilding({ bld_nm, usability })], buildingStatus: 'loaded' });
+    assert.equal(relief.status, 'possible');
+    assert.deepEqual(relief.candidates, []);
+  }
+});
+
+test('explicit register purposes provide named evidence for a review estimate', () => {
+  for (const purpose of ['농업용 창고', '축사', '작물재배사', '농수산물 가공처리시설', '농업 시험연구시설', '마을회관', '어린이놀이터', '농업인주택']) {
+    const relief = getFarmlandCoverageRelief({ zones: [reliefZone()], buildings: [registerBuilding({ BLD_NM: '본관', MAINPURPSCDNM: purpose })], buildingStatus: 'loaded' });
+    assert.equal(relief.status, 'estimated', purpose);
+    assert.deepEqual(relief.candidates, [{ name: '본관', purpose, evidence: `건물용도: ${purpose}` }]);
+  }
+  assert.equal(getFarmlandCoverageRelief({ zones: [reliefZone()], buildings: [registerBuilding({ usability: '21000' })], buildingStatus: 'loaded' }).status, 'estimated');
+});
+
+test('agriculture-specific building names require a compatible registered purpose', () => {
+  const scenarios = [
+    ['부안 미곡종합처리장', '17000', true], ['농산물 가공 공장', '17000', true],
+    ['농업용 창고', '18000', true], ['농산물 저장고', '18000', true],
+    ['마을회관', '03000', true], ['농업 시험연구소', '10000', true],
+    ['농업용 창고', '14000', false], ['미곡종합처리장', '01000', false], ['농가주택', '01000', false],
+  ];
+  for (const [bld_nm, usability, estimated] of scenarios) {
+    const relief = getFarmlandCoverageRelief({ zones: [reliefZone()], buildings: [registerBuilding({ bld_nm, usability })], buildingStatus: 'loaded' });
+    assert.equal(relief.status, estimated ? 'estimated' : 'possible', `${bld_nm}: ${usability}`);
+    if (estimated) assert.match(relief.candidates[0].evidence, /건물명칭: .* \/ 건물용도:/);
+  }
+});
+
+test('map-only, incomplete and failed building results never produce an estimate', () => {
+  const buildings = [registerBuilding({ bld_nm: '농업용 창고', mainPurpsCdNm: '농업용창고' })];
+  for (const buildingStatus of ['idle', 'loading', 'failed', 'stale']) {
+    assert.equal(getFarmlandCoverageRelief({ zones: [reliefZone()], buildings, buildingStatus }).status, 'possible');
+  }
+  assert.equal(getFarmlandCoverageRelief({ zones: [reliefZone()], buildings: [registerBuilding({ bld_nm: '농업용 창고', mainPurpsCdNm: '농업용창고' }, 'LT_C_SPBD.1')], buildingStatus: 'loaded' }).status, 'possible');
+  assert.equal(getFarmlandCoverageRelief({ zones: [reliefZone()], buildings: [registerBuilding({})], buildingStatus: 'loaded' }).status, 'possible');
+  assert.equal(getFarmlandCoverageRelief({ zones: [reliefZone()], buildings: [], buildingStatus: 'loaded' }).status, 'possible');
 });
