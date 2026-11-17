@@ -90,6 +90,25 @@ input {
   object-fit: contain;
 }
 
+.brand__logo {
+  position: relative;
+  display: block;
+  flex: 0 0 auto;
+  width: 151.2px;
+  height: 56px;
+  overflow: hidden;
+}
+
+/* Frame the supplied artwork without changing its pixels or proportions. */
+.brand__logo img {
+  position: absolute;
+  left: -7.111111%;
+  top: -54.4%;
+  width: 113.777778%;
+  max-width: none;
+  height: 204.8%;
+}
+
 .brand__mark {
   display: grid;
   flex: 0 0 58px;

@@ -27,7 +27,7 @@
   .site-header {
     min-height: 72px;
     gap: 24px;
-    padding: 12px clamp(18px, 2.5vw, 40px);
+    padding: 8px clamp(18px, 2.5vw, 40px);
     background: #fff;
     border-bottom: 1px solid var(--line);
     box-shadow: 0 2px 12px rgba(27, 54, 68, .035);
@@ -170,7 +170,8 @@
 }
 
 @media screen and (max-width: 720px) {
-  .site-header { padding: 12px 16px; }
+  .site-header { padding: 9px 16px; }
+  .brand__logo { width: 118.8px; height: 44px; }
   .main-nav { gap: 3px; }
   .main-nav > a { padding: 6px; font-size: .8rem; }
   .brand__mark { flex-basis: 38px; width: 38px; height: 38px; }
@@ -184,7 +185,8 @@
 }
 
 @media screen and (max-width: 980px), screen and (max-height: 600px) and (max-width: 1180px) {
-  .portal-home .site-header { min-height: 52px; gap: 8px; box-shadow: none; }
+  .portal-home .site-header { min-height: 52px; gap: 8px; padding-block: 6px; box-shadow: none; }
+  .portal-home .brand__logo { width: 118.8px; height: 44px; }
   .portal-home .brand { gap: 8px; }
   .portal-home .brand__mark { flex-basis: 32px; width: 32px; height: 32px; }
   .portal-home .brand strong { color: #223e43; font-size: 16px; }
