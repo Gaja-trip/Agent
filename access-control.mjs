@@ -122,8 +122,7 @@ function permittedPath(pathname) {
     || /^\/cadastral\/.+\.(shp|shx|dbf|prj|bin)$/i.test(pathname)
     || /^\/api\/farmland\/(config|info|parcel|tile|wms)$/.test(pathname)
     || pathname === "/api/vworld/parcel"
-    || pathname === "/api/eum/roads"
-    || pathname === "/api/eum/plan";
+    || pathname === "/api/eum/roads";
 }
 
 async function passwordMatches(value) {

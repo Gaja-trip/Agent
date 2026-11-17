@@ -527,7 +527,6 @@ function initPortalTabs() {
   const initialParams = new URLSearchParams(window.location.search);
   let selectedLaw = readSelectedLaw(initialParams);
   let eumFrameRequestId = 0;
-  const eumPlanViews = new WeakMap();
   const vworldParseResponseQueue = [];
   let vworldOriginalParseResponse = null;
 
@@ -674,7 +673,6 @@ function initPortalTabs() {
       let loadingTimer;
       const showLoading = () => {
         window.clearTimeout(loadingTimer);
-        if (portalKey === "eum" && view.dataset.eumMode !== "original") { status.hidden = true; return; }
         status.hidden = false;
         status.textContent = "페이지를 불러오는 중입니다.";
         loadingTimer = window.setTimeout(() => {
@@ -819,7 +817,7 @@ function initPortalTabs() {
   }
 
   function hasTownToken(address) {
-    return /[가-힣]+(?:읍|면|동)\b/.test(String(address || ""));
+    return /[가-힣]+(?:읍|면|동)(?=\s|$)/.test(String(address || ""));
   }
 
   function getDuplicateVillageSearches(address) {
@@ -918,7 +916,7 @@ function initPortalTabs() {
     };
   }
 
-  function getEumUrl(options = {}) {
+  function getEumUrl() {
     const state = getParcelState();
 
     if (state.pnu) {
@@ -945,10 +943,6 @@ function initPortalTabs() {
 
       if (state.title || state.query || state.subtitle) {
         url.searchParams.set("fullAddress", state.title || state.query || state.subtitle);
-      }
-
-      if (options.refresh) {
-        url.searchParams.set("_refresh", String(Date.now()));
       }
 
       return url.toString();
@@ -1019,19 +1013,6 @@ function initPortalTabs() {
       <div class="portal-context portal-context--law">
         <span>선택한 법령 조항</span>
         <strong>${escapeHtml(selectedLaw.title)}</strong>
-      </div>
-    `;
-  }
-
-  function renderEumViewToolbar() {
-    return `
-      <div class="eum-view-toolbar">
-        <div class="eum-view-tabs" role="tablist" aria-label="토지이음 보기 방식">
-          <button type="button" role="tab" data-eum-view="plan" aria-selected="true">확인도면·범례</button>
-          <button type="button" role="tab" data-eum-view="original" aria-selected="false">전체 열람</button>
-        </div>
-        <button type="button" data-eum-action="reload" aria-label="확인도면·범례 새로고침"><i data-lucide="refresh-cw"></i>새로고침</button>
-        <a href="${escapeHtml(getEumUrl())}" data-eum-original-link target="_blank" rel="noopener noreferrer">원문 열기 <i data-lucide="external-link"></i></a>
       </div>
     `;
   }
@@ -1478,9 +1459,7 @@ function initPortalTabs() {
           <a href="${escapeHtml(iframeUrl)}" data-mobile-original target="_blank" rel="noopener noreferrer">원문 열기 <i data-lucide="external-link"></i></a>
         </div>
         <p class="mobile-embedded-status" data-mobile-embed-status role="status">페이지를 불러오는 중입니다.</p>
-        ${isEumPortal ? renderEumViewToolbar() : ""}
         ${isLawPortal ? renderLawContext() : ""}
-        ${isEumPortal ? '<div class="eum-plan" data-eum-plan></div>' : ""}
         <iframe
           class="embedded-site__frame"
           title="${portal.frameTitle}"
@@ -1489,7 +1468,6 @@ function initPortalTabs() {
           loading="eager"
           allow="geolocation; fullscreen"
           referrerpolicy="strict-origin-when-cross-origin"
-          ${isEumPortal ? "hidden" : ""}
         ></iframe>
       </div>
     `;
@@ -1743,53 +1721,17 @@ function initPortalTabs() {
     return portal.url;
   }
 
-  function getEumIframe() {
-    return portalViews.get("eum")?.querySelector(".embedded-site__frame") || null;
-  }
-
   function scheduleEumDetailLoad(view, detailUrl) {
     const iframe = view?.querySelector(".embedded-site__frame");
     if (!iframe || !detailUrl) return;
     const request = ++eumFrameRequestId;
     const pnu = getParcelState().pnu;
     window.requestAnimationFrame(() => {
-      if (request !== eumFrameRequestId || !iframe.isConnected || view.hidden || view.dataset.eumMode !== "original" || getParcelState().pnu !== pnu) return;
+      if (request !== eumFrameRequestId || !iframe.isConnected || view.hidden || getParcelState().pnu !== pnu) return;
       if (iframe.dataset.currentSrc === detailUrl) return;
       iframe.src = detailUrl;
       iframe.dataset.currentSrc = detailUrl;
     });
-  }
-
-  function loadEumPlan(view, refresh = false) {
-    if (!view) return;
-    let controller = eumPlanViews.get(view);
-    if (!controller) {
-      controller = window.EumPlanView.create(view.querySelector("[data-eum-plan]"));
-      eumPlanViews.set(view, controller);
-    }
-    controller.load(getParcelState().pnu, { refresh });
-  }
-
-  function setEumView(view, mode) {
-    if (!view) return;
-    view.querySelectorAll("[data-eum-original-link]").forEach(link => { link.href = getEumUrl(); });
-    const original = mode === "original";
-    view.dataset.eumMode = original ? "original" : "plan";
-    view.querySelector("[data-eum-plan]").hidden = original;
-    view.querySelector(".embedded-site__frame").hidden = !original;
-    view.querySelectorAll("[data-eum-view]").forEach(button => button.setAttribute("aria-selected", String(button.dataset.eumView === view.dataset.eumMode)));
-    if (original) scheduleEumDetailLoad(view, getEumUrl());
-    else {
-      eumFrameRequestId += 1;
-      view.querySelector("[data-mobile-embed-status]").hidden = true;
-      loadEumPlan(view);
-    }
-  }
-
-  function refreshEumIframe() {
-    const view = portalViews.get("eum");
-    loadEumPlan(view, true);
-    if (view?.dataset.eumMode === "original") scheduleEumDetailLoad(view, getEumUrl({ refresh: true }));
   }
 
   function ensurePortalView(portalKey) {
@@ -5841,8 +5783,6 @@ function initPortalTabs() {
     syncMobileAddress();
     const originalLink = view.querySelector("[data-mobile-original]");
     if (originalLink) originalLink.href = getEmbeddedPortalUrl(portal);
-    const embedTools = view.querySelector("[data-mobile-embed-tools]");
-    if (embedTools) embedTools.hidden = !getParcelState().pnu;
 
     portalTabs.forEach((button) => {
       const isActive = button.dataset.portal === portalKey;
@@ -5856,7 +5796,7 @@ function initPortalTabs() {
 
     refreshIcons();
 
-    if (portalKey === "eum") setEumView(view, view.dataset.eumMode || "plan");
+    if (portalKey === "eum" && (!getParcelAddress() || getParcelState().pnu)) scheduleEumDetailLoad(view, getEumUrl());
 
     if (portal.type === "farmland") {
       renderParcelDetails();
@@ -5882,11 +5822,20 @@ function initPortalTabs() {
     }
 
     if ((portalKey === "eum" || portalKey === "map") && getParcelAddress() && !getParcelState().pnu) {
-      resolveParcelAddress().then((state) => {
-        if (state?.pnu && activePortalKey === portalKey) {
-          setActivePortal(portalKey);
+      const requestedAddress = buildContextualParcelAddress(getParcelAddress());
+      const isCurrentLookup = (state) => activePortalKey === portalKey && (
+        buildContextualParcelAddress(getParcelAddress()) === requestedAddress || state?.query === getParcelAddress()
+      );
+      const finishEumLookup = (state) => {
+        if (portalKey === "eum" && isCurrentLookup(state)) {
+          scheduleEumDetailLoad(view, getEumUrl());
         }
-      });
+      };
+      resolveParcelAddress().then((state) => {
+        if (state?.pnu && isCurrentLookup(state)) {
+          setActivePortal(portalKey);
+        } else finishEumLookup(state);
+      }).catch(finishEumLookup);
     }
   }
 
@@ -6070,28 +6019,7 @@ function initPortalTabs() {
       }).catch(() => { document.querySelector("[data-farmland-status]").textContent = "주소를 확인하지 못했습니다. 다시 검색해 주세요."; });
       return;
     }
-    const eumViewButton = event.target.closest("[data-eum-view]");
-    if (eumViewButton) { setEumView(portalViews.get("eum"), eumViewButton.dataset.eumView); return; }
-    const eumActionButton = event.target.closest("[data-eum-action]");
     const copyButton = event.target.closest("[data-farmland-copy]");
-
-    if (eumActionButton) {
-      const action = eumActionButton.dataset.eumAction;
-
-      if (action === "reload") {
-        refreshEumIframe();
-      } else if (action === "reset") {
-        refreshEumIframe({ resetSession: true });
-      } else if (action === "stable-map") {
-        setActivePortal("aerial");
-        updateParcelStatus("항공사진에서 V-World 연속지적도와 지번 정보를 안정 도면으로 확인합니다.");
-      } else if (action === "map") {
-        setActivePortal("map");
-        updateParcelStatus("토지이음지도에서 같은 필지를 확인합니다.");
-      }
-
-      return;
-    }
 
     if (copyButton) {
       copyParcelAddress();

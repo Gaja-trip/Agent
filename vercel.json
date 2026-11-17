@@ -5,9 +5,6 @@
   "outputDirectory": ".",
   "regions": ["icn1"],
   "functions": {
-    "api/eum/plan.js": {
-      "maxDuration": 60
-    },
     "api/eum/roads.js": {
       "maxDuration": 60
     },
